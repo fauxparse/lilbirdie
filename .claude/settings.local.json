@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:better-auth.com)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm remove:*)",
+      "Read(//Users/matt/.claude/**)",
+      "Bash(pnpm db:seed:*)",
+      "Bash(psql:*)",
+      "Bash(pnpm list:*)",
+      "Bash(npx biome check:*)",
+      "Bash(tsc --noEmit)",
+      "Bash(pnpm dlx:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

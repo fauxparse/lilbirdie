@@ -1,0 +1,283 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Better Auth required tables
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Lil Birdie specific fields
+  birthday          DateTime?
+  preferredCurrency String    @default("USD")
+  theme             String    @default("system") // "light", "dark", "system"
+
+  // Relations
+  sessions             Session[]
+  accounts             Account[]
+  wishlists            Wishlist[]
+  friendsInitiated     Friendship[] @relation("UserFriends")
+  friendsReceived      Friendship[] @relation("FriendUser")
+  friendRequestsSent   FriendRequest[] @relation("RequesterUser")
+  friendRequestsReceived FriendRequest[] @relation("ReceiverUser")
+  editableWishlists    WishlistEditor[]
+  claims               Claim[]
+  occasions            Occasion[]
+  auditLogs            AuditLog[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Account {
+  id           String  @id @default(cuid())
+  userId       String
+  accountId    String
+  providerId   String
+  accessToken  String?
+  refreshToken String?
+  password     String? // For email/password if needed
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+  @@map("verifications")
+}
+
+// Lil Birdie application tables
+model Wishlist {
+  id          String            @id @default(cuid())
+  title       String
+  description String?
+  permalink   String            @unique
+  privacy     WishlistPrivacy   @default(FRIENDS_ONLY)
+  isDefault   Boolean           @default(false)
+  ownerId     String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  owner   User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  items   WishlistItem[]
+  editors WishlistEditor[]
+  claims  Claim[]
+
+  @@map("wishlists")
+}
+
+model WishlistItem {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  url         String?
+  imageUrl    String?
+  price       Decimal?
+  currency    String   @default("USD")
+  priority    Int      @default(0) // 0-3 stars
+  tags        String[] // Array of custom tags
+  isDeleted   Boolean  @default(false) // Soft deletion
+  wishlistId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  // Relations
+  wishlist Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  claims   Claim[]
+
+  @@map("wishlist_items")
+}
+
+model Friendship {
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user   User @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("FriendUser", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@map("friendships")
+}
+
+model FriendRequest {
+  id          String              @id @default(cuid())
+  email       String
+  requesterId String
+  receiverId  String?
+  status      FriendRequestStatus @default(PENDING)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  // Relations
+  requester User  @relation("RequesterUser", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiver  User? @relation("ReceiverUser", fields: [receiverId], references: [id], onDelete: SetNull)
+
+  @@unique([requesterId, email])
+  @@map("friend_requests")
+}
+
+model WishlistEditor {
+  id         String   @id @default(cuid())
+  wishlistId String
+  userId     String
+  canEdit    Boolean  @default(true)
+  canDelete  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  // Relations
+  wishlist Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([wishlistId, userId])
+  @@map("wishlist_editors")
+}
+
+model Claim {
+  id         String   @id @default(cuid())
+  itemId     String
+  wishlistId String
+  userId     String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  item     WishlistItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  wishlist Wishlist     @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, userId])
+  @@map("claims")
+}
+
+model Occasion {
+  id          String      @id @default(cuid())
+  title       String
+  date        DateTime
+  type        OccasionType
+  userId      String
+  friendId    String?     // If it's for a friend
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("occasions")
+}
+
+model WebSocketConnection {
+  id          String   @id @default(cuid())
+  socketId    String   @unique
+  userId      String?
+  wishlistId  String?
+  connectedAt DateTime @default(now())
+  lastPing    DateTime @default(now())
+
+  @@map("websocket_connections")
+}
+
+model CurrencyRate {
+  id           String   @id @default(cuid())
+  fromCurrency String
+  toCurrency   String
+  rate         Decimal
+  updatedAt    DateTime @updatedAt
+
+  @@unique([fromCurrency, toCurrency])
+  @@map("currency_rates")
+}
+
+model ScrapedUrl {
+  id          String   @id @default(cuid())
+  url         String   @unique
+  title       String?
+  description String?
+  imageUrl    String?
+  price       String?
+  currency    String?
+  scrapedAt   DateTime @default(now())
+
+  @@map("scraped_urls")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  resource  String
+  resourceId String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+// Enums
+enum WishlistPrivacy {
+  PUBLIC
+  FRIENDS_ONLY
+  PRIVATE
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  IGNORED
+}
+
+enum OccasionType {
+  BIRTHDAY
+  CHRISTMAS
+  VALENTINES_DAY
+  ANNIVERSARY
+  GRADUATION
+  WEDDING
+  CUSTOM
+}

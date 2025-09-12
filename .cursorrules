@@ -1,0 +1,217 @@
+# Cursor Rules for Wishlist App
+
+## Core Development Principles
+
+### 1. READ THE DOCUMENTATION FIRST
+
+- **ALWAYS** read official documentation before implementing features
+- Use Context7 to get up-to-date documentation for libraries and frameworks
+- Follow official best practices and patterns exactly as documented
+- Do NOT guess or make assumptions about how things work
+
+### 2. NO GUESSWORK POLICY
+
+- If you don't know how something works, READ THE DOCS
+- If documentation is unclear, search for more specific examples
+- Never implement solutions based on assumptions or "trying things"
+- When in doubt, ask for clarification rather than guessing
+
+### 3. Documentation-First Approach
+
+- Before implementing any feature, research the proper approach
+- Use tools like Context7 to get current, accurate documentation
+- Follow official examples and patterns exactly
+- Document your reasoning when deviating from standard practices
+
+### 4. Quality Over Speed
+
+- Take time to understand the problem fully before solving it
+- Implement solutions correctly the first time
+- Avoid quick fixes that create technical debt
+- Prioritize maintainable, well-documented code
+
+### 5. Fix Linting Errors Immediately
+
+- **ALWAYS** fix linting and type errors as you make changes
+- Run `npx biome check --write` and `tsc --noEmit` on files after editing them
+- Never leave linting or type errors in the codebase
+- Use proper type-only imports (`import type`) when importing types
+- Address TypeScript errors immediately, don't let them accumulate
+- **CLEAN UP AFTER YOURSELF**: Fix ALL TypeScript errors you introduce, even if they seem unrelated
+- Never claim errors are "not related to your changes" - if they weren't there before, you caused them
+- Run full TypeScript check (`tsc --noEmit`) after making changes to ensure no new errors
+
+### 6. File Search Best Practices
+
+- **NEVER** search inside `node_modules` directory - it's not relevant for app code
+- Use `ignore_globs` parameter when searching to exclude build artifacts and dependencies
+- Focus searches on source code directories: `app/`, `components/`, `lib/`, `test/`
+- Use specific directory targets rather than broad searches when possible
+
+### 7. Development Server Management
+
+- **NEVER** start the development server yourself - the user has it running
+- Only tell the user to restart the dev server if specifically needed for changes to take effect
+- Avoid creating multiple instances of the app running simultaneously
+
+## Project-Specific Guidelines
+
+### Tech Stack
+
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS v4
+- Prisma
+- PostgreSQL
+- Better Auth
+- React Query
+- Tanstack Form
+- Zod
+- Socket.io
+- Vitest (Testing)
+- React Testing Library (Component Testing)
+- MSW (API Mocking)
+
+### Code Standards
+
+- Use Biome for linting and formatting
+- Follow TypeScript strict mode
+- Use shadcn/ui components for consistent UI
+- Implement proper error handling
+- Use Zod schemas for validation
+
+### Service Layer Architecture
+
+#### Core Principles
+
+- **Separation of Concerns**: API routes handle HTTP concerns, services handle business logic
+- **Testability**: Services can be unit tested without HTTP layer overhead
+- **Reusability**: Services can be used across different API routes or other contexts
+- **Type Safety**: All service functions are fully typed with TypeScript
+
+#### Service Layer Structure
+
+```
+lib/services/
+├── types.ts                    # Service-specific types and interfaces
+├── access-control.service.ts   # Access control and permission logic
+├── wishlist.service.ts         # Wishlist business logic
+├── item.service.ts            # Wishlist item business logic
+├── claim.service.ts           # Claim system business logic
+└── url-scraper.service.ts     # URL scraping business logic
+```
+
+#### Service Design Patterns
+
+- **ServiceResult Pattern**: All services return `ServiceResult<T>` for consistent error handling
+- **Static Methods**: Services use static methods for stateless operations
+- **Context Injection**: Services receive `ServiceContext` with user information
+- **Access Control**: Use Better Auth's built-in RBAC system instead of custom access control
+
+#### API Route Pattern
+
+```typescript
+// API routes should be thin wrappers around services
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getSession(request);
+    const context = createServiceContext(session);
+    const data = await request.json();
+
+    const result = await SomeService.createItem(context, data);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: result.statusCode }
+      );
+    }
+
+    return NextResponse.json(result.data, { status: 201 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+```
+
+### 9. Service Layer First Policy
+
+- **ALWAYS** create service layer functions before implementing API routes
+- **NEVER** put business logic directly in API route files
+- API routes should only handle HTTP concerns (request/response, validation, error handling)
+- All business logic goes in the service layer where it can be easily tested
+- Use the ServiceResult pattern for consistent error handling across all services
+- Create comprehensive unit tests for service functions before implementing API routes
+
+#### Service Testing Strategy
+
+- **Unit Tests**: Test services in isolation with mocked dependencies
+- **Mock Database**: Use Prisma mock for database operations
+- **Test Coverage**: Aim for 90%+ coverage on service layer
+- **Integration Tests**: Test API routes with real service calls
+
+### Theme System
+
+- Use Tailwind CSS v4's `@theme` directive for theme variables
+- Use `@custom-variant dark` for dark mode configuration
+- Follow official Tailwind CSS v4 theming patterns
+- Never override Tailwind's built-in systems with manual CSS
+
+### Testing Guidelines
+
+#### Test-First Development
+
+- Write tests before implementing new features
+- Maintain high test coverage (aim for 80%+)
+- Test user behavior, not implementation details
+- Use React Testing Library's user-centric approach
+
+#### Test Organization
+
+- Place tests in `__tests__` directories or co-locate with `.test.ts` files
+- Use descriptive test names that explain the expected behavior
+- Group related tests using `describe` blocks
+- Follow the AAA pattern: Arrange, Act, Assert
+
+#### Test Database
+
+- Use separate test database to avoid data corruption
+- Reset database state between tests
+- Use transactions for test isolation when possible
+- Seed test data consistently for reliable tests
+
+#### Component Testing
+
+- Test components from user perspective
+- Use `screen.getByRole()` and semantic queries
+- Test accessibility with `@testing-library/jest-dom`
+- Mock external dependencies and API calls
+
+#### API Testing
+
+- Test all API routes with various input scenarios
+- Test authentication and authorization
+- Test error handling and edge cases
+- Use MSW for API mocking in component tests
+
+#### Test Utilities
+
+- Create reusable test utilities and helpers
+- Use `@testing-library/user-event` for user interactions
+- Mock WebSocket connections for real-time features
+- Create test data factories for consistent test data
+
+### 8. README-First Workflow
+
+- **ALWAYS** read the README.md first when the user asks "what's next" or about project status
+- The README contains a comprehensive TODO list and implementation status
+- Don't analyze source code to determine what's missing - check the README TODO list first
+- Update the README TODO list when completing tasks
+- The README is the single source of truth for project progress and next steps
+
+## Remember
+
+**Documentation is your friend. Read it. Follow it. Trust it.**

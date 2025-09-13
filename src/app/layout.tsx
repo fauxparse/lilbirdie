@@ -5,7 +5,8 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider } from "@/components/AuthProvider";
 import { QueryProvider } from "@/components/QueryProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { SidebarProvider } from "@/components/ui/Sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/Sidebar";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Lil Birdie - Share Your Wishes",
@@ -23,22 +24,19 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <ThemeProvider>
-              <SidebarProvider>
+              <SidebarProvider defaultOpen={false}>
                 <AppSidebar />
-                <main
-                  className="flex flex-col h-svh items-center w-full"
-                  style={{
-                    backgroundColor: "var(--color-background)",
-                    color: "var(--color-foreground)",
-                  }}
-                >
+                <SidebarInset>
                   <AppHeader />
-                  {children}
-                </main>
+                  <main className="flex flex-col flex-1 items-center w-full p-4 bg-background text-foreground">
+                    {children}
+                  </main>
+                </SidebarInset>
               </SidebarProvider>
             </ThemeProvider>
           </AuthProvider>
         </QueryProvider>
+        <Toaster richColors />
       </body>
     </html>
   );

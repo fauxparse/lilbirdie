@@ -14,8 +14,7 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-const SIDEBAR_COOKIE_NAME = "sidebar_state";
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+const SIDEBAR_STORAGE_KEY = "sidebar_state";
 const SIDEBAR_WIDTH = "20rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
@@ -52,7 +51,7 @@ export const SidebarProvider = React.forwardRef<
 >(
   (
     {
-      defaultOpen = true,
+      defaultOpen = false,
       open: openProp,
       onOpenChange: setOpenProp,
       className,
@@ -65,9 +64,23 @@ export const SidebarProvider = React.forwardRef<
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = React.useState(false);
 
-    // This is the internal state of the sidebar.
-    // We use openProp and setOpenProp for control from outside the component.
+    // Always start with defaultOpen to avoid hydration mismatch
     const [_open, _setOpen] = React.useState(defaultOpen);
+    const [isHydrated, setIsHydrated] = React.useState(false);
+
+    // After hydration, load from localStorage
+    React.useEffect(() => {
+      setIsHydrated(true);
+      try {
+        const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+        if (stored !== null) {
+          _setOpen(JSON.parse(stored));
+        }
+      } catch {
+        // Silently fail if localStorage is not available
+      }
+    }, []);
+
     const open = openProp ?? _open;
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
@@ -78,10 +91,16 @@ export const SidebarProvider = React.forwardRef<
           _setOpen(openState);
         }
 
-        // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+        // Save to localStorage only after hydration
+        if (isHydrated) {
+          try {
+            localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(openState));
+          } catch {
+            // Silently fail if localStorage is not available
+          }
+        }
       },
-      [setOpenProp, open]
+      [setOpenProp, open, isHydrated]
     );
 
     // Helper to toggle the sidebar.

@@ -1,4 +1,5 @@
 "use client";
+import { useAuth } from "@/components/AuthProvider";
 import {
   Sidebar,
   SidebarContent,
@@ -7,27 +8,63 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSkeleton,
 } from "@/components/ui/Sidebar";
+import { useQuery } from "@tanstack/react-query";
 import { Gift, Heart, Home, Plus, User, Users } from "lucide-react";
 import Link from "next/link";
 
-// Dummy data - replace with real data later
-const dummyWishlists = [
-  { id: "1", title: "Birthday Wishlist", itemCount: 12 },
-  { id: "2", title: "Holiday Gifts", itemCount: 8 },
-  { id: "3", title: "Wedding Registry", itemCount: 25 },
-  { id: "4", title: "Baby Shower", itemCount: 15 },
-];
+interface Wishlist {
+  id: string;
+  title: string;
+  permalink: string;
+  _count: {
+    items: number;
+  };
+}
 
-const dummyFriends = [
-  { id: "1", name: "Sarah Johnson", avatar: null },
-  { id: "2", name: "Mike Chen", avatar: null },
-  { id: "3", name: "Emily Rodriguez", avatar: null },
-  { id: "4", name: "David Kim", avatar: null },
-  { id: "5", name: "Jessica Taylor", avatar: null },
-];
+interface Friend {
+  id: string;
+  name: string;
+  email: string;
+  image?: string;
+}
 
 export function AppSidebar() {
+  const { user } = useAuth();
+
+  const {
+    data: wishlists,
+    isLoading,
+    error,
+  } = useQuery<Wishlist[]>({
+    queryKey: ["wishlists"],
+    queryFn: async () => {
+      const response = await fetch("/api/wishlists");
+      if (!response.ok) {
+        throw new Error("Failed to fetch wishlists");
+      }
+      return response.json();
+    },
+    enabled: !!user,
+  });
+
+  const {
+    data: friends,
+    isLoading: friendsLoading,
+    error: friendsError,
+  } = useQuery<Friend[]>({
+    queryKey: ["friends"],
+    queryFn: async () => {
+      const response = await fetch("/api/friends");
+      if (!response.ok) {
+        throw new Error("Failed to fetch friends");
+      }
+      return response.json();
+    },
+    enabled: !!user,
+  });
+
   return (
     <Sidebar>
       <SidebarContent>
@@ -44,7 +81,7 @@ export function AppSidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link href={"/"}>
+                <Link href="/wishlists/new">
                   <Plus className="h-4 w-4" />
                   <span>Create Wishlist</span>
                 </Link>
@@ -57,22 +94,34 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>My Wishlists</SidebarGroupLabel>
           <SidebarMenu>
-            {dummyWishlists.map((wishlist) => (
-              <SidebarMenuItem key={wishlist.id}>
-                <SidebarMenuButton asChild>
-                  <Link href={"/"}>
-                    <Heart className="h-4 w-4" />
-                    <span className="flex-1 truncate">{wishlist.title}</span>
-                    <span className="text-xs text-muted-foreground">{wishlist.itemCount}</span>
-                  </Link>
-                </SidebarMenuButton>
+            {isLoading && user ? (
+              // Show loading skeletons
+              <>
+                <SidebarMenuSkeleton showIcon />
+                <SidebarMenuSkeleton showIcon />
+                <SidebarMenuSkeleton showIcon />
+              </>
+            ) : error ? (
+              <SidebarMenuItem>
+                <div className="px-2 py-2 text-sm text-red-500">Failed to load wishlists</div>
               </SidebarMenuItem>
-            ))}
-            {dummyWishlists.length === 0 && (
+            ) : wishlists && wishlists.length > 0 ? (
+              wishlists.map((wishlist) => (
+                <SidebarMenuItem key={wishlist.id}>
+                  <SidebarMenuButton asChild>
+                    <Link href={`/w/${wishlist.permalink}`}>
+                      <Heart className="h-4 w-4" />
+                      <span className="flex-1 truncate">{wishlist.title}</span>
+                      <span className="text-xs text-muted-foreground">{wishlist._count.items}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))
+            ) : user ? (
               <SidebarMenuItem>
                 <div className="px-2 py-2 text-sm text-muted-foreground">No wishlists yet</div>
               </SidebarMenuItem>
-            )}
+            ) : null}
           </SidebarMenu>
         </SidebarGroup>
 
@@ -88,32 +137,44 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            {dummyFriends.map((friend) => (
-              <SidebarMenuItem key={friend.id}>
-                <SidebarMenuButton asChild>
-                  <Link href={"/"}>
-                    <div className="h-4 w-4 rounded-full bg-muted flex items-center justify-center">
-                      {friend.avatar ? (
-                        <img
-                          src={friend.avatar}
-                          alt={friend.name}
-                          className="h-full w-full rounded-full"
-                        />
-                      ) : (
-                        <User className="h-3 w-3" />
-                      )}
-                    </div>
-                    <span className="truncate">{friend.name}</span>
-                    <Gift className="h-3 w-3 text-muted-foreground" />
-                  </Link>
-                </SidebarMenuButton>
+            {friendsLoading && user ? (
+              // Show loading skeletons
+              <>
+                <SidebarMenuSkeleton showIcon />
+                <SidebarMenuSkeleton showIcon />
+                <SidebarMenuSkeleton showIcon />
+              </>
+            ) : friendsError ? (
+              <SidebarMenuItem>
+                <div className="px-2 py-2 text-sm text-red-500">Failed to load friends</div>
               </SidebarMenuItem>
-            ))}
-            {dummyFriends.length === 0 && (
+            ) : friends && friends.length > 0 ? (
+              friends.map((friend) => (
+                <SidebarMenuItem key={friend.id}>
+                  <SidebarMenuButton asChild>
+                    <Link href={`/u/${friend.id}`}>
+                      <div className="h-4 w-4 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                        {friend.image ? (
+                          <img
+                            src={friend.image}
+                            alt={friend.name}
+                            className="h-full w-full rounded-full object-cover"
+                          />
+                        ) : (
+                          <User className="h-3 w-3" />
+                        )}
+                      </div>
+                      <span className="truncate">{friend.name}</span>
+                      <Gift className="h-3 w-3 text-muted-foreground" />
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))
+            ) : user ? (
               <SidebarMenuItem>
                 <div className="px-2 py-2 text-sm text-muted-foreground">No friends yet</div>
               </SidebarMenuItem>
-            )}
+            ) : null}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

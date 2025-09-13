@@ -21,7 +21,10 @@
       "WebSearch",
       "WebFetch(domain:www.better-auth.com)",
       "Bash(tsc --noEmit --skipLibCheck)",
-      "Bash(pnpm add:*)"
+      "Bash(pnpm add:*)",
+      "Bash(tsx scripts/update-existing-items.ts:*)",
+      "Bash(tsx scripts/update-user-avatars.ts:*)",
+      "Bash(npx tsx:*)"
     ],
     "deny": [],
     "ask": []

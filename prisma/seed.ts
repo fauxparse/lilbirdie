@@ -5,7 +5,9 @@ const prisma = new PrismaClient();
 
 type WishlistItem = {
   name: string;
+  description?: string;
   url?: string;
+  imageUrl?: string;
   price: number;
   priority: number;
 };
@@ -17,36 +19,42 @@ const people = [
     email: "matt@example.com",
     birthday: new Date("1980-07-27"),
     interests: ["code", "improv theatre", "lego", "movies with explosions", "Radiohead"],
+    avatar: "https://api.dicebear.com/7.x/big-smile/svg?seed=Matt",
   },
   {
     name: "Doug Powell",
     email: "doug@example.com",
     birthday: new Date("1952-06-25"),
     interests: ["cars", "gadgets", "3d printing"],
+    avatar: "https://api.dicebear.com/7.x/big-smile/svg?seed=Doug",
   },
   {
     name: "Helen Powell",
     email: "helen@example.com",
     birthday: new Date("1954-11-02"),
     interests: ["crafting", "gluten free cooking"],
+    avatar: "https://api.dicebear.com/7.x/big-smile/svg?seed=Helen",
   },
   {
     name: "Tim Powell",
     email: "tim@example.com",
     birthday: new Date("1983-02-28"), // Fixed invalid date (Feb 30)
     interests: ["sneakers", "star wars", "lego"],
+    avatar: "https://api.dicebear.com/7.x/big-smile/svg?seed=Tim",
   },
   {
     name: "Angela Smith-Williams",
     email: "angela@example.com",
     birthday: new Date("1986-05-02"),
     interests: ["cooking", "Pinterest", "family activities"],
+    avatar: "https://api.dicebear.com/7.x/big-smile/svg?seed=Angela",
   },
   {
     name: "Emma Cullen",
     email: "emma@example.com",
     birthday: new Date("1989-11-06"),
     interests: ["Minions", "purple things"],
+    avatar: "https://api.dicebear.com/7.x/big-smile/svg?seed=Emma",
   },
 ] as const;
 
@@ -56,76 +64,205 @@ const wishlistItems = {
     general: [
       {
         name: "LEGO Creator Expert Millennium Falcon",
+        description:
+          "Ultimate collector's version of the iconic Star Wars ship with over 7,500 pieces",
         url: "https://www.lego.com",
+        imageUrl:
+          "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=400&fit=crop",
         price: 849.99,
         priority: 3,
       },
       {
         name: "Radiohead - OK Computer OKNOTOK Vinyl",
+        description: "20th anniversary edition vinyl with rare B-sides and unreleased tracks",
         url: "https://radiohead.com",
+        imageUrl:
+          "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop",
         price: 45.0,
         priority: 2,
       },
       {
         name: "JavaScript: The Good Parts",
+        description: "Douglas Crockford's essential guide to JavaScript's best features",
         url: "https://shop.oreilly.com",
+        imageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=400&fit=crop",
         price: 29.99,
         priority: 1,
       },
-      { name: "Improv Comedy Workshop Ticket", price: 85.0, priority: 2 },
+      {
+        name: "Improv Comedy Workshop Ticket",
+        description: "6-week beginner's improv class at the local comedy theater",
+        imageUrl:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
+        price: 85.0,
+        priority: 2,
+      },
     ],
     birthday: [
-      { name: "Professional Code Review Session", price: 200.0, priority: 3 },
+      {
+        name: "Professional Code Review Session",
+        description:
+          "One-on-one session with a senior developer to review my code and provide feedback",
+        imageUrl:
+          "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=400&fit=crop",
+        price: 200.0,
+        priority: 3,
+      },
       {
         name: "Premium Lego Storage System",
+        description: "Modular storage solution with sorting trays and building surface",
         url: "https://www.lego.com",
+        imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
         price: 125.0,
         priority: 2,
       },
-      { name: "Improv Theatre Season Pass", price: 300.0, priority: 3 },
+      {
+        name: "Improv Theatre Season Pass",
+        description: "Full season pass to attend all improv shows and workshops",
+        imageUrl:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop",
+        price: 300.0,
+        priority: 3,
+      },
     ],
     private: [
-      { name: "Surprise Weekend Getaway", price: 500.0, priority: 3 },
+      {
+        name: "Surprise Weekend Getaway",
+        description: "Romantic weekend trip to a cozy cabin in the mountains",
+        imageUrl:
+          "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=400&fit=crop",
+        price: 500.0,
+        priority: 3,
+      },
       {
         name: "Custom Mechanical Keyboard",
+        description: "Cherry MX Brown switches with custom keycaps and RGB lighting",
         url: "https://mechanicalkeyboards.com",
+        imageUrl:
+          "https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=400&h=400&fit=crop",
         price: 350.0,
         priority: 2,
       },
     ],
     public: [
-      { name: "Open Source Contribution Sponsorship", price: 50.0, priority: 1 },
-      { name: "Tech Conference Ticket", price: 400.0, priority: 2 },
-      { name: "Programming Books Bundle", price: 150.0, priority: 1 },
+      {
+        name: "Open Source Contribution Sponsorship",
+        description: "Monthly sponsorship to support open source projects I use",
+        imageUrl: "https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=400&h=400&fit=crop",
+        price: 50.0,
+        priority: 1,
+      },
+      {
+        name: "Tech Conference Ticket",
+        description: "Admission to a major web development or JavaScript conference",
+        imageUrl:
+          "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=400&fit=crop",
+        price: 400.0,
+        priority: 2,
+      },
+      {
+        name: "Programming Books Bundle",
+        description: "Collection of the latest books on React, Node.js, and system design",
+        imageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=400&fit=crop",
+        price: 150.0,
+        priority: 1,
+      },
     ],
   },
   doug: [
     {
       name: "Creality Ender 3 V3 SE 3D Printer",
+      description: "Entry-level 3D printer perfect for hobbyists with auto bed leveling",
       url: "https://www.creality.com",
+      imageUrl: "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400&h=400&fit=crop",
       price: 199.0,
       priority: 3,
     },
-    { name: "OBD2 Scanner Tool", price: 89.99, priority: 2 },
-    { name: "Car Detailing Kit", price: 45.0, priority: 1 },
-    { name: "Arduino Starter Kit", url: "https://www.arduino.cc", price: 75.0, priority: 2 },
+    {
+      name: "OBD2 Scanner Tool",
+      description: "Bluetooth diagnostic scanner for reading car error codes and performance data",
+      imageUrl: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&h=400&fit=crop",
+      price: 89.99,
+      priority: 2,
+    },
+    {
+      name: "Car Detailing Kit",
+      description: "Complete set with microfiber cloths, waxes, and cleaning solutions",
+      imageUrl: "https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=400&h=400&fit=crop",
+      price: 45.0,
+      priority: 1,
+    },
+    {
+      name: "Arduino Starter Kit",
+      description: "Complete electronics learning kit with sensors, LEDs, and project guide",
+      url: "https://www.arduino.cc",
+      imageUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=400&fit=crop",
+      price: 75.0,
+      priority: 2,
+    },
   ],
   helen: [
-    { name: "Cricut Explore Air 2", url: "https://cricut.com", price: 249.99, priority: 3 },
-    { name: "Gluten Free Cookbook", price: 24.95, priority: 1 },
-    { name: "Yarn Storage Organizer", price: 35.0, priority: 1 },
-    { name: "Embroidery Floss Set", price: 28.5, priority: 2 },
+    {
+      name: "Cricut Explore Air 2",
+      description: "Precision cutting machine for crafting projects with various materials",
+      url: "https://cricut.com",
+      imageUrl: "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=400&h=400&fit=crop",
+      price: 249.99,
+      priority: 3,
+    },
+    {
+      name: "Gluten Free Cookbook",
+      description: "150+ delicious gluten-free recipes for everyday meals",
+      imageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=400&fit=crop",
+      price: 24.95,
+      priority: 1,
+    },
+    {
+      name: "Yarn Storage Organizer",
+      description: "Multi-compartment storage system for organizing yarn by color and weight",
+      imageUrl: "https://images.unsplash.com/photo-1586816001966-79b736744398?w=400&h=400&fit=crop",
+      price: 35.0,
+      priority: 1,
+    },
+    {
+      name: "Embroidery Floss Set",
+      description: "Complete set of 100 colors of premium embroidery thread",
+      imageUrl: "https://images.unsplash.com/photo-1586816001966-79b736744398?w=400&h=400&fit=crop",
+      price: 28.5,
+      priority: 2,
+    },
   ],
   tim: [
-    { name: "Air Jordan 1 Retro High OG", url: "https://nike.com", price: 170.0, priority: 3 },
+    {
+      name: "Air Jordan 1 Retro High OG",
+      description: "Classic basketball sneakers in the iconic Chicago Bulls colorway",
+      url: "https://nike.com",
+      imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
+      price: 170.0,
+      priority: 3,
+    },
     {
       name: "LEGO Star Wars Millennium Falcon",
+      description: "Detailed replica of Han Solo's ship with mini figures included",
       url: "https://lego.com",
+      imageUrl: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=400&fit=crop",
       price: 169.99,
       priority: 2,
     },
-    { name: "Star Wars Black Series Lightsaber", price: 249.99, priority: 2 },
-    { name: "Sneaker Display Case", price: 89.0, priority: 1 },
+    {
+      name: "Star Wars Black Series Lightsaber",
+      description: "Force FX Elite lightsaber with authentic movie sounds and lighting",
+      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop",
+      price: 249.99,
+      priority: 2,
+    },
+    {
+      name: "Sneaker Display Case",
+      description: "Premium acrylic display case for showcasing favorite sneakers",
+      imageUrl: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop",
+      price: 89.0,
+      priority: 1,
+    },
   ],
   angela: {
     personal: [
@@ -160,15 +297,35 @@ const wishlistItems = {
     ],
   },
   emma: [
-    { name: "Minions Collectible Figure Set", price: 89.99, priority: 3 },
-    { name: "Purple Throw Blanket", price: 35.0, priority: 1 },
+    {
+      name: "Minions Collectible Figure Set",
+      description: "Complete set of 12 Minions figures from the Despicable Me movies",
+      imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+      price: 89.99,
+      priority: 3,
+    },
+    {
+      name: "Purple Throw Blanket",
+      description: "Soft fleece throw blanket in Emma's favorite color",
+      imageUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop",
+      price: 35.0,
+      priority: 1,
+    },
     {
       name: "Despicable Me Movie Collection",
+      description: "Complete collection of all Despicable Me and Minions movies on Blu-ray",
       url: "https://movies.disney.com",
+      imageUrl: "https://images.unsplash.com/photo-1489599732645-0e4a0815b9e3?w=400&h=400&fit=crop",
       price: 39.99,
       priority: 2,
     },
-    { name: "Purple Kitchen Appliance Set", price: 125.0, priority: 2 },
+    {
+      name: "Purple Kitchen Appliance Set",
+      description: "Matching purple toaster, kettle, and blender set for the kitchen",
+      imageUrl: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop",
+      price: 125.0,
+      priority: 2,
+    },
   ],
 } as const;
 
@@ -269,11 +426,12 @@ async function createUserWithPassword(userData: (typeof people)[number]): Promis
       throw new Error("User creation failed");
     }
 
-    // Update the user with email verification
+    // Update the user with email verification and avatar
     const user = await prisma.user.update({
       where: { email: userData.email },
       data: {
         emailVerified: true,
+        image: userData.avatar,
       },
     });
 
@@ -333,7 +491,9 @@ async function createWishlists(userId: string, userName: string, wishlists: Wish
           await prisma.wishlistItem.create({
             data: {
               name: item.name,
+              description: item.description || null,
               url: item.url || null,
+              imageUrl: item.imageUrl || null,
               price: item.price,
               currency: "USD",
               priority: item.priority,
@@ -377,7 +537,9 @@ async function createWishlists(userId: string, userName: string, wishlists: Wish
           await prisma.wishlistItem.create({
             data: {
               name: item.name,
+              description: item.description || null,
               url: item.url || null,
+              imageUrl: item.imageUrl || null,
               price: item.price,
               currency: "USD",
               priority: item.priority,
@@ -420,7 +582,9 @@ async function createWishlists(userId: string, userName: string, wishlists: Wish
           await prisma.wishlistItem.create({
             data: {
               name: item.name,
+              description: item.description || null,
               url: item.url || null,
+              imageUrl: item.imageUrl || null,
               price: item.price,
               currency: "USD",
               priority: item.priority,

@@ -5,6 +5,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 const prisma = new PrismaClient();
 
 export const auth = betterAuth({
+  secret: process.env.BETTER_AUTH_SECRET || "fallback-secret-for-dev",
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
@@ -27,18 +28,18 @@ export const auth = betterAuth({
       preferredCurrency: {
         type: "string",
         defaultValue: "USD",
+        required: false,
       },
       theme: {
         type: "string",
         defaultValue: "system",
+        required: false,
       },
     },
   },
   emailAndPassword: {
-    enabled: false, // Only using Google OAuth for now
-  },
-  advanced: {
-    generateId: false, // Let Prisma handle ID generation with cuid()
+    enabled: true,
+    requireEmailVerification: false,
   },
 });
 

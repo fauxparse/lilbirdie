@@ -10,7 +10,14 @@
       "Bash(pnpm list:*)",
       "Bash(npx biome check:*)",
       "Bash(tsc --noEmit)",
-      "Bash(pnpm dlx:*)"
+      "Bash(pnpm dlx:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(npx better-auth generate:*)",
+      "Bash(curl:*)",
+      "Bash(pnpm update:*)",
+      "Bash(timeout:*)",
+      "Bash(node:*)",
+      "Bash(npx prisma:*)"
     ],
     "deny": [],
     "ask": []

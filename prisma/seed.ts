@@ -1,16 +1,7 @@
-import { randomBytes, scrypt } from "node:crypto";
-import { promisify } from "node:util";
 import { PrismaClient } from "@prisma/client";
+import { auth } from "../src/lib/auth";
 
 const prisma = new PrismaClient();
-const scryptAsync = promisify(scrypt);
-
-// Better Auth uses scrypt for password hashing - we need to match their format
-async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(32).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${salt}:${buf.toString("hex")}`;
-}
 
 // People data from PEOPLE.md
 const people = [
@@ -183,36 +174,61 @@ async function createUserWithPassword(userData: (typeof people)[0]): Promise<str
 
     if (existingUser) {
       console.log(`User ${userData.name} already exists, skipping...`);
+      
+      // Check if they have a password account
+      const existingAccount = await prisma.account.findFirst({
+        where: { 
+          userId: existingUser.id,
+          providerId: "credential"
+        }
+      });
+      
+      if (!existingAccount) {
+        console.log(`Creating password account for existing user ${userData.name}...`);
+        // Use Better Auth API to create password account
+        const result = await auth.api.signUpEmail({
+          body: {
+            email: userData.email,
+            password: "P4$$w0rd!",
+            name: userData.name,
+          },
+        });
+        
+        if (result && result.error) {
+          console.error(`Failed to create password for ${userData.name}:`, result.error);
+        } else {
+          console.log(`Password account created for ${userData.name}`);
+        }
+      }
+      
       return existingUser.id;
     }
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name: userData.name,
+    // Create user with password using Better Auth
+    console.log(`Creating user with password: ${userData.name}`);
+    const result = await auth.api.signUpEmail({
+      body: {
         email: userData.email,
-        emailVerified: true,
-        birthday: userData.birthday,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        password: "P4$$w0rd!",
+        name: userData.name,
       },
     });
 
-    // Create password account for the user
-    const hashedPassword = await hashPassword("P4$$w0rd!");
+    if (result && result.error) {
+      console.error(`Failed to create user ${userData.name}:`, result.error);
+      throw new Error(`User creation failed: ${result.error}`);
+    }
 
-    await prisma.account.create({
+    // Update the user with additional fields that Better Auth doesn't handle
+    const user = await prisma.user.update({
+      where: { email: userData.email },
       data: {
-        userId: user.id,
-        accountId: userData.email,
-        providerId: "credential",
-        password: hashedPassword,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        birthday: userData.birthday,
+        emailVerified: true,
       },
     });
 
-    console.log(`Created user: ${userData.name}`);
+    console.log(`Created user with password: ${userData.name}`);
     return user.id;
   } catch (error) {
     console.error(`Error creating user ${userData.name}:`, error);

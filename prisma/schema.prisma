@@ -11,6 +11,7 @@ datasource db {
 }
 
 // Better Auth required tables
+
 model User {
   id            String   @id @default(cuid())
   name          String
@@ -26,38 +27,34 @@ model User {
   theme             String    @default("system") // "light", "dark", "system"
 
   // Relations
-  sessions             Session[]
-  accounts             Account[]
-  wishlists            Wishlist[]
-  friendsInitiated     Friendship[] @relation("UserFriends")
-  friendsReceived      Friendship[] @relation("FriendUser")
-  friendRequestsSent   FriendRequest[] @relation("RequesterUser")
-  friendRequestsReceived FriendRequest[] @relation("ReceiverUser")
-  editableWishlists    WishlistEditor[]
-  claims               Claim[]
-  occasions            Occasion[]
-  auditLogs            AuditLog[]
+  sessions               Session[]
+  accounts               Account[]
+  wishlists              Wishlist[]
+  friendsInitiated       Friendship[]     @relation("UserFriends")
+  friendsReceived        Friendship[]     @relation("FriendUser")
+  friendRequestsSent     FriendRequest[]  @relation("RequesterUser")
+  friendRequestsReceived FriendRequest[]  @relation("ReceiverUser")
+  editableWishlists      WishlistEditor[]
+  claims                 Claim[]
+  occasions              Occasion[]
+  auditLogs              AuditLog[]
 
   @@map("users")
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
+  id        String   @id
   expiresAt DateTime
   ipAddress String?
   userAgent String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
 
 model Account {
-  id           String  @id @default(cuid())
+  id           String   @id @default(cuid())
   userId       String
   accountId    String
   providerId   String
@@ -68,6 +65,9 @@ model Account {
   updatedAt    DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  idToken   String?
+  expiresAt DateTime?
 
   @@unique([providerId, accountId])
   @@map("accounts")
@@ -86,16 +86,17 @@ model Verification {
 }
 
 // Lil Birdie application tables
+
 model Wishlist {
-  id          String            @id @default(cuid())
+  id          String          @id @default(cuid())
   title       String
   description String?
-  permalink   String            @unique
-  privacy     WishlistPrivacy   @default(FRIENDS_ONLY)
-  isDefault   Boolean           @default(false)
+  permalink   String          @unique
+  privacy     WishlistPrivacy @default(FRIENDS_ONLY)
+  isDefault   Boolean         @default(false)
   ownerId     String
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   // Relations
   owner   User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
@@ -107,19 +108,19 @@ model Wishlist {
 }
 
 model WishlistItem {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   description String?
   url         String?
   imageUrl    String?
   price       Decimal?
-  currency    String   @default("USD")
-  priority    Int      @default(0) // 0-3 stars
+  currency    String    @default("USD")
+  priority    Int       @default(0) // 0-3 stars
   tags        String[] // Array of custom tags
-  isDeleted   Boolean  @default(false) // Soft deletion
+  isDeleted   Boolean   @default(false) // Soft deletion
   wishlistId  String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
   // Relations
@@ -193,15 +194,15 @@ model Claim {
 }
 
 model Occasion {
-  id          String      @id @default(cuid())
+  id          String       @id @default(cuid())
   title       String
   date        DateTime
   type        OccasionType
   userId      String
-  friendId    String?     // If it's for a friend
+  friendId    String? // If it's for a friend
   description String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -245,13 +246,13 @@ model ScrapedUrl {
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
-  userId    String?
-  action    String
-  resource  String
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  resource   String
   resourceId String?
-  metadata  Json?
-  createdAt DateTime @default(now())
+  metadata   Json?
+  createdAt  DateTime @default(now())
 
   // Relations
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -260,6 +261,7 @@ model AuditLog {
 }
 
 // Enums
+
 enum WishlistPrivacy {
   PUBLIC
   FRIENDS_ONLY

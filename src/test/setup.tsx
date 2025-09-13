@@ -1,7 +1,7 @@
-import '@testing-library/jest-dom';
-import { cleanup } from '@testing-library/react';
-import { afterAll, afterEach, beforeAll, expect } from 'vitest';
-import { server } from './mocks/server';
+import "@testing-library/jest-dom";
+import { cleanup } from "@testing-library/react";
+import { afterAll, afterEach, beforeAll, expect } from "vitest";
+import { server } from "./mocks/server";
 
 // Extend Vitest's expect with jest-dom matchers
 expect.extend({});
@@ -13,7 +13,7 @@ afterEach(() => {
 
 // MSW server setup
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: 'error' });
+  server.listen({ onUnhandledRequest: "error" });
 });
 
 afterEach(() => {
@@ -25,7 +25,7 @@ afterAll(() => {
 });
 
 // Mock Next.js router
-vi.mock('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),
@@ -39,14 +39,14 @@ vi.mock('next/navigation', () => ({
     has: vi.fn(),
     getAll: vi.fn(),
   }),
-  usePathname: () => '/',
+  usePathname: () => "/",
 }));
 
 // Mock Next.js Image component
-vi.mock('next/image', () => ({
+vi.mock("next/image", () => ({
   default: ({ src, alt, ...props }: any) => {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={alt} ...props/>;
+    return <img src={src} alt={alt} {...props} />;
   },
 }));
 
@@ -55,8 +55,8 @@ const originalError = console.error;
 beforeAll(() => {
   console.error = (...args: any[]) => {
     if (
-      typeof args[0] === 'string' &&
-      args[0].includes('Warning: ReactDOM.render is no longer supported')
+      typeof args[0] === "string" &&
+      args[0].includes("Warning: ReactDOM.render is no longer supported")
     ) {
       return;
     }

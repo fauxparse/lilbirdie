@@ -1,8 +1,8 @@
 "use client";
 
 import { useAuth } from "@/components/AuthProvider";
+import { Gift, Heart, Home, Plus, User, Users } from "lucide-react";
 import Link from "next/link";
-import { Heart, Home, Plus, Users, User, Gift } from "lucide-react";
 
 // Dummy data - same as before
 const dummyWishlists = [
@@ -37,7 +37,10 @@ export function DebugSidebar() {
             <Home className="h-4 w-4" />
             <span>Home</span>
           </Link>
-          <Link href="/wishlists/new" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100">
+          <Link
+            href="/wishlists/new"
+            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100"
+          >
             <Plus className="h-4 w-4" />
             <span>Create Wishlist</span>
           </Link>
@@ -46,10 +49,12 @@ export function DebugSidebar() {
 
       {/* My Wishlists */}
       <div className="mb-6">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">My Wishlists</h3>
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          My Wishlists
+        </h3>
         <nav className="space-y-1">
           {dummyWishlists.map((wishlist) => (
-            <Link 
+            <Link
               key={wishlist.id}
               href={`/wishlists/${wishlist.id}`}
               className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100 text-sm"
@@ -64,14 +69,19 @@ export function DebugSidebar() {
 
       {/* Friends */}
       <div>
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Friends</h3>
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          Friends
+        </h3>
         <nav className="space-y-1">
-          <Link href="/friends" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100 text-sm">
+          <Link
+            href="/friends"
+            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100 text-sm"
+          >
             <Users className="h-4 w-4" />
             <span>Manage Friends</span>
           </Link>
           {dummyFriends.slice(0, 3).map((friend) => (
-            <Link 
+            <Link
               key={friend.id}
               href={`/profile/${friend.id}`}
               className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100 text-sm"

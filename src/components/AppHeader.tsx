@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/components/AuthProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { SidebarTrigger } from "@/components/ui/Sidebar";
@@ -26,6 +27,7 @@ export function AppHeader() {
       </div>
 
       <div className="flex items-center gap-2">
+        <ThemeToggle />
         {isLoading ? (
           <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
         ) : user ? (

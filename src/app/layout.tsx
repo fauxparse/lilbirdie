@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AuthProvider } from "@/components/AuthProvider";
-import { SidebarProvider } from "@/components/ui/Sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
 import { AppHeader } from "@/components/AppHeader";
+import { AppSidebar } from "@/components/AppSidebar";
+import { AuthProvider } from "@/components/AuthProvider";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { SidebarProvider } from "@/components/ui/Sidebar";
 
 export const metadata: Metadata = {
   title: "Lil Birdie - Share Your Wishes",
@@ -18,15 +19,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>
-          <SidebarProvider>
-            <AppSidebar />
-            <main className="flex flex-col h-svh items-center w-full">
-              <AppHeader />
-              {children}
-            </main>
-          </SidebarProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <main 
+                className="flex flex-col h-svh items-center w-full"
+                style={{
+                  backgroundColor: 'var(--color-background)',
+                  color: 'var(--color-foreground)'
+                }}
+              >
+                <AppHeader />
+                {children}
+              </main>
+            </SidebarProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

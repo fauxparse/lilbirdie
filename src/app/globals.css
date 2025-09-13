@@ -1,144 +1,215 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
-
-@theme {
-  --color-border: oklch(0.9 0.024 240);
-  --color-input: oklch(0.9 0.024 240);
-  --color-ring: oklch(0.2 0.024 240);
-  --color-background: oklch(1 0 0);
-  --color-foreground: oklch(0.15 0.004 240);
-  --color-primary: oklch(0.2 0.024 240);
-  --color-primary-foreground: oklch(0.98 0 0);
-  --color-secondary: oklch(0.96 0.006 240);
-  --color-secondary-foreground: oklch(0.2 0.024 240);
-  --color-destructive: oklch(0.6 0.24 0);
-  --color-destructive-foreground: oklch(0.98 0 0);
-  --color-muted: oklch(0.96 0.006 240);
-  --color-muted-foreground: oklch(0.46 0.013 240);
-  --color-accent: oklch(0.96 0.006 240);
-  --color-accent-foreground: oklch(0.2 0.024 240);
-  --color-popover: oklch(1 0 0);
-  --color-popover-foreground: oklch(0.15 0.004 240);
-  --color-card: oklch(1 0 0);
-  --color-card-foreground: oklch(0.15 0.004 240);
-
-  --color-sidebar: oklch(0.98 0 0);
-  --color-sidebar-foreground: oklch(0.26 0.013 240);
-  --color-sidebar-primary: oklch(0.2 0.024 240);
-  --color-sidebar-primary-foreground: oklch(0.98 0 0);
-  --color-sidebar-accent: oklch(0.96 0.006 240);
-  --color-sidebar-accent-foreground: oklch(0.2 0.024 240);
-  --color-sidebar-border: oklch(0.91 0.037 220);
-  --color-sidebar-ring: oklch(0.59 0.269 217);
-
-  --radius: 0.5rem;
+/* Satoshi Variable Font */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Variable.woff2') format('woff2'),
+       url('/fonts/Satoshi-Variable.woff') format('woff');
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
 }
 
-@theme dark {
-  --color-background: oklch(0.15 0.004 240);
-  --color-foreground: oklch(0.98 0 0);
-  --color-card: oklch(0.15 0.004 240);
-  --color-card-foreground: oklch(0.98 0 0);
-  --color-popover: oklch(0.15 0.004 240);
-  --color-popover-foreground: oklch(0.98 0 0);
-  --color-primary: oklch(0.98 0 0);
-  --color-primary-foreground: oklch(0.2 0.024 240);
-  --color-secondary: oklch(0.2 0.013 240);
-  --color-secondary-foreground: oklch(0.98 0 0);
-  --color-muted: oklch(0.2 0.013 240);
-  --color-muted-foreground: oklch(0.65 0.015 240);
-  --color-accent: oklch(0.2 0.013 240);
-  --color-accent-foreground: oklch(0.98 0 0);
-  --color-destructive: oklch(0.35 0.15 0);
-  --color-destructive-foreground: oklch(0.98 0 0);
-  --color-border: oklch(0.2 0.013 240);
-  --color-input: oklch(0.2 0.013 240);
-  --color-ring: oklch(0.84 0.015 240);
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-VariableItalic.woff2') format('woff2'),
+       url('/fonts/Satoshi-VariableItalic.woff') format('woff');
+  font-weight: 300 900;
+  font-style: italic;
+  font-display: swap;
+}
 
-  --color-sidebar: oklch(0.15 0.004 240);
-  --color-sidebar-foreground: oklch(0.96 0.006 240);
-  --color-sidebar-primary: oklch(0.48 0.22 224);
-  --color-sidebar-primary-foreground: oklch(1 0 0);
-  --color-sidebar-accent: oklch(0.2 0.013 240);
-  --color-sidebar-accent-foreground: oklch(0.96 0.006 240);
-  --color-sidebar-border: oklch(0.2 0.013 240);
-  --color-sidebar-ring: oklch(0.59 0.269 217);
+@theme {
+  /* =============================================================================
+   * DESIGN TOKEN SYSTEM
+   * =============================================================================
+   * This system follows a two-tier approach:
+   * 1. Named Colors: Direct Tailwind palette colors (--color-slate-50, --color-pink-500, etc.)
+   * 2. Semantic Tokens: Purpose-based tokens that reference named colors
+   * 
+   * This makes it easy to:
+   * - Understand what colors are being used
+   * - Experiment with different palettes by changing semantic mappings
+   * - Maintain consistency across the design system
+   * ============================================================================= */
+
+  /* Named Color Palette - Slate (Neutral) */
+  --color-white: oklch(100% 0 0);
+  --color-slate-50: oklch(98% 0.004 270);
+  --color-slate-100: oklch(96% 0.008 270);
+  --color-slate-200: oklch(93% 0.012 270);
+  --color-slate-300: oklch(87% 0.015 270);
+  --color-slate-400: oklch(71% 0.013 270);
+  --color-slate-500: oklch(55% 0.015 270);
+  --color-slate-600: oklch(46% 0.018 270);
+  --color-slate-700: oklch(36% 0.016 270);
+  --color-slate-800: oklch(26% 0.016 270);
+  --color-slate-900: oklch(16% 0.012 270);
+  --color-slate-950: oklch(8% 0.012 270);
+
+  /* Named Color Palette - Pink (Primary Accent) */
+  --color-pink-50: oklch(98% 0.028 340);
+  --color-pink-100: oklch(96% 0.056 340);
+  --color-pink-200: oklch(92% 0.083 340);
+  --color-pink-300: oklch(86% 0.111 340);
+  --color-pink-400: oklch(76% 0.139 340);
+  --color-pink-500: oklch(64% 0.167 340);
+  --color-pink-600: oklch(55% 0.167 340);
+  --color-pink-700: oklch(46% 0.153 340);
+  --color-pink-800: oklch(39% 0.125 340);
+  --color-pink-900: oklch(33% 0.097 340);
+  --color-pink-950: oklch(18% 0.056 340);
+
+  /* Named Color Palette - Functional Colors */
+  --color-red-500: oklch(65% 0.185 20);
+  --color-red-50: oklch(98% 0.037 20);
+  --color-yellow-500: oklch(75% 0.135 65);
+  --color-yellow-50: oklch(98% 0.027 65);
+  --color-green-500: oklch(65% 0.125 145);
+  --color-green-50: oklch(98% 0.025 145);
+  --color-blue-500: oklch(65% 0.125 240);
+  --color-blue-50: oklch(98% 0.025 240);
+
+  /* =============================================================================
+   * SEMANTIC COLOR TOKENS - LIGHT MODE
+   * ============================================================================= */
+
+  /* Base Colors */
+  --color-background: var(--color-white);
+  --color-foreground: var(--color-slate-900);
+  --color-muted: var(--color-slate-100);
+  --color-muted-foreground: var(--color-slate-600);
+  --color-subtle: var(--color-slate-50);
+  --color-border: var(--color-slate-300);
+  --color-input: var(--color-slate-300);
+
+  /* Primary Accent */
+  --color-primary: var(--color-pink-500);
+  --color-primary-foreground: var(--color-white);
+  --color-primary-muted: var(--color-pink-100);
+  --color-primary-subtle: var(--color-pink-50);
+
+  /* Secondary */
+  --color-secondary: var(--color-slate-100);
+  --color-secondary-foreground: var(--color-slate-900);
+
+  /* Functional Colors */
+  --color-accent: var(--color-slate-100);
+  --color-accent-foreground: var(--color-slate-900);
+  --color-destructive: var(--color-red-500);
+  --color-destructive-foreground: var(--color-white);
+  --color-warning: var(--color-yellow-500);
+  --color-warning-foreground: var(--color-slate-900);
+  --color-success: var(--color-green-500);
+  --color-success-foreground: var(--color-white);
+  --color-info: var(--color-blue-500);
+  --color-info-foreground: var(--color-white);
+
+  /* Interactive Elements */
+  --color-ring: var(--color-pink-500);
+  --color-popover: var(--color-white);
+  --color-popover-foreground: var(--color-slate-900);
+  --color-card: var(--color-white);
+  --color-card-foreground: var(--color-slate-900);
+
+  /* Sidebar */
+  --color-sidebar: var(--color-slate-50);
+  --color-sidebar-foreground: var(--color-slate-800);
+  --color-sidebar-primary: var(--color-pink-500);
+  --color-sidebar-primary-foreground: var(--color-white);
+  --color-sidebar-accent: var(--color-slate-100);
+  --color-sidebar-accent-foreground: var(--color-slate-900);
+  --color-sidebar-border: var(--color-slate-300);
+  --color-sidebar-ring: var(--color-pink-500);
+
+  /* Design Tokens */
+  --radius: 0.5rem;
+
+  /* Typography */
+  --font-sans: 'Satoshi', system-ui, sans-serif;
+}
+
+/* =============================================================================
+ * DARK MODE OVERRIDES
+ * =============================================================================
+ * Only semantic tokens are overridden here. Named colors stay the same.
+ * This makes it easy to see exactly what changes between light and dark modes.
+ * ============================================================================= */
+.dark {
+  /* Base Colors - Dark Mode */
+  --color-background: var(--color-slate-800);
+  --color-foreground: var(--color-slate-50);
+  --color-muted: var(--color-slate-700);
+  --color-muted-foreground: var(--color-slate-400);
+  --color-subtle: var(--color-slate-700);
+  --color-border: var(--color-slate-600);
+  --color-input: var(--color-slate-600);
+
+  /* Primary Accent - Adjusted for dark mode contrast */
+  --color-primary: var(--color-pink-400);
+  --color-primary-foreground: var(--color-slate-800);
+  --color-primary-muted: var(--color-pink-950);
+  --color-primary-subtle: var(--color-slate-700);
+
+  /* Secondary - Dark Mode */
+  --color-secondary: var(--color-slate-700);
+  --color-secondary-foreground: var(--color-slate-50);
+
+  /* Functional Colors - Dark Mode */
+  --color-accent: var(--color-slate-700);
+  --color-accent-foreground: var(--color-slate-50);
+  --color-destructive: var(--color-red-500);
+  --color-destructive-foreground: var(--color-slate-800);
+  --color-warning: var(--color-yellow-500);
+  --color-warning-foreground: var(--color-slate-800);
+  --color-success: var(--color-green-500);
+  --color-success-foreground: var(--color-slate-800);
+  --color-info: var(--color-blue-500);
+  --color-info-foreground: var(--color-slate-800);
+
+  /* Interactive Elements - Dark Mode */
+  --color-ring: var(--color-pink-400);
+  --color-popover: var(--color-slate-800);
+  --color-popover-foreground: var(--color-slate-50);
+  --color-card: var(--color-slate-800);
+  --color-card-foreground: var(--color-slate-50);
+
+  /* Sidebar - Dark Mode */
+  --color-sidebar: var(--color-slate-900);
+  --color-sidebar-foreground: var(--color-slate-200);
+  --color-sidebar-primary: var(--color-pink-400);
+  --color-sidebar-primary-foreground: var(--color-slate-900);
+  --color-sidebar-accent: var(--color-slate-800);
+  --color-sidebar-accent-foreground: var(--color-slate-50);
+  --color-sidebar-border: var(--color-slate-700);
+  --color-sidebar-ring: var(--color-pink-400);
 }
 
 * {
-  @apply border-border;
+  border-color: var(--color-border);
 }
 
 body {
-  @apply bg-background text-foreground;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: 'Satoshi', system-ui, sans-serif;
+}
+
+/* Debug styles to test color tokens */
+.debug-bg-test {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  border: 2px solid var(--color-border);
 }
 
 :root {
   --sidebar-width: 36rem;
   --sidebar-width-mobile: 18rem;
   --sidebar-width-icon: 3rem;
-  --sidebar: hsl(0 0% 98%);
-  --sidebar-foreground: hsl(240 5.3% 26.1%);
-  --sidebar-primary: hsl(240 5.9% 10%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(240 4.8% 95.9%);
-  --sidebar-accent-foreground: hsl(240 5.9% 10%);
-  --sidebar-border: hsl(220 13% 91%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
-.dark {
-  --sidebar: hsl(240 5.9% 10%);
-  --sidebar-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-primary: hsl(224.3 76.3% 48%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(240 3.7% 15.9%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
-}
-
-@theme inline {
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-}
-
-@layer base {
-  :root {
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
-  }
-
-  .dark {
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.439 0 0);
   }
 }

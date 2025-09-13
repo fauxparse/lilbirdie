@@ -17,7 +17,11 @@
       "Bash(pnpm update:*)",
       "Bash(timeout:*)",
       "Bash(node:*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "WebSearch",
+      "WebFetch(domain:www.better-auth.com)",
+      "Bash(tsc --noEmit --skipLibCheck)",
+      "Bash(pnpm add:*)"
     ],
     "deny": [],
     "ask": []

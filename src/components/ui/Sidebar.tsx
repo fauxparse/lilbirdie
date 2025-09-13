@@ -371,8 +371,8 @@ export const SidebarFooter = React.forwardRef<HTMLDivElement, React.ComponentPro
 SidebarFooter.displayName = "Sidebar.Footer";
 
 export const SidebarSeparator = React.forwardRef<
-  React.ElementRef<typeof SeparatorComponent>,
-  React.ComponentProps<typeof SeparatorComponent>
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<"div">
 >(({ className, ...props }, ref) => {
   return (
     <SeparatorComponent

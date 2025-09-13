@@ -41,7 +41,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       console.log("Attempting auth with:", { email, isSignUp, name: isSignUp ? name : undefined });
-      
+
       let result;
       if (isSignUp) {
         result = await signUp.email({
@@ -57,9 +57,9 @@ export default function LoginPage() {
           callbackURL: "/",
         });
       }
-      
+
       console.log("Auth result:", result);
-      
+
       // Check if the result contains an error
       if (result.error) {
         console.error("Auth error in result:", result.error);
@@ -67,20 +67,19 @@ export default function LoginPage() {
         if (result.error.message) {
           errorMessage += `: ${result.error.message}`;
         } else if (result.error.status) {
-          errorMessage += `: ${result.error.status} ${result.error.statusText || ''}`;
+          errorMessage += `: ${result.error.status} ${result.error.statusText || ""}`;
         }
         alert(errorMessage);
         return;
       }
-      
+
       // If we get here, it succeeded
       alert(isSignUp ? "Sign up successful!" : "Sign in successful!");
-      
     } catch (error) {
       console.error("Email auth error:", error);
       // Try to extract the actual error message
       let errorMessage = isSignUp ? "Sign up failed" : "Sign in failed";
-      if (error && typeof error === 'object' && 'message' in error) {
+      if (error && typeof error === "object" && "message" in error) {
         errorMessage += `: ${error.message}`;
       }
       alert(errorMessage);

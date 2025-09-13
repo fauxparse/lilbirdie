@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { cleanup } from "@testing-library/react";
-import { afterAll, afterEach, beforeAll, expect } from "vitest";
+import { afterAll, afterEach, beforeAll, expect, vi } from "vitest";
 import { server } from "./mocks/server";
 
 // Extend Vitest's expect with jest-dom matchers
@@ -44,8 +44,8 @@ vi.mock("next/navigation", () => ({
 
 // Mock Next.js Image component
 vi.mock("next/image", () => ({
-  default: ({ src, alt, ...props }: any) => {
-    // eslint-disable-next-line @next/next/no-img-element
+  default: ({ src, alt, ...props }: { src: string; alt: string; [key: string]: unknown }) => {
+    // biome-ignore lint/a11y/useAltText: false positive
     return <img src={src} alt={alt} {...props} />;
   },
 }));
@@ -53,7 +53,7 @@ vi.mock("next/image", () => ({
 // Suppress console warnings in tests
 const originalError = console.error;
 beforeAll(() => {
-  console.error = (...args: any[]) => {
+  console.error = (...args: unknown[]) => {
     if (
       typeof args[0] === "string" &&
       args[0].includes("Warning: ReactDOM.render is no longer supported")

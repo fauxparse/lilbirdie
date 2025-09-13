@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,64 +7,67 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Better Auth required tables
-
 model User {
-  id            String   @id @default(cuid())
-  name          String
-  email         String   @unique
-  emailVerified Boolean  @default(false)
-  image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Lil Birdie specific fields
-  birthday          DateTime?
-  preferredCurrency String    @default("USD")
-  theme             String    @default("system") // "light", "dark", "system"
-
-  // Relations
-  sessions               Session[]
+  id                     String           @id @default(cuid())
+  name                   String
+  email                  String           @unique
+  emailVerified          Boolean          @default(false)
+  image                  String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
   accounts               Account[]
-  wishlists              Wishlist[]
-  friendsInitiated       Friendship[]     @relation("UserFriends")
-  friendsReceived        Friendship[]     @relation("FriendUser")
-  friendRequestsSent     FriendRequest[]  @relation("RequesterUser")
-  friendRequestsReceived FriendRequest[]  @relation("ReceiverUser")
-  editableWishlists      WishlistEditor[]
-  claims                 Claim[]
-  occasions              Occasion[]
   auditLogs              AuditLog[]
+  claims                 Claim[]
+  friendRequestsReceived FriendRequest[]  @relation("ReceiverUser")
+  friendRequestsSent     FriendRequest[]  @relation("RequesterUser")
+  friendsReceived        Friendship[]     @relation("FriendUser")
+  friendsInitiated       Friendship[]     @relation("UserFriends")
+  occasions              Occasion[]
+  profile                Profile?
+  sessions               Session[]
+  editableWishlists      WishlistEditor[]
+  wishlists              Wishlist[]
 
   @@map("users")
 }
 
+model Profile {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  birthday          DateTime?
+  preferredCurrency String    @default("USD")
+  theme             String    @default("system")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
 model Session {
   id        String   @id
+  userId    String
   expiresAt DateTime
   ipAddress String?
   userAgent String?
-  userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
 
 model Account {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   userId       String
   accountId    String
   providerId   String
   accessToken  String?
   refreshToken String?
-  password     String? // For email/password if needed
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  idToken   String?
-  expiresAt DateTime?
+  password     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  expiresAt    DateTime?
+  idToken      String?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerId, accountId])
   @@map("accounts")
@@ -85,24 +85,20 @@ model Verification {
   @@map("verifications")
 }
 
-// Lil Birdie application tables
-
 model Wishlist {
-  id          String          @id @default(cuid())
+  id          String           @id @default(cuid())
   title       String
   description String?
-  permalink   String          @unique
-  privacy     WishlistPrivacy @default(FRIENDS_ONLY)
-  isDefault   Boolean         @default(false)
+  permalink   String           @unique
+  privacy     WishlistPrivacy  @default(FRIENDS_ONLY)
+  isDefault   Boolean          @default(false)
   ownerId     String
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-
-  // Relations
-  owner   User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  items   WishlistItem[]
-  editors WishlistEditor[]
-  claims  Claim[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  claims      Claim[]
+  editors     WishlistEditor[]
+  items       WishlistItem[]
+  owner       User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@map("wishlists")
 }
@@ -115,17 +111,15 @@ model WishlistItem {
   imageUrl    String?
   price       Decimal?
   currency    String    @default("USD")
-  priority    Int       @default(0) // 0-3 stars
-  tags        String[] // Array of custom tags
-  isDeleted   Boolean   @default(false) // Soft deletion
+  priority    Int       @default(0)
+  tags        String[]
+  isDeleted   Boolean   @default(false)
   wishlistId  String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
-
-  // Relations
-  wishlist Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
-  claims   Claim[]
+  claims      Claim[]
+  wishlist    Wishlist  @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
 
   @@map("wishlist_items")
 }
@@ -135,10 +129,8 @@ model Friendship {
   userId    String
   friendId  String
   createdAt DateTime @default(now())
-
-  // Relations
-  user   User @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
-  friend User @relation("FriendUser", fields: [friendId], references: [id], onDelete: Cascade)
+  friend    User     @relation("FriendUser", fields: [friendId], references: [id], onDelete: Cascade)
+  user      User     @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, friendId])
   @@map("friendships")
@@ -152,10 +144,8 @@ model FriendRequest {
   status      FriendRequestStatus @default(PENDING)
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
-
-  // Relations
-  requester User  @relation("RequesterUser", fields: [requesterId], references: [id], onDelete: Cascade)
-  receiver  User? @relation("ReceiverUser", fields: [receiverId], references: [id], onDelete: SetNull)
+  receiver    User?               @relation("ReceiverUser", fields: [receiverId], references: [id])
+  requester   User                @relation("RequesterUser", fields: [requesterId], references: [id], onDelete: Cascade)
 
   @@unique([requesterId, email])
   @@map("friend_requests")
@@ -168,26 +158,22 @@ model WishlistEditor {
   canEdit    Boolean  @default(true)
   canDelete  Boolean  @default(false)
   createdAt  DateTime @default(now())
-
-  // Relations
-  wishlist Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
 
   @@unique([wishlistId, userId])
   @@map("wishlist_editors")
 }
 
 model Claim {
-  id         String   @id @default(cuid())
+  id         String       @id @default(cuid())
   itemId     String
   wishlistId String
   userId     String
-  createdAt  DateTime @default(now())
-
-  // Relations
-  item     WishlistItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  wishlist Wishlist     @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
-  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime     @default(now())
+  item       WishlistItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wishlist   Wishlist     @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
 
   @@unique([itemId, userId])
   @@map("claims")
@@ -199,13 +185,11 @@ model Occasion {
   date        DateTime
   type        OccasionType
   userId      String
-  friendId    String? // If it's for a friend
+  friendId    String?
   description String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("occasions")
 }
@@ -253,14 +237,10 @@ model AuditLog {
   resourceId String?
   metadata   Json?
   createdAt  DateTime @default(now())
-
-  // Relations
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user       User?    @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
 }
-
-// Enums
 
 enum WishlistPrivacy {
   PUBLIC

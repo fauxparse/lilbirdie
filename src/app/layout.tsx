@@ -3,6 +3,7 @@ import "./globals.css";
 import { AppHeader } from "@/components/AppHeader";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider } from "@/components/AuthProvider";
+import { QueryProvider } from "@/components/QueryProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SidebarProvider } from "@/components/ui/Sidebar";
 
@@ -19,23 +20,25 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ThemeProvider>
-          <AuthProvider>
-            <SidebarProvider>
-              <AppSidebar />
-              <main
-                className="flex flex-col h-svh items-center w-full"
-                style={{
-                  backgroundColor: "var(--color-background)",
-                  color: "var(--color-foreground)",
-                }}
-              >
-                <AppHeader />
-                {children}
-              </main>
-            </SidebarProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <SidebarProvider>
+                <AppSidebar />
+                <main
+                  className="flex flex-col h-svh items-center w-full"
+                  style={{
+                    backgroundColor: "var(--color-background)",
+                    color: "var(--color-foreground)",
+                  }}
+                >
+                  <AppHeader />
+                  {children}
+                </main>
+              </SidebarProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );

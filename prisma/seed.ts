@@ -3,6 +3,13 @@ import { auth } from "../src/lib/auth";
 
 const prisma = new PrismaClient();
 
+type WishlistItem = {
+  name: string;
+  url?: string;
+  price: number;
+  priority: number;
+};
+
 // People data from PEOPLE.md
 const people = [
   {
@@ -41,7 +48,7 @@ const people = [
     birthday: new Date("1989-11-06"),
     interests: ["Minions", "purple things"],
   },
-];
+] as const;
 
 // Sample wishlist items for each person
 const wishlistItems = {
@@ -163,9 +170,78 @@ const wishlistItems = {
     },
     { name: "Purple Kitchen Appliance Set", price: 125.0, priority: 2 },
   ],
-};
+} as const;
 
-async function createUserWithPassword(userData: (typeof people)[0]): Promise<string> {
+const mattWishlists = [
+  {
+    key: "general",
+    title: "Matt's General Wishlist",
+    description: "Everyday things I'd love to have",
+    privacy: "FRIENDS_ONLY" as const,
+    isDefault: true,
+  },
+  {
+    key: "birthday",
+    title: "Birthday Wishlist 2024",
+    description: "Special items for my birthday celebration",
+    privacy: "FRIENDS_ONLY" as const,
+    isDefault: false,
+  },
+  {
+    key: "private",
+    title: "Private Wishlist",
+    description: "Personal items - for close family only",
+    privacy: "PRIVATE" as const,
+    isDefault: false,
+  },
+  {
+    key: "public",
+    title: "Public Tech Wishlist",
+    description: "Professional development and tech items",
+    privacy: "PUBLIC" as const,
+    isDefault: false,
+  },
+] as const;
+
+const angelaWishlists = [
+  {
+    key: "personal",
+    title: "Angela's Wishlist",
+    description: "Things for Angela",
+    privacy: "FRIENDS_ONLY" as const,
+    isDefault: true,
+  },
+  {
+    key: "ihaia",
+    title: "Ihaia's Wishlist",
+    description: "Gift ideas for Ihaia",
+    privacy: "FRIENDS_ONLY" as const,
+    isDefault: false,
+  },
+  {
+    key: "tawera",
+    title: "Tāwera's Wishlist",
+    description: "Gift ideas for Tāwera",
+    privacy: "FRIENDS_ONLY" as const,
+    isDefault: false,
+  },
+  {
+    key: "atawhai",
+    title: "Atawhai's Wishlist",
+    description: "Gift ideas for Atawhai",
+    privacy: "FRIENDS_ONLY" as const,
+    isDefault: false,
+  },
+  {
+    key: "mana",
+    title: "Mana's Wishlist",
+    description: "Gift ideas for baby Mana",
+    privacy: "FRIENDS_ONLY" as const,
+    isDefault: false,
+  },
+] as const;
+
+async function createUserWithPassword(userData: (typeof people)[number]): Promise<string> {
   try {
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -173,34 +249,7 @@ async function createUserWithPassword(userData: (typeof people)[0]): Promise<str
     });
 
     if (existingUser) {
-      console.log(`User ${userData.name} already exists, skipping...`);
-      
-      // Check if they have a password account
-      const existingAccount = await prisma.account.findFirst({
-        where: { 
-          userId: existingUser.id,
-          providerId: "credential"
-        }
-      });
-      
-      if (!existingAccount) {
-        console.log(`Creating password account for existing user ${userData.name}...`);
-        // Use Better Auth API to create password account
-        const result = await auth.api.signUpEmail({
-          body: {
-            email: userData.email,
-            password: "P4$$w0rd!",
-            name: userData.name,
-          },
-        });
-        
-        if (result && result.error) {
-          console.error(`Failed to create password for ${userData.name}:`, result.error);
-        } else {
-          console.log(`Password account created for ${userData.name}`);
-        }
-      }
-      
+      console.log(`User ${userData.name} already exists, skipping user creation...`);
       return existingUser.id;
     }
 
@@ -214,17 +263,27 @@ async function createUserWithPassword(userData: (typeof people)[0]): Promise<str
       },
     });
 
-    if (result && result.error) {
-      console.error(`Failed to create user ${userData.name}:`, result.error);
-      throw new Error(`User creation failed: ${result.error}`);
+    // Handle auth result - success returns user/session object
+    if (!result || !result.user) {
+      console.error(`Failed to create user ${userData.name}`);
+      throw new Error("User creation failed");
     }
 
-    // Update the user with additional fields that Better Auth doesn't handle
+    // Update the user with email verification
     const user = await prisma.user.update({
       where: { email: userData.email },
       data: {
-        birthday: userData.birthday,
         emailVerified: true,
+      },
+    });
+
+    // Create profile with additional fields
+    await prisma.profile.create({
+      data: {
+        userId: user.id,
+        birthday: userData.birthday,
+        preferredCurrency: "USD",
+        theme: "system",
       },
     });
 
@@ -236,43 +295,14 @@ async function createUserWithPassword(userData: (typeof people)[0]): Promise<str
   }
 }
 
-async function createWishlists(userId: string, userName: string, wishlists: any) {
+type Wishlists = Record<string, readonly WishlistItem[]> | readonly WishlistItem[];
+
+async function createWishlists(userId: string, userName: string, wishlists: Wishlists) {
   const firstName = userName.split(" ")[0].toLowerCase();
 
   try {
     // Handle Matt's multiple wishlists
     if (firstName === "matt") {
-      const mattWishlists = [
-        {
-          key: "general",
-          title: `${userName}'s General Wishlist`,
-          description: "Everyday things I'd love to have",
-          privacy: "FRIENDS_ONLY" as const,
-          isDefault: true,
-        },
-        {
-          key: "birthday",
-          title: "Birthday Wishlist 2024",
-          description: "Special items for my birthday celebration",
-          privacy: "FRIENDS_ONLY" as const,
-          isDefault: false,
-        },
-        {
-          key: "private",
-          title: "Private Wishlist",
-          description: "Personal items - for close family only",
-          privacy: "PRIVATE" as const,
-          isDefault: false,
-        },
-        {
-          key: "public",
-          title: "Public Tech Wishlist",
-          description: "Professional development and tech items",
-          privacy: "PUBLIC" as const,
-          isDefault: false,
-        },
-      ];
-
       for (const wl of mattWishlists) {
         const existingWishlist = await prisma.wishlist.findFirst({
           where: {
@@ -298,7 +328,7 @@ async function createWishlists(userId: string, userName: string, wishlists: any)
         });
 
         // Add items to wishlist
-        const items = wishlists[wl.key];
+        const items = wishlists[wl.key as keyof typeof wishlists] as WishlistItem[];
         for (const item of items) {
           await prisma.wishlistItem.create({
             data: {
@@ -317,44 +347,6 @@ async function createWishlists(userId: string, userName: string, wishlists: any)
     }
     // Handle Angela's children's wishlists
     else if (firstName === "angela") {
-      const angelaWishlists = [
-        {
-          key: "personal",
-          title: `${userName}'s Wishlist`,
-          description: "Things for Angela",
-          privacy: "FRIENDS_ONLY" as const,
-          isDefault: true,
-        },
-        {
-          key: "ihaia",
-          title: "Ihaia's Wishlist",
-          description: "Gift ideas for Ihaia",
-          privacy: "FRIENDS_ONLY" as const,
-          isDefault: false,
-        },
-        {
-          key: "tawera",
-          title: "Tāwera's Wishlist",
-          description: "Gift ideas for Tāwera",
-          privacy: "FRIENDS_ONLY" as const,
-          isDefault: false,
-        },
-        {
-          key: "atawhai",
-          title: "Atawhai's Wishlist",
-          description: "Gift ideas for Atawhai",
-          privacy: "FRIENDS_ONLY" as const,
-          isDefault: false,
-        },
-        {
-          key: "mana",
-          title: "Mana's Wishlist",
-          description: "Gift ideas for baby Mana",
-          privacy: "FRIENDS_ONLY" as const,
-          isDefault: false,
-        },
-      ];
-
       for (const wl of angelaWishlists) {
         const existingWishlist = await prisma.wishlist.findFirst({
           where: {
@@ -380,7 +372,7 @@ async function createWishlists(userId: string, userName: string, wishlists: any)
         });
 
         // Add items to wishlist
-        const items = wishlists[wl.key];
+        const items = wishlists[wl.key as keyof typeof wishlists] as WishlistItem[];
         for (const item of items) {
           await prisma.wishlistItem.create({
             data: {
@@ -422,18 +414,20 @@ async function createWishlists(userId: string, userName: string, wishlists: any)
         },
       });
 
-      // Add items to wishlist (wishlists is an array for other people)
-      for (const item of wishlists) {
-        await prisma.wishlistItem.create({
-          data: {
-            name: item.name,
-            url: item.url || null,
-            price: item.price,
-            currency: "USD",
-            priority: item.priority,
-            wishlistId: wishlist.id,
-          },
-        });
+      if (Array.isArray(wishlists)) {
+        // Add items to wishlist (wishlists is an array for other people)
+        for (const item of wishlists) {
+          await prisma.wishlistItem.create({
+            data: {
+              name: item.name,
+              url: item.url || null,
+              price: item.price,
+              currency: "USD",
+              priority: item.priority,
+              wishlistId: wishlist.id,
+            },
+          });
+        }
       }
 
       console.log(`Created wishlist for ${userName} with ${wishlists.length} items`);
@@ -539,7 +533,7 @@ async function main() {
       await createWishlists(
         userId,
         person.name,
-        wishlistItems[firstName as keyof typeof wishlistItems]
+        wishlistItems[firstName as keyof typeof wishlistItems] as readonly WishlistItem[]
       );
     }
   }
@@ -549,6 +543,25 @@ async function main() {
 
   // Create pending friend requests
   await createPendingFriendRequests(userIds);
+
+  // Create profiles for existing users who don't have them
+  console.log("Creating profiles for existing users...");
+  const usersWithoutProfiles = await prisma.user.findMany({
+    where: {
+      profile: null,
+    },
+  });
+
+  for (const user of usersWithoutProfiles) {
+    await prisma.profile.create({
+      data: {
+        userId: user.id,
+        preferredCurrency: "USD",
+        theme: "system",
+      },
+    });
+    console.log(`Created profile for user: ${user.name}`);
+  }
 
   console.log("🎉 Database seeding completed!");
 }

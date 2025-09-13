@@ -51,7 +51,7 @@ importers:
         specifier: ^0.31.0
         version: 0.31.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.9.2)
       '@tanstack/react-query':
-        specifier: ^5.17.0
+        specifier: ^5.87.4
         version: 5.87.4(react@19.1.1)
       '@vercel/blob':
         specifier: ^0.15.1

@@ -1,6 +1,8 @@
 "use client";
 
 import { useAuth } from "@/components/AuthProvider";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 type Theme = "light" | "dark" | "system";
@@ -29,7 +31,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>("system");
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
   const [mounted, setMounted] = useState(false);
-  const { user, isLoading } = useAuth();
+  const [pendingTheme, setPendingTheme] = useState<Theme | null>(null);
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const { data: profile, isLoading: isProfileLoading } = useUserProfile();
+  const queryClient = useQueryClient();
 
   // Save theme to database for authenticated users
   const saveThemeToDatabase = useCallback(
@@ -77,42 +82,29 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   // Initialize theme from user profile or localStorage and mark as mounted
   useEffect(() => {
     setMounted(true);
+  }, []);
 
-    const initializeTheme = async () => {
-      if (!isLoading) {
-        let initialTheme: Theme;
+  // Update theme when profile data changes
+  useEffect(() => {
+    if (!isAuthLoading && !isProfileLoading) {
+      let initialTheme: Theme;
 
-        if (user) {
-          // Fetch user's profile to get theme preference
-          try {
-            const response = await fetch("/api/user/profile");
-            if (response.ok) {
-              const profile = await response.json();
-              if (profile?.theme && ["light", "dark", "system"].includes(profile.theme)) {
-                initialTheme = profile.theme as Theme;
-              } else {
-                initialTheme = "system";
-              }
-            } else {
-              initialTheme = "system";
-            }
-          } catch (error) {
-            console.error("Failed to fetch user profile:", error);
-            initialTheme = "system";
-          }
-        } else {
-          // Fall back to localStorage for non-authenticated users
-          const storedTheme = localStorage.getItem("theme") as Theme | null;
-          initialTheme = storedTheme || "system";
-        }
-
-        setThemeState(initialTheme);
-        updateResolvedTheme(initialTheme);
+      if (user && profile?.theme && ["light", "dark", "system"].includes(profile.theme)) {
+        // Use user's saved theme from database profile
+        initialTheme = profile.theme as Theme;
+      } else if (!user) {
+        // Fall back to localStorage for non-authenticated users
+        const storedTheme = localStorage.getItem("theme") as Theme | null;
+        initialTheme = storedTheme || "system";
+      } else {
+        // User is authenticated but no profile theme yet
+        initialTheme = "system";
       }
-    };
 
-    initializeTheme();
-  }, [updateResolvedTheme, user, isLoading]);
+      setThemeState(initialTheme);
+      updateResolvedTheme(initialTheme);
+    }
+  }, [user, profile, isAuthLoading, isProfileLoading, updateResolvedTheme]);
 
   // Apply theme to DOM when mounted state changes
   useEffect(() => {
@@ -135,28 +127,60 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     return () => mediaQuery.removeEventListener("change", handleSystemThemeChange);
   }, [theme, updateResolvedTheme]);
 
+  // Save pending theme when user becomes available
+  useEffect(() => {
+    if (user && pendingTheme) {
+      const saveTheme = async () => {
+        try {
+          const response = await fetch("/api/user/theme", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ theme: pendingTheme }),
+          });
+
+          if (response.ok) {
+            queryClient.invalidateQueries({ queryKey: ["user-profile", user.id] });
+          }
+        } catch (error) {
+          console.error("Failed to save pending theme:", error);
+        } finally {
+          setPendingTheme(null);
+        }
+      };
+
+      saveTheme();
+    }
+  }, [user, pendingTheme, queryClient]);
+
   const setTheme = useCallback(
     async (newTheme: Theme) => {
       setThemeState(newTheme);
       localStorage.setItem("theme", newTheme);
       updateResolvedTheme(newTheme);
 
-      // Persist to database if user is logged in
       if (user) {
         try {
-          await fetch("/api/user/theme", {
+          const response = await fetch("/api/user/theme", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ theme: newTheme }),
           });
+
+          if (response.ok) {
+            queryClient.invalidateQueries({ queryKey: ["user-profile", user.id] });
+          }
         } catch (error) {
-          console.error("Failed to save theme preference:", error);
+          console.error("Failed to save theme:", error);
         }
+      } else {
+        setPendingTheme(newTheme);
       }
     },
-    [updateResolvedTheme, user]
+    [updateResolvedTheme, user, queryClient]
   );
 
   return (

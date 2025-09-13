@@ -21,8 +21,8 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <QueryProvider>
-          <ThemeProvider>
-            <AuthProvider>
+          <AuthProvider>
+            <ThemeProvider>
               <SidebarProvider>
                 <AppSidebar />
                 <main
@@ -36,8 +36,8 @@ export default function RootLayout({
                   {children}
                 </main>
               </SidebarProvider>
-            </AuthProvider>
-          </ThemeProvider>
+            </ThemeProvider>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

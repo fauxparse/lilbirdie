@@ -30,24 +30,27 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [mounted, setMounted] = useState(false);
 
   // Update resolved theme based on system preference
-  const updateResolvedTheme = useCallback((currentTheme: Theme) => {
-    if (currentTheme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-      setResolvedTheme(systemTheme);
-      // Only apply DOM changes if we're mounted (client-side)
-      if (mounted) {
-        document.documentElement.classList.toggle("dark", systemTheme === "dark");
+  const updateResolvedTheme = useCallback(
+    (currentTheme: Theme) => {
+      if (currentTheme === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+        setResolvedTheme(systemTheme);
+        // Only apply DOM changes if we're mounted (client-side)
+        if (mounted) {
+          document.documentElement.classList.toggle("dark", systemTheme === "dark");
+        }
+      } else {
+        setResolvedTheme(currentTheme);
+        // Only apply DOM changes if we're mounted (client-side)
+        if (mounted) {
+          document.documentElement.classList.toggle("dark", currentTheme === "dark");
+        }
       }
-    } else {
-      setResolvedTheme(currentTheme);
-      // Only apply DOM changes if we're mounted (client-side)
-      if (mounted) {
-        document.documentElement.classList.toggle("dark", currentTheme === "dark");
-      }
-    }
-  }, [mounted]);
+    },
+    [mounted]
+  );
 
   // Initialize theme from localStorage and mark as mounted
   useEffect(() => {

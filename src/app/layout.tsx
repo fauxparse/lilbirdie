@@ -23,11 +23,11 @@ export default function RootLayout({
           <AuthProvider>
             <SidebarProvider>
               <AppSidebar />
-              <main 
+              <main
                 className="flex flex-col h-svh items-center w-full"
                 style={{
-                  backgroundColor: 'var(--color-background)',
-                  color: 'var(--color-foreground)'
+                  backgroundColor: "var(--color-background)",
+                  color: "var(--color-foreground)",
                 }}
               >
                 <AppHeader />

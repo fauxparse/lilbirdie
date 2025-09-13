@@ -1,6 +1,4 @@
 "use client";
-
-import { useAuth } from "@/components/AuthProvider";
 import {
   Sidebar,
   SidebarContent,
@@ -9,7 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/WorkingSidebar";
+} from "@/components/ui/Sidebar";
 import { Gift, Heart, Home, Plus, User, Users } from "lucide-react";
 import Link from "next/link";
 
@@ -30,8 +28,6 @@ const dummyFriends = [
 ];
 
 export function AppSidebar() {
-  const { user } = useAuth();
-
   return (
     <Sidebar>
       <SidebarContent>
@@ -48,7 +44,7 @@ export function AppSidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link href="/wishlists/new">
+                <Link href={"/"}>
                   <Plus className="h-4 w-4" />
                   <span>Create Wishlist</span>
                 </Link>
@@ -64,7 +60,7 @@ export function AppSidebar() {
             {dummyWishlists.map((wishlist) => (
               <SidebarMenuItem key={wishlist.id}>
                 <SidebarMenuButton asChild>
-                  <Link href={`/wishlists/${wishlist.id}`}>
+                  <Link href={"/"}>
                     <Heart className="h-4 w-4" />
                     <span className="flex-1 truncate">{wishlist.title}</span>
                     <span className="text-xs text-muted-foreground">{wishlist.itemCount}</span>
@@ -86,7 +82,7 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link href="/friends">
+                <Link href="/">
                   <Users className="h-4 w-4" />
                   <span>Manage Friends</span>
                 </Link>
@@ -95,7 +91,7 @@ export function AppSidebar() {
             {dummyFriends.map((friend) => (
               <SidebarMenuItem key={friend.id}>
                 <SidebarMenuButton asChild>
-                  <Link href={`/profile/${friend.id}`}>
+                  <Link href={"/"}>
                     <div className="h-4 w-4 rounded-full bg-muted flex items-center justify-center">
                       {friend.avatar ? (
                         <img

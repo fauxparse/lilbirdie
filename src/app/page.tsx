@@ -18,7 +18,7 @@ export default function HomePage() {
 
   if (user) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto justify-self-center px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Welcome back, {user.name}!</h1>
           <p className="text-muted-foreground">Ready to manage your wishlists?</p>
@@ -56,7 +56,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
       <div className="text-center space-y-6 mb-12">
         <h1 className="text-4xl font-bold text-primary">🐦 Welcome to Lil Birdie</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -112,6 +112,6 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </div>
-    </main>
+    </div>
   );
 }

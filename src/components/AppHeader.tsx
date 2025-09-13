@@ -3,7 +3,7 @@
 import { useAuth } from "@/components/AuthProvider";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { SidebarTrigger } from "@/components/ui/WorkingSidebar";
+import { SidebarTrigger } from "@/components/ui/Sidebar";
 import { signOut } from "@/lib/auth-client";
 import Link from "next/link";
 
@@ -15,7 +15,7 @@ export function AppHeader() {
   };
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 px-4 border-b">
+    <header className="self-stretch flex h-16 shrink-0 items-center gap-2 px-4 border-b">
       <SidebarTrigger className="-ml-1" />
 
       <div className="flex items-center gap-2 flex-1">

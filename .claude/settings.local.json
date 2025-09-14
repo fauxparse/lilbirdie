@@ -24,7 +24,9 @@
       "Bash(pnpm add:*)",
       "Bash(tsx scripts/update-existing-items.ts:*)",
       "Bash(tsx scripts/update-user-avatars.ts:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm view:*)"
     ],
     "deny": [],
     "ask": []

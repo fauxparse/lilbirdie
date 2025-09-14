@@ -1,9 +1,9 @@
+/// <reference types="vitest" />
 import { resolve } from "node:path";
-import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [],
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test/setup.tsx"],
@@ -14,7 +14,14 @@ export default defineConfig({
     // Coverage configuration
     coverage: {
       reporter: ["text", "json", "html"],
-      exclude: ["node_modules/", "src/test/", "**/*.d.ts", "**/*.config.ts", "src/app/globals.css"],
+      exclude: [
+        "node_modules/",
+        "src/test/",
+        "**/*.d.ts",
+        "**/*.config.ts",
+        "src/app/globals.css",
+        ".next",
+      ],
       thresholds: {
         global: {
           branches: 80,
@@ -25,8 +32,10 @@ export default defineConfig({
       },
     },
     // Mock handling
-    deps: {
-      inline: ["@testing-library/user-event"],
+    server: {
+      deps: {
+        inline: ["@testing-library/user-event"],
+      },
     },
   },
   resolve: {

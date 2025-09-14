@@ -11,7 +11,7 @@ import {
   SidebarMenuSkeleton,
 } from "@/components/ui/Sidebar";
 import { useQuery } from "@tanstack/react-query";
-import { Gift, Heart, Home, Plus, User, Users } from "lucide-react";
+import { Gift, Heart, Home, LayoutDashboard, Plus, User, Users } from "lucide-react";
 import Link from "next/link";
 
 interface Wishlist {
@@ -76,6 +76,14 @@ export function AppSidebar() {
                 <Link href="/">
                   <Home className="h-4 w-4" />
                   <span>Home</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/dashboard">
+                  <LayoutDashboard className="h-4 w-4" />
+                  <span>Dashboard</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

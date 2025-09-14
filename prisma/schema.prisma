@@ -170,6 +170,8 @@ model Claim {
   itemId     String
   wishlistId String
   userId     String
+  sent       Boolean      @default(false)
+  sentAt     DateTime?
   createdAt  DateTime     @default(now())
   item       WishlistItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
   user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -184,12 +186,15 @@ model Occasion {
   title       String
   date        DateTime
   type        OccasionType
-  userId      String
-  friendId    String?
+  isRecurring Boolean      @default(true)
+  startYear   Int?
+  ownerId     String
+  entityType  EntityType?
+  entityId    String?
   description String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@map("occasions")
 }
@@ -262,4 +267,10 @@ enum OccasionType {
   GRADUATION
   WEDDING
   CUSTOM
+}
+
+enum EntityType {
+  USER
+  WISHLIST
+  FRIENDSHIP
 }

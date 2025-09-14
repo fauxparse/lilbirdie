@@ -1,15 +1,16 @@
 "use client";
 
 import { useAuth } from "@/components/AuthProvider";
+import { ItemForm, type ItemFormData } from "@/components/ItemForm";
 import { WishlistItemCard } from "@/components/WishlistItemCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Gift, User } from "lucide-react";
+import { Gift, Plus, User, X } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import { toast } from "sonner";
 
 interface WishlistItem {
@@ -95,6 +96,105 @@ export default function PublicWishlistPage({
     },
   });
 
+  // Item management state
+  const [showAddItem, setShowAddItem] = useState(false);
+  const [editingItem, setEditingItem] = useState<WishlistItem | null>(null);
+
+  // Add item mutation
+  const addItemMutation = useMutation({
+    mutationFn: async (data: ItemFormData) => {
+      const response = await fetch(`/api/wishlists/${wishlist?.id}/items`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to add item");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["public-wishlist", permalink] });
+      setShowAddItem(false);
+      toast.success("Item added successfully!");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // Edit item mutation
+  const editItemMutation = useMutation({
+    mutationFn: async (data: ItemFormData) => {
+      if (!editingItem) throw new Error("No item selected for editing");
+
+      const response = await fetch(`/api/items/${editingItem.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update item");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["public-wishlist", permalink] });
+      setEditingItem(null);
+      toast.success("Item updated successfully!");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // Delete item mutation
+  const deleteItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      const response = await fetch(`/api/items/${itemId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete item");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["public-wishlist", permalink] });
+      toast.success("Item deleted successfully!");
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleAddItem = (data: ItemFormData) => {
+    addItemMutation.mutate(data);
+  };
+
+  const handleEditItem = (data: ItemFormData) => {
+    editItemMutation.mutate(data);
+  };
+
+  const handleDeleteItem = (itemId: string) => {
+    if (confirm("Are you sure you want to delete this item?")) {
+      deleteItemMutation.mutate(itemId);
+    }
+  };
+
   const handleClaim = (itemId: string, isClaimed: boolean) => {
     if (!user) {
       toast.error("Please sign in to claim items");
@@ -116,13 +216,13 @@ export default function PublicWishlistPage({
       <div className="container mx-auto max-w-4xl">
         <div className="space-y-6">
           <div className="animate-pulse">
-            <div className="h-8 bg-muted rounded w-1/3 mb-2"></div>
-            <div className="h-4 bg-muted rounded w-1/2"></div>
+            <div className="h-8 bg-muted rounded w-1/3 mb-2" />
+            <div className="h-4 bg-muted rounded w-1/2" />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-48 bg-muted rounded-lg"></div>
+                <div className="h-48 bg-muted rounded-lg" />
               </div>
             ))}
           </div>
@@ -186,6 +286,10 @@ export default function PublicWishlistPage({
 
           {isOwner && (
             <div className="flex gap-2">
+              <Button onClick={() => setShowAddItem(true)} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Add Item
+              </Button>
               <Button variant="outline" asChild>
                 <Link href={`/wishlists/${wishlist.permalink}/edit` as any}>Edit Wishlist</Link>
               </Button>
@@ -195,6 +299,75 @@ export default function PublicWishlistPage({
             </div>
           )}
         </div>
+
+        {/* Add Item Form */}
+        {showAddItem && isOwner && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Add New Item</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAddItem(false)}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ItemForm
+                mode="create"
+                onSubmit={handleAddItem}
+                onCancel={() => setShowAddItem(false)}
+                isSubmitting={addItemMutation.isPending}
+                error={addItemMutation.error?.message || null}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Edit Item Form */}
+        {editingItem && isOwner && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Edit Item</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditingItem(null)}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ItemForm
+                mode="edit"
+                initialData={{
+                  name: editingItem.name,
+                  description: editingItem.description,
+                  url: editingItem.url,
+                  imageUrl: editingItem.imageUrl,
+                  price:
+                    typeof editingItem.price === "number"
+                      ? editingItem.price
+                      : Number.parseFloat(editingItem.price?.toString() || "0"),
+                  currency: editingItem.currency,
+                  priority: editingItem.priority,
+                  tags: [], // TODO: Add tags when available in item data
+                }}
+                onSubmit={handleEditItem}
+                onCancel={() => setEditingItem(null)}
+                isSubmitting={editItemMutation.isPending}
+                error={editItemMutation.error?.message || null}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Items */}
         {wishlist.items.length === 0 ? (
@@ -216,6 +389,8 @@ export default function PublicWishlistPage({
                 item={item}
                 isOwner={isOwner}
                 onClaim={handleClaim}
+                onEdit={isOwner ? setEditingItem : undefined}
+                onDelete={isOwner ? handleDeleteItem : undefined}
                 isClaimPending={claimMutation.isPending}
               />
             ))}

@@ -37,7 +37,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const queryClient = useQueryClient();
 
   // Save theme to database for authenticated users
-  const saveThemeToDatabase = useCallback(
+  const _saveThemeToDatabase = useCallback(
     async (newTheme: Theme) => {
       if (!user) return;
 

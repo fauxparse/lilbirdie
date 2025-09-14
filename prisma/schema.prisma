@@ -35,7 +35,7 @@ model Profile {
   id                String    @id @default(cuid())
   userId            String    @unique
   birthday          DateTime?
-  preferredCurrency String    @default("USD")
+  preferredCurrency String    @default("NZD")
   theme             String    @default("system")
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -110,7 +110,7 @@ model WishlistItem {
   url         String?
   imageUrl    String?
   price       Decimal?
-  currency    String    @default("USD")
+  currency    String    @default("NZD")
   priority    Int       @default(0)
   tags        String[]
   isDeleted   Boolean   @default(false)

@@ -73,7 +73,7 @@ export class OccasionService {
   }
 
   static async updateOccasion(id: string, userId: string, data: UpdateOccasionData) {
-    const occasion = await this.getOccasionById(id, userId);
+    const occasion = await OccasionService.getOccasionById(id, userId);
     if (!occasion || occasion.ownerId !== userId) {
       return null;
     }
@@ -90,7 +90,7 @@ export class OccasionService {
   }
 
   static async deleteOccasion(id: string, userId: string) {
-    const occasion = await this.getOccasionById(id, userId);
+    const occasion = await OccasionService.getOccasionById(id, userId);
     if (!occasion || occasion.ownerId !== userId) {
       return false;
     }
@@ -120,7 +120,7 @@ export class OccasionService {
     // Calculate next occurrence for each occasion
     const upcomingOccasions = occasions
       .map((occasion) => {
-        const nextOccurrence = this.calculateNextOccurrence(
+        const nextOccurrence = OccasionService.calculateNextOccurrence(
           occasion.date,
           occasion.isRecurring,
           now
@@ -131,7 +131,7 @@ export class OccasionService {
         };
       })
       .filter((occasion) => occasion.nextOccurrence && occasion.nextOccurrence <= futureDate)
-      .sort((a, b) => a.nextOccurrence!.getTime() - b.nextOccurrence!.getTime());
+      .sort((a, b) => (a.nextOccurrence?.getTime() || 0) - (b.nextOccurrence?.getTime() || 0));
 
     return upcomingOccasions;
   }
@@ -186,7 +186,7 @@ export class OccasionService {
     entityType?: EntityType,
     entityId?: string
   ) {
-    return this.createOccasion(ownerId, {
+    return OccasionService.createOccasion(ownerId, {
       title,
       date: birthDate,
       type: "BIRTHDAY",
@@ -204,7 +204,7 @@ export class OccasionService {
     entityType?: EntityType,
     entityId?: string
   ) {
-    return this.createOccasion(ownerId, {
+    return OccasionService.createOccasion(ownerId, {
       title,
       date: anniversaryDate,
       type: "ANNIVERSARY",
@@ -225,7 +225,7 @@ export class OccasionService {
       VALENTINES_DAY: "Valentine's Day",
     };
 
-    return this.createOccasion(ownerId, {
+    return OccasionService.createOccasion(ownerId, {
       title: titles[type],
       date: dates[type],
       type,

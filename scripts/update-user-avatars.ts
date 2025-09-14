@@ -45,10 +45,10 @@ async function updateUserAvatars() {
     }
   }
 
-  console.log(`\n📊 Avatar Update Summary:`);
+  console.log("\n📊 Avatar Update Summary:");
   console.log(`✅ Updated: ${updatedCount} users`);
   console.log(`❌ Not found: ${notFoundCount} users`);
-  console.log(`🎉 Avatar update completed!`);
+  console.log("🎉 Avatar update completed!");
 }
 
 async function main() {

@@ -185,7 +185,7 @@ describe("ProfileService", () => {
       const themes = ["light", "dark", "system", "auto"];
 
       (prisma.profile.findUnique as any).mockResolvedValue(mockProfile);
-      (prisma.profile.update as any).mockImplementation(({ data }) =>
+      (prisma.profile.update as any).mockImplementation(({ data }: { data: any }) =>
         Promise.resolve({ ...mockProfile, theme: data.theme })
       );
 
@@ -300,9 +300,7 @@ describe("ProfileService", () => {
       (prisma.profile.findUnique as any).mockResolvedValue(mockProfile);
       (prisma.profile.update as any).mockRejectedValue(dbError);
 
-      await expect(ProfileService.updateTheme("user-1", "dark")).rejects.toThrow(
-        "Update failed"
-      );
+      await expect(ProfileService.updateTheme("user-1", "dark")).rejects.toThrow("Update failed");
     });
 
     it("should propagate database errors in getProfile", async () => {

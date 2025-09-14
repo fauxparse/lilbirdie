@@ -96,7 +96,7 @@ export default function UserProfilePage({
 
       return response.json();
     },
-    onSuccess: (data, action) => {
+    onSuccess: (_data, action) => {
       queryClient.invalidateQueries({ queryKey: ["user-profile", userId] });
       toast.success(action === "add" ? "Friend request sent!" : "Friend removed");
     },

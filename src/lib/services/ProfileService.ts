@@ -11,7 +11,7 @@ export class ProfileService {
         data: {
           userId,
           theme: "system",
-          preferredCurrency: "USD",
+          preferredCurrency: "NZD",
         },
       });
     }
@@ -20,7 +20,7 @@ export class ProfileService {
   }
 
   static async updateTheme(userId: string, theme: string) {
-    const profile = await this.getOrCreateProfile(userId);
+    const profile = await ProfileService.getOrCreateProfile(userId);
 
     return await prisma.profile.update({
       where: { id: profile.id },
@@ -31,6 +31,15 @@ export class ProfileService {
   static async getProfile(userId: string) {
     return await prisma.profile.findUnique({
       where: { userId },
+    });
+  }
+
+  static async updatePreferredCurrency(userId: string, currency: string) {
+    const profile = await ProfileService.getOrCreateProfile(userId);
+
+    return await prisma.profile.update({
+      where: { id: profile.id },
+      data: { preferredCurrency: currency },
     });
   }
 }

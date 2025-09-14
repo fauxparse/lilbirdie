@@ -1,0 +1,485 @@
+interface ScrapedData {
+  title: string;
+  description?: string;
+  url: string;
+  imageUrl?: string;
+  price?: number;
+  currency: string;
+}
+
+interface ScrapingError {
+  error: string;
+  errorType: 'validation' | 'network' | 'timeout' | 'blocked' | 'parsing' | 'unknown';
+  suggestion?: string;
+  canRetry?: boolean;
+}
+
+export class UrlScrapingService {
+  private static readonly TIMEOUT_DURATION = 10000; // 10 seconds
+
+  static async scrapeUrl(url: string): Promise<ScrapedData | ScrapingError> {
+    try {
+      // Validate URL format
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(url);
+      } catch {
+        return {
+          error: "Invalid URL format",
+          errorType: "validation",
+          suggestion: "Please check the URL and make sure it starts with http:// or https://",
+          canRetry: false,
+        };
+      }
+
+      // Check if URL is from a supported domain type
+      const hostname = parsedUrl.hostname.toLowerCase();
+      if (hostname === 'localhost' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('127.')) {
+        return {
+          error: "Local URLs are not supported",
+          errorType: "validation",
+          suggestion: "Please use a public website URL instead",
+          canRetry: false,
+        };
+      }
+
+      // Fetch the page with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT_DURATION);
+
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (compatible; WishlistBot/1.0)",
+          },
+          signal: controller.signal,
+        });
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error instanceof Error && error.name === "AbortError") {
+          return {
+            error: "Request timeout",
+            errorType: "timeout",
+            suggestion: "The website took too long to respond. Try again or check if the URL is correct.",
+            canRetry: true,
+          };
+        }
+
+        // Network errors
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          return {
+            error: "Unable to connect to website",
+            errorType: "network",
+            suggestion: "Check your internet connection or try a different URL.",
+            canRetry: true,
+          };
+        }
+
+        throw error;
+      }
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        let errorMessage = "Failed to access website";
+        let suggestion = "Try again later or check if the URL is correct.";
+        let errorType: ScrapingError['errorType'] = 'network';
+        let canRetry = true;
+
+        switch (response.status) {
+          case 403:
+            errorMessage = "Access denied by website";
+            suggestion = "This website blocks automated requests. Try copying the product details manually.";
+            errorType = 'blocked';
+            canRetry = false;
+            break;
+          case 404:
+            errorMessage = "Page not found";
+            suggestion = "Please check if the URL is correct and the page still exists.";
+            errorType = 'network';
+            canRetry = false;
+            break;
+          case 429:
+            errorMessage = "Too many requests";
+            suggestion = "Please wait a moment before trying again.";
+            errorType = 'blocked';
+            canRetry = true;
+            break;
+          case 500:
+          case 502:
+          case 503:
+            errorMessage = "Website is currently unavailable";
+            suggestion = "The website is having issues. Please try again later.";
+            errorType = 'network';
+            canRetry = true;
+            break;
+          default:
+            errorMessage = `Website returned error ${response.status}`;
+            suggestion = "Please try a different URL or try again later.";
+        }
+
+        return {
+          error: errorMessage,
+          errorType,
+          suggestion,
+          canRetry,
+        };
+      }
+
+      const html = await response.text();
+
+      // Check if this is Amazon and use specialized scraping
+      if (hostname.includes('amazon.')) {
+        return this.scrapeAmazon(html, url);
+      }
+
+      // Extract OpenGraph and meta data for other sites
+      const scrapedData = this.extractMetadata(html, url);
+
+      // Check if we got any useful data
+      const hasUsefulData = scrapedData.title !== 'Untitled' || scrapedData.description || scrapedData.price || scrapedData.imageUrl;
+
+      if (!hasUsefulData) {
+        return {
+          error: "No product information found",
+          errorType: "parsing",
+          suggestion: "This page doesn't seem to contain product information. Try copying the details manually.",
+          canRetry: false,
+        };
+      }
+
+      return scrapedData;
+    } catch (error) {
+      console.error("Error scraping URL:", error);
+      return {
+        error: "Something went wrong while processing the page",
+        errorType: "unknown",
+        suggestion: "Please try again or copy the product details manually.",
+        canRetry: true,
+      };
+    }
+  }
+
+  private static scrapeAmazon(html: string, originalUrl: string): ScrapedData {
+    const data: ScrapedData = {
+      title: "Untitled",
+      url: originalUrl,
+      currency: "USD",
+    };
+
+    // Amazon-specific selectors
+    const amazonSelectors = {
+      title: [
+        /#productTitle[^>]*>([^<]+)</i,
+        /data-automation-id="title"[^>]*>([^<]+)</i,
+        /<h1[^>]*class="[^"]*product[^"]*title[^"]*"[^>]*>([^<]+)</i,
+        /<span[^>]*id="productTitle"[^>]*>([^<]+)</i,
+      ],
+      price: [
+        // Amazon price classes and selectors (comprehensive patterns)
+        /<span[^>]*class="[^"]*a-price-whole[^"]*"[^>]*>([0-9,]+)<\/span>/i,
+        /<span[^>]*class="[^"]*a-price-fraction[^"]*"[^>]*>([0-9]+)<\/span>/i,
+        /<span[^>]*class="[^"]*a-offscreen[^"]*"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})<\/span>/i,
+        /<span[^>]*class="[^"]*a-price-range-price[^"]*"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})<\/span>/i,
+        /data-automation-id="price"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})/i,
+        /"price":\s*"?([0-9,]+\.?\d{0,2})"?/i, // JSON-LD structured data
+        // Amazon-specific price containers
+        /<span[^>]*id="[^"]*price[^"]*"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})/i,
+        /<div[^>]*class="[^"]*price[^"]*"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})/i,
+        // Generic currency patterns (broader search)
+        /(?:A\$|AU\$|NZ\$|CA\$)\s*([0-9,]+\.?\d{0,2})/gi,
+        /\$\s*([0-9,]+\.?\d{0,2})/gi,
+        /£\s*([0-9,]+\.?\d{0,2})/gi,
+        /€\s*([0-9,]+\.?\d{0,2})/gi,
+      ],
+      image: [
+        /"hiRes":"([^"]+)"/i,
+        /"large":"([^"]+)"/i,
+        /data-old-hires="([^"]+)"/i,
+        /id="landingImage"[^>]*src="([^"]+)"/i,
+      ],
+    };
+
+    // Extract title
+    for (const pattern of amazonSelectors.title) {
+      const match = html.match(pattern);
+      if (match) {
+        data.title = this.cleanText(match[1]);
+        break;
+      }
+    }
+
+    // Extract price with Amazon-specific handling
+    const foundPrices: number[] = [];
+
+    // First, try to find Amazon's split price format (whole.fraction)
+    // Look for all whole/fraction pairs that might be on the page
+    const wholeMatches = [...html.matchAll(/<span[^>]*class="[^"]*a-price-whole[^"]*"[^>]*>([0-9,]+)<\/span>/gi)];
+    const fractionMatches = [...html.matchAll(/<span[^>]*class="[^"]*a-price-fraction[^"]*"[^>]*>([0-9]+)<\/span>/gi)];
+
+    // Combine whole and fraction prices - assume they appear in matching order
+    const minPairs = Math.min(wholeMatches.length, fractionMatches.length);
+    for (let i = 0; i < minPairs; i++) {
+      const wholePrice = wholeMatches[i][1].replace(/,/g, "");
+      const fraction = fractionMatches[i][1];
+      const combinedPrice = Number.parseFloat(`${wholePrice}.${fraction}`);
+      if (!isNaN(combinedPrice) && combinedPrice > 0) {
+        foundPrices.push(combinedPrice);
+      }
+    }
+
+    // Then try other patterns
+    for (const pattern of amazonSelectors.price) {
+      if (pattern.global) {
+        const matches = [...html.matchAll(pattern)];
+        for (const match of matches) {
+          const priceStr = match[1].replace(/,/g, "");
+          const price = Number.parseFloat(priceStr);
+          if (!isNaN(price) && price > 0 && price < 1000000) {
+            foundPrices.push(price);
+          }
+        }
+      } else {
+        const match = html.match(pattern);
+        if (match) {
+          const priceStr = match[1].replace(/,/g, "");
+          const price = Number.parseFloat(priceStr);
+          if (!isNaN(price) && price > 0 && price < 1000000) {
+            foundPrices.push(price);
+          }
+        }
+      }
+    }
+
+    // Additional fallback patterns specifically for Amazon
+    if (foundPrices.length === 0) {
+      const fallbackPatterns = [
+        // Look for any decimal numbers after A$ or AU$ in the HTML
+        /A\$\s*([0-9]+\.?[0-9]*)/gi,
+        /AU\$\s*([0-9]+\.?[0-9]*)/gi,
+        // Look for price in any span or div containing "price" in class
+        /<[^>]*class="[^"]*price[^"]*"[^>]*>[^0-9]*([0-9]+\.?[0-9]*)/gi,
+        // Look for JSON-like structures with price
+        /"displayPrice":"[^"]*?([0-9]+\.?[0-9]*)/gi,
+        /"price":"[^"]*?([0-9]+\.?[0-9]*)/gi,
+        // Look for data attributes containing price
+        /data-[^=]*price[^=]*="[^"]*?([0-9]+\.?[0-9]*)/gi,
+      ];
+
+      for (const pattern of fallbackPatterns) {
+        const matches = [...html.matchAll(pattern)];
+        for (const match of matches) {
+          const priceStr = match[1];
+          const price = Number.parseFloat(priceStr);
+          if (!isNaN(price) && price >= 1.0 && price < 1000000) {
+            foundPrices.push(price);
+          }
+        }
+      }
+    }
+
+    if (foundPrices.length > 0) {
+      // Smart price selection for Amazon
+      // Filter out very low prices (shipping, small items) and very high prices (bundles, premium editions)
+      const reasonablePrices = foundPrices.filter(price => price >= 5.00 && price <= 500.00);
+
+      if (reasonablePrices.length > 0) {
+        // For Amazon, don't just take the highest - try to find the most likely main product price
+        // Sort prices and choose a middle-range price that's likely the main product
+        const sortedPrices = reasonablePrices.sort((a, b) => a - b);
+
+        // Heuristic: If there are multiple prices, avoid the highest and lowest extremes
+        // This helps avoid Kindle prices (usually lowest) and bundle/premium prices (highest)
+        if (sortedPrices.length >= 3) {
+          // Pick the median price as it's often the main product price
+          const medianIndex = Math.floor(sortedPrices.length / 2);
+          data.price = sortedPrices[medianIndex];
+        } else if (sortedPrices.length === 2) {
+          // With two prices, pick the lower one (often the main product vs premium edition)
+          data.price = sortedPrices[0];
+        } else {
+          // Only one reasonable price
+          data.price = sortedPrices[0];
+        }
+      } else {
+        // Fallback to highest price if no reasonable prices found
+        data.price = Math.max(...foundPrices);
+      }
+    }
+
+    // Extract image
+    for (const pattern of amazonSelectors.image) {
+      const match = html.match(pattern);
+      if (match) {
+        try {
+          data.imageUrl = new URL(match[1], originalUrl).href;
+          break;
+        } catch {
+          data.imageUrl = match[1];
+          break;
+        }
+      }
+    }
+
+    // Smart currency detection for Amazon domains
+    const hostname = new URL(originalUrl).hostname.toLowerCase();
+    if (hostname.includes('amazon.com.au')) {
+      data.currency = "AUD";
+    } else if (hostname.includes('amazon.co.uk')) {
+      data.currency = "GBP";
+    } else if (hostname.includes('amazon.ca')) {
+      data.currency = "CAD";
+    } else if (hostname.includes('amazon.co.jp')) {
+      data.currency = "JPY";
+    } else if (hostname.includes('amazon.de') || hostname.includes('amazon.fr') || hostname.includes('amazon.it') || hostname.includes('amazon.es')) {
+      data.currency = "EUR";
+    } else {
+      data.currency = "USD";
+    }
+
+    return data;
+  }
+
+  private static extractMetadata(html: string, originalUrl: string): ScrapedData {
+    const data: ScrapedData = {
+      url: originalUrl,
+      title: "Untitled",
+      currency: "USD",
+    };
+
+    // Helper function to extract content from meta tags
+    const extractMeta = (property: string, attribute = "property") => {
+      const regex = new RegExp(
+        `<meta\\\\s+${attribute}=[\"']${property}[\"']\\\\s+content=[\"']([^\"']+)[\"'][^>]*>`,
+        "i"
+      );
+      const match = html.match(regex);
+      return match ? match[1] : null;
+    };
+
+    // Helper function to extract content from HTML tags
+    const extractTag = (tag: string) => {
+      const regex = new RegExp(`<${tag}[^>]*>([^<]+)</${tag}>`, "i");
+      const match = html.match(regex);
+      return match ? match[1].trim() : null;
+    };
+
+    // Extract title
+    data.title =
+      extractMeta("og:title") || extractMeta("twitter:title") || extractTag("title") || "Untitled";
+
+    // Extract description
+    data.description =
+      extractMeta("og:description") ||
+      extractMeta("twitter:description") ||
+      extractMeta("description", "name") ||
+      undefined;
+
+    // Extract image
+    const ogImage = extractMeta("og:image") || extractMeta("twitter:image");
+    if (ogImage) {
+      try {
+        data.imageUrl = new URL(ogImage, originalUrl).href;
+      } catch {
+        data.imageUrl = ogImage;
+      }
+    }
+
+    // Extract price - generic patterns for non-Amazon sites
+    const pricePatterns = [
+      // Schema.org structured data (highest priority)
+      /\"price\":\\s*\"?([0-9,]+\\.?\\d{0,2})\"?/i,
+      // Common price class/id patterns
+      /class=\"[^\"]*price[^\"]*\"[^>]*>\\D*([0-9,]+\\.?\\d{0,2})/i,
+      /id=\"[^\"]*price[^\"]*\"[^>]*>\\D*([0-9,]+\\.?\\d{0,2})/i,
+      // Price spans and divs
+      /<(?:span|div)[^>]*class=\"[^\"]*price[^\"]*\"[^>]*>\\D*([0-9,]+\\.?\\d{0,2})/i,
+      // Currency symbols with prices (more specific patterns first)
+      /NZ\\$\\s*([0-9,]+\\.?\\d{0,2})/gi,
+      /AU\\$\\s*([0-9,]+\\.?\\d{0,2})/gi,
+      /CA\\$\\s*([0-9,]+\\.?\\d{0,2})/gi,
+      /\\$\\s*([0-9,]+\\.?\\d{0,2})/g,
+      /£\\s*([0-9,]+\\.?\\d{0,2})/g,
+      /€\\s*([0-9,]+\\.?\\d{0,2})/g,
+      // Generic price patterns (lowest priority)
+      /price[^>]*>\\D*([0-9,]+\\.?\\d{0,2})/i,
+      /price.*?([0-9,]+\\.?\\d{0,2})/i,
+    ];
+
+    const foundPrices: number[] = [];
+    for (const pattern of pricePatterns) {
+      if (pattern.global) {
+        const matches = [...html.matchAll(pattern)];
+        for (const match of matches) {
+          const priceStr = match[1].replace(/,/g, "");
+          const price = Number.parseFloat(priceStr);
+          if (!isNaN(price) && price > 0 && price < 1000000) {
+            foundPrices.push(price);
+          }
+        }
+      } else {
+        const match = html.match(pattern);
+        if (match) {
+          const priceStr = match[1].replace(/,/g, "");
+          const price = Number.parseFloat(priceStr);
+          if (!isNaN(price) && price > 0 && price < 1000000) {
+            foundPrices.push(price);
+          }
+        }
+      }
+    }
+
+    if (foundPrices.length > 0) {
+      const reasonablePrices = foundPrices.filter(price => price >= 1.00);
+      if (reasonablePrices.length > 0) {
+        data.price = Math.max(...reasonablePrices);
+      } else {
+        data.price = Math.max(...foundPrices);
+      }
+    }
+
+    // Extract currency from content or use smart domain detection
+    const hostname = new URL(originalUrl).hostname.toLowerCase();
+    if (hostname.endsWith(".nz")) {
+      data.currency = "NZD";
+    } else if (hostname.endsWith(".au")) {
+      data.currency = "AUD";
+    } else if (hostname.endsWith(".uk") || hostname.endsWith(".co.uk")) {
+      data.currency = "GBP";
+    } else if (hostname.endsWith(".ca")) {
+      data.currency = "CAD";
+    } else if (hostname.endsWith(".jp")) {
+      data.currency = "JPY";
+    } else if (hostname.includes(".eu") || hostname.endsWith(".de") || hostname.endsWith(".fr") || hostname.endsWith(".it") || hostname.endsWith(".es")) {
+      data.currency = "EUR";
+    } else if (hostname.endsWith(".com") || hostname.endsWith(".us")) {
+      data.currency = "USD";
+    } else {
+      data.currency = "NZD"; // Default for NZ users
+    }
+
+    // Clean up text
+    if (data.title) {
+      data.title = this.cleanText(data.title);
+    }
+    if (data.description) {
+      data.description = this.cleanText(data.description);
+    }
+
+    return data;
+  }
+
+  private static cleanText(text: string): string {
+    return text
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\\n/g, " ")
+      .replace(/\\t/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+}

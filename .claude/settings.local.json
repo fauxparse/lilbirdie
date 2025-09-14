@@ -26,7 +26,8 @@
       "Bash(tsx scripts/update-user-avatars.ts:*)",
       "Bash(npx tsx:*)",
       "Bash(pnpm test:*)",
-      "Bash(pnpm view:*)"
+      "Bash(pnpm view:*)",
+      "WebFetch(domain:www.amazon.com.au)"
     ],
     "deny": [],
     "ask": []

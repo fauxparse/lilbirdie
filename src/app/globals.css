@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@100..900&display=swap');
+
 /* Satoshi Variable Font */
 @font-face {
   font-family: 'Satoshi';
@@ -26,7 +28,7 @@
    * This system follows a two-tier approach:
    * 1. Named Colors: Direct Tailwind palette colors (--color-slate-50, --color-pink-500, etc.)
    * 2. Semantic Tokens: Purpose-based tokens that reference named colors
-   * 
+   *
    * This makes it easy to:
    * - Understand what colors are being used
    * - Experiment with different palettes by changing semantic mappings
@@ -126,7 +128,7 @@
   --radius: 0.5rem;
 
   /* Typography */
-  --font-sans: 'Satoshi', system-ui, sans-serif;
+  --font-sans: 'Onest', 'Satoshi', system-ui, sans-serif;
 }
 
 /* =============================================================================
@@ -192,7 +194,7 @@
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
-  font-family: 'Satoshi', system-ui, sans-serif;
+  font-family: 'Onest', 'Satoshi', system-ui, sans-serif;
 }
 
 /* Debug styles to test color tokens */

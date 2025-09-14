@@ -51,7 +51,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     let parsedDate: Date | undefined;
     if (date) {
       parsedDate = new Date(date);
-      if (isNaN(parsedDate.getTime())) {
+      if (Number.isNaN(parsedDate.getTime())) {
         return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
       }
     }

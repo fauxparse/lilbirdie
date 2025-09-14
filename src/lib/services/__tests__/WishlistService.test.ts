@@ -530,9 +530,9 @@ describe("WishlistService", () => {
       (prisma.wishlist.findFirst as any).mockResolvedValue(mockWishlist);
       (prisma.wishlist.findMany as any).mockResolvedValue([]); // No other wishlists
 
-      await expect(
-        WishlistService.deleteWishlist("wishlist-1", "user-1")
-      ).rejects.toThrow("Cannot delete the only wishlist");
+      await expect(WishlistService.deleteWishlist("wishlist-1", "user-1")).rejects.toThrow(
+        "Cannot delete the only wishlist"
+      );
     });
 
     it("should set another wishlist as default when deleting default wishlist", async () => {

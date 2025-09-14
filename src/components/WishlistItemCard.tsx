@@ -1,9 +1,10 @@
 "use client";
-
-import { Badge } from "@/components/ui/Badge";
+import { PriceDisplay } from "@/components/PriceDisplay";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { ExternalLink, Gift, Heart, Star } from "lucide-react";
+import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
+import { useUserPreferredCurrency } from "@/hooks/useUserPreferredCurrency";
+import { Edit, ExternalLink, Gift, Heart, Star, Trash } from "lucide-react";
 import Link from "next/link";
 
 interface WishlistItemCardProps {
@@ -23,6 +24,8 @@ interface WishlistItemCardProps {
   };
   isOwner: boolean;
   onClaim?: (itemId: string, isClaimed: boolean) => void;
+  onEdit?: (item: any) => void;
+  onDelete?: (itemId: string) => void;
   isClaimPending?: boolean;
 }
 
@@ -30,8 +33,17 @@ export function WishlistItemCard({
   item,
   isOwner,
   onClaim,
+  onEdit,
+  onDelete,
   isClaimPending = false,
 }: WishlistItemCardProps) {
+  const { preferredCurrency, isLoading: isCurrencyLoading } = useUserPreferredCurrency();
+  const { convertedPrice, convertedCurrency } = useCurrencyConversion(
+    Number(item.price) || 0,
+    item.currency,
+    preferredCurrency
+  );
+
   const getPriorityColor = (priority: number) => {
     switch (priority) {
       case 3:
@@ -53,12 +65,9 @@ export function WishlistItemCard({
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg line-clamp-2">{item.name}</CardTitle>
           <div className="flex items-center gap-1">
-            {item.priority > 0 && (
-              <Badge variant={getPriorityColor(item.priority)} className="text-xs">
-                <Star className="h-3 w-3 mr-1" />
-                {item.priority}
-              </Badge>
-            )}
+            {Array.from({ length: item.priority || 0 }).map((_, i) => (
+              <Star key={i} className="h-3 w-3 mr-1" />
+            ))}
           </div>
         </div>
         {item.description && (
@@ -76,10 +85,14 @@ export function WishlistItemCard({
         )}
 
         <div className="flex items-center justify-between">
-          {item.price && (
-            <span className="font-semibold text-lg">
-              ${Number(item.price).toFixed(2)} {item.currency}
-            </span>
+          {item.price && !isCurrencyLoading && (
+            <PriceDisplay
+              originalPrice={Number(item.price)}
+              originalCurrency={item.currency}
+              convertedPrice={convertedPrice || undefined}
+              convertedCurrency={convertedCurrency || undefined}
+              className="font-semibold text-lg"
+            />
           )}
           <div className="flex items-center gap-2">
             {item.url && (
@@ -90,25 +103,42 @@ export function WishlistItemCard({
                 </Link>
               </Button>
             )}
-            {!isOwner && onClaim && (
-              <Button
-                size="sm"
-                variant={isClaimed ? "outline" : "default"}
-                disabled={isClaimPending}
-                onClick={() => onClaim(item.id, isClaimed)}
-              >
-                {isClaimed ? (
-                  <>
-                    <Heart className="h-4 w-4 mr-1 fill-current" />
-                    Unclaim
-                  </>
-                ) : (
-                  <>
-                    <Gift className="h-4 w-4 mr-1" />
-                    Claim
-                  </>
+            {isOwner ? (
+              <>
+                {onEdit && (
+                  <Button size="sm" variant="outline" onClick={() => onEdit(item)}>
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
                 )}
-              </Button>
+                {onDelete && (
+                  <Button size="sm" variant="outline" onClick={() => onDelete(item.id)}>
+                    <Trash className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                )}
+              </>
+            ) : (
+              onClaim && (
+                <Button
+                  size="sm"
+                  variant={isClaimed ? "outline" : "default"}
+                  disabled={isClaimPending}
+                  onClick={() => onClaim(item.id, isClaimed)}
+                >
+                  {isClaimed ? (
+                    <>
+                      <Heart className="h-4 w-4 mr-1 fill-current" />
+                      Unclaim
+                    </>
+                  ) : (
+                    <>
+                      <Gift className="h-4 w-4 mr-1" />
+                      Claim
+                    </>
+                  )}
+                </Button>
+              )
             )}
           </div>
         </div>

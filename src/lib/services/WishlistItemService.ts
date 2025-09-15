@@ -47,6 +47,7 @@ export class WishlistItemService {
                 id: true,
                 name: true,
                 email: true,
+                image: true,
               },
             },
           },
@@ -139,6 +140,7 @@ export class WishlistItemService {
                 id: true,
                 name: true,
                 email: true,
+                image: true,
               },
             },
           },
@@ -215,6 +217,7 @@ export class WishlistItemService {
                 id: true,
                 name: true,
                 email: true,
+                image: true,
               },
             },
           },
@@ -306,16 +309,28 @@ export class WishlistItemService {
         itemId,
         userId,
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+      },
     });
 
     if (!claim) {
       throw new Error("Claim not found");
     }
 
-    return await prisma.claim.delete({
+    await prisma.claim.delete({
       where: {
         id: claim.id,
       },
     });
+
+    return claim;
   }
 }

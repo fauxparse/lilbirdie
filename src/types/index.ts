@@ -17,7 +17,7 @@ export interface UserWithProfile extends User {
 }
 
 export interface ClaimWithUser extends Claim {
-  user: Pick<User, "id" | "name" | "email">;
+  user: Pick<User, "id" | "name" | "email" | "image">;
 }
 
 export interface WishlistItemWithClaims extends WishlistItem {

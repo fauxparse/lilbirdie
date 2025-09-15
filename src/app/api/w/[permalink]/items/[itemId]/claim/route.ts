@@ -73,6 +73,16 @@ export async function POST(
         itemId,
         wishlistId: item.wishlist.id,
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json({ success: true, claim });
@@ -127,15 +137,36 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    // Remove the claim
-    await prisma.claim.deleteMany({
+    // Get the claim first to return user info
+    const existingClaim = await prisma.claim.findFirst({
       where: {
         userId: session.user.id,
         itemId,
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+      },
     });
 
-    return NextResponse.json({ success: true });
+    if (!existingClaim) {
+      return NextResponse.json({ error: "Claim not found" }, { status: 404 });
+    }
+
+    // Remove the claim
+    await prisma.claim.delete({
+      where: {
+        id: existingClaim.id,
+      },
+    });
+
+    return NextResponse.json({ success: true, claim: existingClaim });
   } catch (error) {
     console.error("Error unclaiming item:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

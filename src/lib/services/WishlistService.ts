@@ -56,7 +56,11 @@ export class WishlistService {
             claims: viewerId
               ? {
                   where: { userId: { not: viewerId } }, // Hide viewer's own claims
-                  select: { userId: true, createdAt: true },
+                  include: {
+                    user: {
+                      select: { id: true, name: true, email: true, image: true },
+                    },
+                  },
                 }
               : false,
           },

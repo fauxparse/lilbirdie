@@ -121,10 +121,7 @@ export default function WishlistsPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <CardTitle className="flex items-center gap-2">
-                      <Link
-                        href={`/wishlists/${wishlist.permalink}` as any}
-                        className="hover:underline"
-                      >
+                      <Link href={`/w/${wishlist.permalink}`} className="hover:underline">
                         {wishlist.title}
                       </Link>
                       {wishlist.isDefault && (
@@ -153,10 +150,10 @@ export default function WishlistsPage() {
                 </div>
                 <div className="mt-4 flex gap-2">
                   <Button variant="outline" size="sm" asChild className="flex-1">
-                    <Link href={`/wishlists/${wishlist.permalink}` as any}>View</Link>
+                    <Link href={`/w/${wishlist.permalink}`}>View</Link>
                   </Button>
                   <Button variant="outline" size="sm" asChild className="flex-1">
-                    <Link href={`/wishlists/${wishlist.permalink}/edit` as any}>Edit</Link>
+                    <Link href={`/wishlists/${wishlist.permalink}/edit`}>Edit</Link>
                   </Button>
                 </div>
               </CardContent>

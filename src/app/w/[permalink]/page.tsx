@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import type { WishlistItemWithRelations } from "@/types";
+import type { WishlistItemResponse, WishlistItemWithRelations, WishlistWithItems } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Gift, Plus, User, X } from "lucide-react";
 import Link from "next/link";
@@ -34,8 +34,17 @@ interface WishlistItem {
   currency: string;
   priority: number;
   claims?: Array<{
+    id: string;
     userId: string;
+    itemId: string;
+    wishlistId: string;
     createdAt: string;
+    user: {
+      id: string;
+      name: string | null;
+      email: string;
+      image: string | null;
+    };
   }>;
 }
 
@@ -98,11 +107,128 @@ export default function PublicWishlistPage({
 
       return response.json();
     },
-    onSuccess: (_, { action }) => {
-      queryClient.invalidateQueries({ queryKey: ["public-wishlist", permalink] });
+    onMutate: async ({ itemId, action }) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["item", itemId] });
+      await queryClient.cancelQueries({ queryKey: ["public-wishlist", permalink] });
+
+      // Snapshot the previous values
+      const previousItemData = queryClient.getQueryData<WishlistItemResponse>(["item", itemId]);
+      const previousWishlistData = queryClient.getQueryData<PublicWishlist>(["public-wishlist", permalink]);
+
+      // Create optimistic claim object
+      const optimisticClaim = {
+        id: `optimistic-${Date.now()}`,
+        userId: user?.id || "",
+        itemId,
+        wishlistId: "",
+        createdAt: new Date().toISOString(),
+        user: {
+          id: user?.id || "",
+          name: user?.name || "",
+          email: user?.email || "",
+          image: user?.image || null,
+        }
+      };
+
+      // Optimistically update individual item cache
+      if (previousItemData) {
+        const currentClaims = previousItemData.claims || [];
+        const updatedClaims =
+          action === "claim"
+            ? [...currentClaims, optimisticClaim]
+            : currentClaims.filter((claim) => claim.userId !== user?.id);
+
+        queryClient.setQueryData(["item", itemId], {
+          ...previousItemData,
+          claims: updatedClaims,
+        });
+      }
+
+      // Optimistically update wishlist cache
+      if (previousWishlistData) {
+        queryClient.setQueryData(["public-wishlist", permalink], {
+          ...previousWishlistData,
+          items: previousWishlistData.items.map((item) => {
+            if (item.id === itemId) {
+              const currentClaims = item.claims || [];
+              const updatedClaims =
+                action === "claim"
+                  ? [...currentClaims, optimisticClaim]
+                  : currentClaims.filter((claim) => claim.userId !== user?.id);
+
+              return {
+                ...item,
+                claims: updatedClaims,
+              };
+            }
+            return item;
+          }),
+        });
+      }
+
+      // Return a context object with the snapshotted values
+      return { previousItemData, previousWishlistData };
+    },
+    onSuccess: (response, { itemId, action }) => {
+      // Replace optimistic update with real data from server
+      queryClient.setQueryData(["item", itemId], (oldData: WishlistItemResponse | undefined) => {
+        if (!oldData) return oldData;
+
+        const currentClaims = oldData.claims || [];
+        const updatedClaims =
+          action === "claim"
+            ? [
+                ...currentClaims.filter(claim => claim.id && !claim.id.startsWith('optimistic-')),
+                response.claim
+              ]
+            : currentClaims.filter((claim) => claim.userId !== response.claim.userId);
+
+        return {
+          ...oldData,
+          claims: updatedClaims,
+        };
+      });
+
+      queryClient.setQueryData(
+        ["public-wishlist", permalink],
+        (oldData: PublicWishlist | undefined) => {
+          if (!oldData) return oldData;
+
+          return {
+            ...oldData,
+            items: oldData.items.map((item) => {
+              if (item.id === itemId) {
+                const currentClaims = item.claims || [];
+                const updatedClaims =
+                  action === "claim"
+                    ? [
+                        ...currentClaims.filter(claim => claim.id && !claim.id.startsWith('optimistic-')),
+                        response.claim
+                      ]
+                    : currentClaims.filter((claim) => claim.userId !== response.claim.userId);
+
+                return {
+                  ...item,
+                  claims: updatedClaims,
+                };
+              }
+              return item;
+            }),
+          };
+        }
+      );
+
       toast.success(action === "claim" ? "Item claimed!" : "Item unclaimed!");
     },
-    onError: (error) => {
+    onError: (error, { itemId }, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousItemData) {
+        queryClient.setQueryData(["item", itemId], context.previousItemData);
+      }
+      if (context?.previousWishlistData) {
+        queryClient.setQueryData(["public-wishlist", permalink], context.previousWishlistData);
+      }
       toast.error(error.message);
     },
   });
@@ -311,7 +437,7 @@ export default function PublicWishlistPage({
                 Add Item
               </Button>
               <Button variant="outline" asChild>
-                <Link href={`/wishlists/${wishlist.permalink}/edit` as any}>Edit Wishlist</Link>
+                <Link href={`/wishlists/${wishlist.permalink}/edit`}>Edit Wishlist</Link>
               </Button>
               <Button variant="outline" asChild>
                 <Link href="/wishlists">My Wishlists</Link>

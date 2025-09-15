@@ -1,5 +1,6 @@
 "use client";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import {
@@ -11,10 +12,14 @@ import {
 import { StarInput } from "@/components/ui/StarInput";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { useUserPreferredCurrency } from "@/hooks/useUserPreferredCurrency";
+import { HandOff } from "@/icons/HandOff";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit, ExternalLink, Gift, Heart, MoreVertical, Trash } from "lucide-react";
+import { sortBy } from "es-toolkit";
+import { Edit, ExternalLink, Hand, MoreVertical, Trash } from "lucide-react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 import type { WishlistItemCardProps, WishlistItemResponse, WishlistResponse } from "../types";
+import { useAuth } from "./AuthProvider";
 import { ItemFormData } from "./ItemForm";
 
 export function WishlistItemCard({
@@ -26,6 +31,8 @@ export function WishlistItemCard({
   onDelete,
   isClaimPending = false,
 }: WishlistItemCardProps) {
+  const { user } = useAuth();
+
   const queryClient = useQueryClient();
   // Individual item query - will use cached data if available
   const itemQuery = useQuery<WishlistItemResponse>({
@@ -49,7 +56,31 @@ export function WishlistItemCard({
     preferredCurrency
   );
 
-  const isClaimed = (item?.claims?.length || 0) > 0;
+  const claims = useMemo(() => {
+    return sortBy(item?.claims || [], [(c) => (c.userId === user?.id ? -1 : 0)]);
+  }, [item?.claims, user?.id]);
+
+  const claimNames = useMemo(() => {
+    const names = claims.map((c) =>
+      c.user.id === user?.id ? "You" : c.user.name || "Someone else"
+    );
+
+    if (names.length === 0) {
+      return "No one";
+    }
+
+    if (names.length === 1) {
+      return names[0];
+    }
+    if (names.length === 2) {
+      return `${names[0]} and ${names[1]}`;
+    }
+    return `${names[0]} and ${names.length - 1} other people`;
+  }, [claims, user]);
+
+  const isClaimed = claims.length > 0;
+
+  const claimedByMe = claims.some((claim) => claim.userId === user?.id);
 
   const updateItemMutation = useMutation<WishlistItemResponse, Error, Partial<ItemFormData>>({
     mutationFn: async (data: Partial<ItemFormData>): Promise<WishlistItemResponse> => {
@@ -130,13 +161,13 @@ export function WishlistItemCard({
   };
 
   return (
-    <Card className="group item-card grid p-0 shadow-none">
-      <CardHeader className="p-0 space-y-0 grid-area-header relative">
+    <Card className="group grid grid-rows-[auto_1fr_auto] min-h-96 p-0 shadow-none">
+      <CardHeader className="p-0 space-y-0 row-start-1 row-end-2 col-start-1 col-end-1 relative">
         {item.imageUrl && (
           <img
             src={item.imageUrl}
             alt={item.name}
-            className="w-full h-40 block object-cover rounded-t-md"
+            className="w-full h-40 block object-cover rounded-t-[calc(var(--radius-lg)-1px)]"
           />
         )}
         {/* Kebab menu in top right */}
@@ -182,17 +213,17 @@ export function WishlistItemCard({
               ) : (
                 onClaim && (
                   <DropdownMenuItem
-                    onClick={() => onClaim(item.id, isClaimed)}
+                    onClick={() => onClaim(item.id, claimedByMe)}
                     disabled={isClaimPending}
                   >
-                    {isClaimed ? (
+                    {claimedByMe ? (
                       <>
-                        <Heart className="h-4 w-4 mr-2 fill-current" />
+                        <HandOff className="h-4 w-4 mr-2" />
                         Unclaim
                       </>
                     ) : (
                       <>
-                        <Gift className="h-4 w-4 mr-2" />
+                        <Hand className="h-4 w-4 mr-2" />
                         Claim
                       </>
                     )}
@@ -204,7 +235,7 @@ export function WishlistItemCard({
         </div>
       </CardHeader>
 
-      <CardContent className="grid-area-text space-y-3 p-4 pt-4">
+      <CardContent className="row-start-2 row-span-1 col-start-1 col-span-1 space-y-3 p-4 pt-4">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg line-clamp-2 leading-1.2">
             {item.url ? (
@@ -219,15 +250,8 @@ export function WishlistItemCard({
         {item.description && (
           <p className="text-sm text-muted-foreground line-clamp-3">{item.description}</p>
         )}
-
-        {isClaimed && (
-          <p className="text-xs text-muted-foreground">
-            Claimed by {item.claims?.length || 0} person
-            {(item.claims?.length || 0) > 1 ? "s" : ""}
-          </p>
-        )}
       </CardContent>
-      <CardFooter className="grid-area-footer grid grid-cols-2 grid-rows-1 px-4 py-4 items-end">
+      <CardFooter className="row-start-3 row-span-1 col-start-1 col-span-1 grid grid-cols-2 grid-rows-1 px-4 py-4 items-end">
         {item.price && !isCurrencyLoading && (
           <PriceDisplay
             originalPrice={Number(item.price)}
@@ -243,6 +267,46 @@ export function WishlistItemCard({
           className="col-start-2 row-start-1 justify-self-end"
         />
       </CardFooter>
+      {isClaimed && !isOwner && (
+        <div className="row-start-1 row-span-3 col-start-1 col-span-1 relative bg-background/85 backdrop-blur-sm rounded-[calc(var(--radius-lg)-1px)] grid place-items-center p-4">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-row-reverse justify-center">
+              {[...claims].reverse().map((claim) => (
+                <Avatar
+                  key={claim.id}
+                  className="h-10 w-10 bg-avatar-background shadow-[0_0_0_2px_var(--color-background)] not-last:-ml-2"
+                >
+                  {claim.user.image && (
+                    <AvatarImage src={claim.user.image} alt={claim.user.name || claim.user.email} />
+                  )}
+                  <AvatarFallback className="text-xs">
+                    {(claim.user.name || claim.user.email).charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              ))}
+            </div>
+            <div className="text-sm text-center text-balance">
+              {`${claimNames} ${claims.length > 1 ? "have" : "has"} claimed this item`}
+            </div>
+            <div className="text-lg line-clamp-2 leading-1.2 font-medium">{item.name}</div>
+            {!claimedByMe && onClaim && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => onClaim(item.id, claimedByMe)}
+              >
+                Join in
+              </Button>
+            )}
+            {claimedByMe && (
+              <Button variant="outline" size="sm" className="w-full" disabled>
+                Get sorted
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

@@ -1,5 +1,21 @@
 import { http, HttpResponse } from "msw";
+import type { CreateWishlistItemData, UpdateWishlistItemData } from "../../types";
 import { mockUser, mockWishlist, mockWishlistItem } from "../utils";
+
+// Request body types for mock handlers
+interface CreateWishlistData {
+  title: string;
+  description?: string;
+  permalink: string;
+  privacy: "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE";
+  isDefault?: boolean;
+}
+
+interface UpdateWishlistData extends Partial<CreateWishlistData> {}
+
+interface FriendRequestData {
+  email: string;
+}
 
 // API route handlers for MSW
 export const handlers = [
@@ -29,19 +45,19 @@ export const handlers = [
   }),
 
   http.post("/api/wishlists", async ({ request }) => {
-    const body = await request.json();
+    const body = (await request.json()) as CreateWishlistData;
     return HttpResponse.json({
       ...mockWishlist,
-      ...(body as any),
+      ...body,
       id: "new-wishlist-id",
     });
   }),
 
   http.put("/api/wishlists/:id", async ({ request, params }) => {
-    const body = await request.json();
+    const body = (await request.json()) as UpdateWishlistData;
     return HttpResponse.json({
       ...mockWishlist,
-      ...(body as any),
+      ...body,
       id: params.id,
     });
   }),
@@ -59,20 +75,20 @@ export const handlers = [
   }),
 
   http.post("/api/wishlists/:id/items", async ({ request, params }) => {
-    const body = await request.json();
+    const body = (await request.json()) as CreateWishlistItemData;
     return HttpResponse.json({
       ...mockWishlistItem,
-      ...(body as any),
+      ...body,
       id: "new-item-id",
       wishlistId: params.id,
     });
   }),
 
   http.put("/api/items/:id", async ({ request, params }) => {
-    const body = await request.json();
+    const body = (await request.json()) as UpdateWishlistItemData;
     return HttpResponse.json({
       ...mockWishlistItem,
-      ...(body as any),
+      ...body,
       id: params.id,
     });
   }),
@@ -113,11 +129,11 @@ export const handlers = [
   }),
 
   http.post("/api/friends", async ({ request }) => {
-    const body = await request.json();
+    const body = (await request.json()) as FriendRequestData;
     return HttpResponse.json({
       success: true,
       requestSent: true,
-      email: (body as any).email,
+      email: body.email,
     });
   }),
 

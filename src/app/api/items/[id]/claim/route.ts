@@ -52,10 +52,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await WishlistItemService.getInstance().unclaimItem(id, session.user.id);
+    const claim = await WishlistItemService.getInstance().unclaimItem(id, session.user.id);
 
     return NextResponse.json({
       success: true,
+      claim,
     });
   } catch (error) {
     console.error("Error unclaiming item:", error);

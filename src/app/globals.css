@@ -126,6 +126,8 @@
 
   --color-star: var(--color-yellow-500);
 
+  --color-avatar-background: var(--color-slate-200);
+
   /* Design Tokens */
   --radius: 0.5rem;
 
@@ -187,6 +189,8 @@
   --color-sidebar-accent-foreground: var(--color-slate-50);
   --color-sidebar-border: var(--color-slate-700);
   --color-sidebar-ring: var(--color-pink-400);
+
+  --color-avatar-background: var(--color-slate-700);
 }
 
 * {
@@ -216,12 +220,4 @@ body {
   * {
     @apply border-border outline-ring/50;
   }
-}
-
-.item-card {
-  grid-template:
-    'header' 10rem
-    'text' 1fr
-    'footer' auto
-    / 1fr
 }

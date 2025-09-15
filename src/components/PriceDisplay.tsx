@@ -37,7 +37,7 @@ export function PriceDisplay({
   originalCurrency,
   convertedPrice,
   convertedCurrency,
-  className = "font-semibold text-lg",
+  className = "font-medium text-base",
   showOriginalFirst = false,
 }: PriceDisplayProps) {
   const [showConverted, setShowConverted] = useState(!showOriginalFirst);
@@ -52,8 +52,6 @@ export function PriceDisplay({
     );
   }
 
-  const isConverted = showConverted && convertedPrice !== originalPrice;
-
   return (
     <button
       type="button"
@@ -63,11 +61,14 @@ export function PriceDisplay({
     >
       {showConverted ? (
         <span>
-          ~{getCurrencySymbol(convertedCurrency)}{convertedPrice.toFixed(2)} ({getCurrencySymbol(originalCurrency)}{originalPrice.toFixed(2)})
+          ~{getCurrencySymbol(convertedCurrency)}
+          {convertedPrice.toFixed(2)} ({getCurrencySymbol(originalCurrency)}
+          {originalPrice.toFixed(2)})
         </span>
       ) : (
         <span>
-          {getCurrencySymbol(originalCurrency)}{originalPrice.toFixed(2)}
+          {getCurrencySymbol(originalCurrency)}
+          {originalPrice.toFixed(2)}
         </span>
       )}
     </button>

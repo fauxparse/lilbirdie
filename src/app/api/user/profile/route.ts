@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get or create user's profile
-    const profile = await ProfileService.getOrCreateProfile(session.user.id);
+    const profile = await ProfileService.getInstance().getOrCreateProfile(session.user.id);
 
     return NextResponse.json(profile);
   } catch (error) {

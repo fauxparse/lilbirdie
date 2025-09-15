@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update user's theme in their profile
-    await ProfileService.updateTheme(session.user.id, theme);
+    await ProfileService.getInstance().updateTheme(session.user.id, theme);
 
     return NextResponse.json({ success: true });
   } catch (error) {

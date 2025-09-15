@@ -1,30 +1,20 @@
 import { Prisma } from "@prisma/client";
+import type { CreateWishlistItemData, UpdateWishlistItemData } from "../../types";
 import { prisma } from "../db";
 
-export interface CreateWishlistItemData {
-  name: string;
-  description?: string;
-  url?: string;
-  imageUrl?: string;
-  price?: number;
-  currency?: string;
-  priority?: number;
-  tags?: string[];
-}
-
-export interface UpdateWishlistItemData {
-  name?: string;
-  description?: string;
-  url?: string;
-  imageUrl?: string;
-  price?: number;
-  currency?: string;
-  priority?: number;
-  tags?: string[];
-}
-
 export class WishlistItemService {
-  static async createItem(wishlistId: string, userId: string, data: CreateWishlistItemData) {
+  private static instance: WishlistItemService;
+
+  private constructor() {}
+
+  public static getInstance(): WishlistItemService {
+    if (!WishlistItemService.instance) {
+      WishlistItemService.instance = new WishlistItemService();
+    }
+    return WishlistItemService.instance;
+  }
+
+  async createItem(wishlistId: string, userId: string, data: CreateWishlistItemData) {
     // First verify the user owns the wishlist
     const wishlist = await prisma.wishlist.findFirst({
       where: {
@@ -65,7 +55,7 @@ export class WishlistItemService {
     });
   }
 
-  static async getItemsByWishlistId(wishlistId: string, viewerId?: string) {
+  async getItemsByWishlistId(wishlistId: string, viewerId?: string) {
     // Check if wishlist exists and is accessible
     const wishlist = await prisma.wishlist.findFirst({
       where: {
@@ -124,7 +114,7 @@ export class WishlistItemService {
     });
   }
 
-  static async getItemById(itemId: string, viewerId?: string) {
+  async getItemById(itemId: string, viewerId?: string) {
     const item = await prisma.wishlistItem.findFirst({
       where: {
         id: itemId,
@@ -173,7 +163,7 @@ export class WishlistItemService {
     return item;
   }
 
-  static async updateItem(itemId: string, userId: string, data: UpdateWishlistItemData) {
+  async updateItem(itemId: string, userId: string, data: UpdateWishlistItemData) {
     // First verify the user owns the wishlist that contains this item
     const item = await prisma.wishlistItem.findFirst({
       where: {
@@ -193,7 +183,16 @@ export class WishlistItemService {
       throw new Error("Access denied");
     }
 
-    const updateData: any = {};
+    const updateData: {
+      name?: string;
+      description?: string | null;
+      url?: string | null;
+      imageUrl?: string | null;
+      price?: Prisma.Decimal | null;
+      currency?: string;
+      priority?: number;
+      tags?: string[];
+    } = {};
 
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
@@ -224,7 +223,7 @@ export class WishlistItemService {
     });
   }
 
-  static async deleteItem(itemId: string, userId: string) {
+  async deleteItem(itemId: string, userId: string) {
     // First verify the user owns the wishlist that contains this item
     const item = await prisma.wishlistItem.findFirst({
       where: {
@@ -254,7 +253,7 @@ export class WishlistItemService {
     });
   }
 
-  static async claimItem(itemId: string, userId: string) {
+  async claimItem(itemId: string, userId: string) {
     // Get item and verify it's accessible and not owned by the user
     const item = await this.getItemById(itemId, userId);
 
@@ -301,7 +300,7 @@ export class WishlistItemService {
     });
   }
 
-  static async unclaimItem(itemId: string, userId: string) {
+  async unclaimItem(itemId: string, userId: string) {
     const claim = await prisma.claim.findFirst({
       where: {
         itemId,

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { UrlScrapingService } from "@/lib/services/UrlScrapingService";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,10 +18,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await UrlScrapingService.scrapeUrl(url);
+    const result = await UrlScrapingService.getInstance().scrapeUrl(url);
 
     // Check if result is an error
-    if ('error' in result) {
+    if ("error" in result) {
       return NextResponse.json(result, { status: result.canRetry ? 400 : 200 });
     }
 

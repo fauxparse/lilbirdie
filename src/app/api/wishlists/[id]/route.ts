@@ -10,7 +10,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       headers: request.headers,
     });
 
-    const wishlist = await WishlistService.getWishlistByPermalink(id, session?.user?.id);
+    const wishlist = await WishlistService.getInstance().getWishlistByPermalink(
+      id,
+      session?.user?.id
+    );
 
     if (!wishlist) {
       return NextResponse.json({ error: "Wishlist not found" }, { status: 404 });
@@ -61,7 +64,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updateData.isDefault = !!isDefault;
     }
 
-    const wishlist = await WishlistService.updateWishlist(id, session.user.id, updateData);
+    const wishlist = await WishlistService.getInstance().updateWishlist(
+      id,
+      session.user.id,
+      updateData
+    );
 
     if (!wishlist) {
       return NextResponse.json({ error: "Wishlist not found or access denied" }, { status: 404 });
@@ -88,7 +95,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const result = await WishlistService.deleteWishlist(id, session.user.id);
+    const result = await WishlistService.getInstance().deleteWishlist(id, session.user.id);
 
     if (!result) {
       return NextResponse.json({ error: "Wishlist not found or access denied" }, { status: 404 });

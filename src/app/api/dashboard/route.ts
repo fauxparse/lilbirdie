@@ -149,7 +149,10 @@ export async function GET(request: NextRequest) {
     upcomingGifts.sort((a, b) => a.daysUntil - b.daysUntil);
 
     // Get upcoming occasions
-    const upcomingOccasions = await OccasionService.getUpcomingOccasions(currentUserId, 2);
+    const upcomingOccasions = await OccasionService.getInstance().getUpcomingOccasions(
+      currentUserId,
+      2
+    );
 
     // Get claimed gifts that haven't been sent
     const claimedGifts = await prisma.claim.findMany({

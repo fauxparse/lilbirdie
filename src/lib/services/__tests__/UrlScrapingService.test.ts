@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { UrlScrapingService } from '../UrlScrapingService';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { UrlScrapingService } from "../UrlScrapingService";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-describe('UrlScrapingService', () => {
+describe("UrlScrapingService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -14,9 +14,9 @@ describe('UrlScrapingService', () => {
     vi.restoreAllMocks();
   });
 
-  describe('URL Validation', () => {
-    it('should reject invalid URL formats', async () => {
-      const result = await UrlScrapingService.scrapeUrl('invalid-url');
+  describe("URL Validation", () => {
+    it("should reject invalid URL formats", async () => {
+      const result = await UrlScrapingService.getInstance().scrapeUrl("invalid-url");
 
       expect(result).toEqual({
         error: "Invalid URL format",
@@ -26,8 +26,8 @@ describe('UrlScrapingService', () => {
       });
     });
 
-    it('should reject localhost URLs', async () => {
-      const result = await UrlScrapingService.scrapeUrl('http://localhost:3000/test');
+    it("should reject localhost URLs", async () => {
+      const result = await UrlScrapingService.getInstance().scrapeUrl("http://localhost:3000/test");
 
       expect(result).toEqual({
         error: "Local URLs are not supported",
@@ -37,8 +37,8 @@ describe('UrlScrapingService', () => {
       });
     });
 
-    it('should reject private IP addresses', async () => {
-      const result = await UrlScrapingService.scrapeUrl('http://192.168.1.1/test');
+    it("should reject private IP addresses", async () => {
+      const result = await UrlScrapingService.getInstance().scrapeUrl("http://192.168.1.1/test");
 
       expect(result).toEqual({
         error: "Local URLs are not supported",
@@ -49,32 +49,33 @@ describe('UrlScrapingService', () => {
     });
   });
 
-  describe('Network Error Handling', () => {
-    it('should handle timeout errors', async () => {
+  describe("Network Error Handling", () => {
+    it("should handle timeout errors", async () => {
       mockFetch.mockImplementation(() => {
         return new Promise((_, reject) => {
-          const error = new Error('Timeout');
-          error.name = 'AbortError';
+          const error = new Error("Timeout");
+          error.name = "AbortError";
           reject(error);
         });
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://example.com');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toEqual({
         error: "Request timeout",
         errorType: "timeout",
-        suggestion: "The website took too long to respond. Try again or check if the URL is correct.",
+        suggestion:
+          "The website took too long to respond. Try again or check if the URL is correct.",
         canRetry: true,
       });
     });
 
-    it('should handle network errors', async () => {
+    it("should handle network errors", async () => {
       mockFetch.mockImplementation(() => {
-        throw new TypeError('fetch failed');
+        throw new TypeError("fetch failed");
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://example.com');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toEqual({
         error: "Unable to connect to website",
@@ -84,29 +85,30 @@ describe('UrlScrapingService', () => {
       });
     });
 
-    it('should handle 403 Forbidden responses', async () => {
+    it("should handle 403 Forbidden responses", async () => {
       mockFetch.mockResolvedValue({
         ok: false,
         status: 403,
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://example.com');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toEqual({
         error: "Access denied by website",
         errorType: "blocked",
-        suggestion: "This website blocks automated requests. Try copying the product details manually.",
+        suggestion:
+          "This website blocks automated requests. Try copying the product details manually.",
         canRetry: false,
       });
     });
 
-    it('should handle 404 Not Found responses', async () => {
+    it("should handle 404 Not Found responses", async () => {
       mockFetch.mockResolvedValue({
         ok: false,
         status: 404,
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://example.com');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toEqual({
         error: "Page not found",
@@ -116,13 +118,13 @@ describe('UrlScrapingService', () => {
       });
     });
 
-    it('should handle 429 Too Many Requests', async () => {
+    it("should handle 429 Too Many Requests", async () => {
       mockFetch.mockResolvedValue({
         ok: false,
         status: 429,
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://example.com');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toEqual({
         error: "Too many requests",
@@ -133,8 +135,8 @@ describe('UrlScrapingService', () => {
     });
   });
 
-  describe('General Website Scraping', () => {
-    it('should extract basic OpenGraph metadata', async () => {
+  describe("General Website Scraping", () => {
+    it("should extract basic OpenGraph metadata", async () => {
       const html = `
         <!DOCTYPE html>
         <html>
@@ -155,7 +157,7 @@ describe('UrlScrapingService', () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://example.com');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toEqual({
         title: "Test Product",
@@ -167,7 +169,7 @@ describe('UrlScrapingService', () => {
       });
     });
 
-    it('should extract Twitter Card metadata when OpenGraph is missing', async () => {
+    it("should extract Twitter Card metadata when OpenGraph is missing", async () => {
       const html = `
         <!DOCTYPE html>
         <html>
@@ -187,7 +189,7 @@ describe('UrlScrapingService', () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://example.co.uk');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.co.uk");
 
       expect(result).toEqual({
         title: "Twitter Product",
@@ -199,7 +201,7 @@ describe('UrlScrapingService', () => {
       });
     });
 
-    it('should detect currency from domain when price currency is unclear', async () => {
+    it("should detect currency from domain when price currency is unclear", async () => {
       const html = `
         <!DOCTYPE html>
         <html>
@@ -217,7 +219,7 @@ describe('UrlScrapingService', () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://shop.co.nz/product');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://shop.co.nz/product");
 
       expect(result).toEqual({
         title: "NZ Product",
@@ -227,7 +229,7 @@ describe('UrlScrapingService', () => {
       });
     });
 
-    it('should return error when no useful data is found', async () => {
+    it("should return error when no useful data is found", async () => {
       const html = `
         <!DOCTYPE html>
         <html>
@@ -245,19 +247,20 @@ describe('UrlScrapingService', () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://example.com');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toEqual({
         error: "No product information found",
         errorType: "parsing",
-        suggestion: "This page doesn't seem to contain product information. Try copying the details manually.",
+        suggestion:
+          "This page doesn't seem to contain product information. Try copying the details manually.",
         canRetry: false,
       });
     });
   });
 
-  describe('Amazon Scraping', () => {
-    it('should detect Amazon URLs and use specialized scraping', async () => {
+  describe("Amazon Scraping", () => {
+    it("should detect Amazon URLs and use specialized scraping", async () => {
       const html = `
         <!DOCTYPE html>
         <html>
@@ -275,7 +278,9 @@ describe('UrlScrapingService', () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://amazon.com.au/product/test');
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://amazon.com.au/product/test"
+      );
 
       expect(result).toEqual({
         title: "Amazon Test Product",
@@ -286,7 +291,7 @@ describe('UrlScrapingService', () => {
       });
     });
 
-    it('should extract Amazon pricing with A$ symbol', async () => {
+    it("should extract Amazon pricing with A$ symbol", async () => {
       const html = `
         <!DOCTYPE html>
         <html>
@@ -302,7 +307,9 @@ describe('UrlScrapingService', () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://amazon.com.au/product');
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://amazon.com.au/product"
+      );
 
       expect(result).toEqual({
         title: "Susanna Clarke Collection",
@@ -312,7 +319,7 @@ describe('UrlScrapingService', () => {
       });
     });
 
-    it('should handle Amazon UK with GBP currency', async () => {
+    it("should handle Amazon UK with GBP currency", async () => {
       const html = `
         <!DOCTYPE html>
         <html>
@@ -329,7 +336,9 @@ describe('UrlScrapingService', () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://amazon.co.uk/product');
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://amazon.co.uk/product"
+      );
 
       expect(result).toEqual({
         title: "UK Product",
@@ -339,7 +348,7 @@ describe('UrlScrapingService', () => {
       });
     });
 
-    it('should filter out unreasonably low prices on Amazon', async () => {
+    it("should filter out unreasonably low prices on Amazon", async () => {
       const html = `
         <!DOCTYPE html>
         <html>
@@ -357,7 +366,7 @@ describe('UrlScrapingService', () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://amazon.com/product');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://amazon.com/product");
 
       expect(result).toEqual({
         title: "Product with Multiple Prices",
@@ -368,14 +377,39 @@ describe('UrlScrapingService', () => {
     });
   });
 
-  describe('Price Extraction', () => {
-    it('should extract prices with various currency symbols', async () => {
+  describe("Price Extraction", () => {
+    it("should extract prices with various currency symbols", async () => {
       const testCases = [
-        { html: '<span class="price">NZ$125.50</span>', expected: 125.5, currency: 'NZD', url: 'https://shop.nz' },
-        { html: '<span class="price">AU$89.99</span>', expected: 89.99, currency: 'AUD', url: 'https://shop.au' },
-        { html: '<span class="price">CA$199.00</span>', expected: 199, currency: 'CAD', url: 'https://shop.ca' },
-        { html: '<span class="price">€45.99</span>', expected: 45.99, currency: 'EUR', url: 'https://shop.de' },
-        { html: '<span class="price">£32.50</span>', expected: 32.5, currency: 'GBP', url: 'https://shop.uk' },
+        {
+          html: '<span class="price">NZ$125.50</span>',
+          expected: 125.5,
+          currency: "NZD",
+          url: "https://shop.nz",
+        },
+        {
+          html: '<span class="price">AU$89.99</span>',
+          expected: 89.99,
+          currency: "AUD",
+          url: "https://shop.au",
+        },
+        {
+          html: '<span class="price">CA$199.00</span>',
+          expected: 199,
+          currency: "CAD",
+          url: "https://shop.ca",
+        },
+        {
+          html: '<span class="price">€45.99</span>',
+          expected: 45.99,
+          currency: "EUR",
+          url: "https://shop.de",
+        },
+        {
+          html: '<span class="price">£32.50</span>',
+          expected: 32.5,
+          currency: "GBP",
+          url: "https://shop.uk",
+        },
       ];
 
       for (const testCase of testCases) {
@@ -386,7 +420,7 @@ describe('UrlScrapingService', () => {
           text: () => Promise.resolve(html),
         });
 
-        const result = await UrlScrapingService.scrapeUrl(testCase.url);
+        const result = await UrlScrapingService.getInstance().scrapeUrl(testCase.url);
 
         expect(result).toMatchObject({
           price: testCase.expected,
@@ -395,7 +429,7 @@ describe('UrlScrapingService', () => {
       }
     });
 
-    it('should choose highest reasonable price from multiple matches', async () => {
+    it("should choose highest reasonable price from multiple matches", async () => {
       const html = `
         <!DOCTYPE html>
         <html>
@@ -414,7 +448,7 @@ describe('UrlScrapingService', () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://example.com');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toMatchObject({
         price: 129.99,
@@ -422,22 +456,24 @@ describe('UrlScrapingService', () => {
     });
   });
 
-  describe('Domain-Based Currency Detection', () => {
+  describe("Domain-Based Currency Detection", () => {
     const domainTests = [
-      { domain: 'shop.co.nz', expected: 'NZD' },
-      { domain: 'store.com.au', expected: 'AUD' },
-      { domain: 'example.co.uk', expected: 'GBP' },
-      { domain: 'test.ca', expected: 'CAD' },
-      { domain: 'shop.jp', expected: 'JPY' },
-      { domain: 'store.de', expected: 'EUR' },
-      { domain: 'shop.fr', expected: 'EUR' },
-      { domain: 'example.com', expected: 'USD' },
-      { domain: 'test.us', expected: 'USD' },
-      { domain: 'random.xyz', expected: 'NZD' }, // Default fallback
+      { domain: "shop.co.nz", expected: "NZD" },
+      { domain: "store.com.au", expected: "AUD" },
+      { domain: "example.co.uk", expected: "GBP" },
+      { domain: "test.ca", expected: "CAD" },
+      { domain: "shop.jp", expected: "JPY" },
+      { domain: "store.de", expected: "EUR" },
+      { domain: "shop.fr", expected: "EUR" },
+      { domain: "example.com", expected: "USD" },
+      { domain: "test.us", expected: "USD" },
+      { domain: "random.xyz", expected: "NZD" }, // Default fallback
     ];
 
-    it.each(domainTests)('should detect $expected currency for $domain', async ({ domain, expected }) => {
-      const html = `
+    it.each(domainTests)(
+      "should detect $expected currency for $domain",
+      async ({ domain, expected }) => {
+        const html = `
         <!DOCTYPE html>
         <html>
         <head><title>Test Product</title></head>
@@ -445,21 +481,24 @@ describe('UrlScrapingService', () => {
         </html>
       `;
 
-      mockFetch.mockResolvedValue({
-        ok: true,
-        text: () => Promise.resolve(html),
-      });
+        mockFetch.mockResolvedValue({
+          ok: true,
+          text: () => Promise.resolve(html),
+        });
 
-      const result = await UrlScrapingService.scrapeUrl(`https://${domain}/product`);
+        const result = await UrlScrapingService.getInstance().scrapeUrl(
+          `https://${domain}/product`
+        );
 
-      expect(result).toMatchObject({
-        currency: expected,
-      });
-    });
+        expect(result).toMatchObject({
+          currency: expected,
+        });
+      }
+    );
   });
 
-  describe('Text Cleaning', () => {
-    it('should clean HTML entities from extracted text', async () => {
+  describe("Text Cleaning", () => {
+    it("should clean HTML entities from extracted text", async () => {
       const html = `
         <!DOCTYPE html>
         <html>
@@ -478,7 +517,7 @@ describe('UrlScrapingService', () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://example.com');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toEqual({
         title: "Product & Service <Special>",
@@ -489,7 +528,7 @@ describe('UrlScrapingService', () => {
       });
     });
 
-    it('should clean whitespace from extracted text', async () => {
+    it("should clean whitespace from extracted text", async () => {
       const html = `
         <!DOCTYPE html>
         <html>
@@ -507,7 +546,7 @@ describe('UrlScrapingService', () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://example.com');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toMatchObject({
         title: "Product Title",

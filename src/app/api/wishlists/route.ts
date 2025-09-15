@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const wishlists = await WishlistService.getUserWishlists(session.user.id);
+    const wishlists = await WishlistService.getInstance().getUserWishlists(session.user.id);
 
     return NextResponse.json(wishlists);
   } catch (error) {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Valid privacy setting is required" }, { status: 400 });
     }
 
-    const wishlist = await WishlistService.createWishlist(session.user.id, {
+    const wishlist = await WishlistService.getInstance().createWishlist(session.user.id, {
       title: title.trim(),
       description: description?.trim(),
       privacy,

@@ -16,7 +16,18 @@ export interface UpdateWishlistData {
 }
 
 export class WishlistService {
-  static async getUserWishlists(userId: string) {
+  private static instance: WishlistService;
+
+  private constructor() {}
+
+  public static getInstance(): WishlistService {
+    if (!WishlistService.instance) {
+      WishlistService.instance = new WishlistService();
+    }
+    return WishlistService.instance;
+  }
+
+  async getUserWishlists(userId: string) {
     return await prisma.wishlist.findMany({
       where: { ownerId: userId },
       include: {
@@ -32,7 +43,7 @@ export class WishlistService {
     });
   }
 
-  static async getWishlistByPermalink(permalink: string, viewerId?: string) {
+  async getWishlistByPermalink(permalink: string, viewerId?: string) {
     const wishlist = await prisma.wishlist.findUnique({
       where: { permalink },
       include: {
@@ -82,7 +93,7 @@ export class WishlistService {
     return wishlist;
   }
 
-  static async createWishlist(userId: string, data: CreateWishlistData) {
+  async createWishlist(userId: string, data: CreateWishlistData) {
     // Generate unique permalink
     const basePermalink = data.title
       .toLowerCase()
@@ -124,7 +135,7 @@ export class WishlistService {
     });
   }
 
-  static async updateWishlist(wishlistId: string, userId: string, data: UpdateWishlistData) {
+  async updateWishlist(wishlistId: string, userId: string, data: UpdateWishlistData) {
     // Verify ownership
     const wishlist = await prisma.wishlist.findFirst({
       where: { id: wishlistId, ownerId: userId },
@@ -157,7 +168,7 @@ export class WishlistService {
     });
   }
 
-  static async deleteWishlist(wishlistId: string, userId: string) {
+  async deleteWishlist(wishlistId: string, userId: string) {
     // Verify ownership
     const wishlist = await prisma.wishlist.findFirst({
       where: { id: wishlistId, ownerId: userId },

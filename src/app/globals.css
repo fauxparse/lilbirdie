@@ -124,6 +124,8 @@
   --color-sidebar-border: var(--color-slate-300);
   --color-sidebar-ring: var(--color-pink-500);
 
+  --color-star: var(--color-yellow-500);
+
   /* Design Tokens */
   --radius: 0.5rem;
 
@@ -214,4 +216,12 @@ body {
   * {
     @apply border-border outline-ring/50;
   }
+}
+
+.item-card {
+  grid-template:
+    'header' 10rem
+    'text' 1fr
+    'footer' auto
+    / 1fr
 }

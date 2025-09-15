@@ -9,7 +9,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       headers: request.headers,
     });
 
-    const item = await WishlistItemService.getItemById(id, session?.user?.id);
+    const item = await WishlistItemService.getInstance().getItemById(id, session?.user?.id);
 
     return NextResponse.json(item);
   } catch (error) {
@@ -54,7 +54,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (priority !== undefined) updateData.priority = Number(priority);
     if (tags !== undefined) updateData.tags = tags;
 
-    const item = await WishlistItemService.updateItem(id, session.user.id, updateData);
+    const item = await WishlistItemService.getInstance().updateItem(
+      id,
+      session.user.id,
+      updateData
+    );
 
     return NextResponse.json(item);
   } catch (error) {
@@ -87,7 +91,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await WishlistItemService.deleteItem(id, session.user.id);
+    await WishlistItemService.getInstance().deleteItem(id, session.user.id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

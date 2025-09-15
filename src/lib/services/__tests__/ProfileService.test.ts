@@ -34,7 +34,7 @@ describe("ProfileService", () => {
 
       (prisma.profile.findUnique as any).mockResolvedValue(mockProfile);
 
-      const result = await ProfileService.getOrCreateProfile("user-1");
+      const result = await ProfileService.getInstance().getOrCreateProfile("user-1");
 
       expect(prisma.profile.findUnique).toHaveBeenCalledWith({
         where: { userId: "user-1" },
@@ -58,7 +58,7 @@ describe("ProfileService", () => {
       (prisma.profile.findUnique as any).mockResolvedValue(null);
       (prisma.profile.create as any).mockResolvedValue(mockCreatedProfile);
 
-      const result = await ProfileService.getOrCreateProfile("user-1");
+      const result = await ProfileService.getInstance().getOrCreateProfile("user-1");
 
       expect(prisma.profile.findUnique).toHaveBeenCalledWith({
         where: { userId: "user-1" },
@@ -89,8 +89,8 @@ describe("ProfileService", () => {
       (prisma.profile.findUnique as any).mockResolvedValue(mockProfile);
 
       // Call multiple times
-      await ProfileService.getOrCreateProfile("user-1");
-      await ProfileService.getOrCreateProfile("user-1");
+      await ProfileService.getInstance().getOrCreateProfile("user-1");
+      await ProfileService.getInstance().getOrCreateProfile("user-1");
 
       expect(prisma.profile.findUnique).toHaveBeenCalledTimes(2);
       expect(prisma.profile.create).not.toHaveBeenCalled();
@@ -118,7 +118,7 @@ describe("ProfileService", () => {
       (prisma.profile.findUnique as any).mockResolvedValue(mockProfile);
       (prisma.profile.update as any).mockResolvedValue(mockUpdatedProfile);
 
-      const result = await ProfileService.updateTheme("user-1", "dark");
+      const result = await ProfileService.getInstance().updateTheme("user-1", "dark");
 
       expect(prisma.profile.findUnique).toHaveBeenCalledWith({
         where: { userId: "user-1" },
@@ -153,7 +153,7 @@ describe("ProfileService", () => {
       (prisma.profile.create as any).mockResolvedValue(mockCreatedProfile);
       (prisma.profile.update as any).mockResolvedValue(mockUpdatedProfile);
 
-      const result = await ProfileService.updateTheme("user-1", "light");
+      const result = await ProfileService.getInstance().updateTheme("user-1", "light");
 
       expect(prisma.profile.findUnique).toHaveBeenCalledWith({
         where: { userId: "user-1" },
@@ -190,7 +190,7 @@ describe("ProfileService", () => {
       );
 
       for (const theme of themes) {
-        const result = await ProfileService.updateTheme("user-1", theme);
+        const result = await ProfileService.getInstance().updateTheme("user-1", theme);
 
         expect(prisma.profile.update).toHaveBeenCalledWith({
           where: { id: "profile-1" },
@@ -218,7 +218,7 @@ describe("ProfileService", () => {
 
       (prisma.profile.findUnique as any).mockResolvedValue(mockProfile);
 
-      const result = await ProfileService.getProfile("user-1");
+      const result = await ProfileService.getInstance().getProfile("user-1");
 
       expect(prisma.profile.findUnique).toHaveBeenCalledWith({
         where: { userId: "user-1" },
@@ -230,7 +230,7 @@ describe("ProfileService", () => {
     it("should return null when profile not found", async () => {
       (prisma.profile.findUnique as any).mockResolvedValue(null);
 
-      const result = await ProfileService.getProfile("nonexistent-user");
+      const result = await ProfileService.getInstance().getProfile("nonexistent-user");
 
       expect(prisma.profile.findUnique).toHaveBeenCalledWith({
         where: { userId: "nonexistent-user" },
@@ -252,7 +252,7 @@ describe("ProfileService", () => {
 
       (prisma.profile.findUnique as any).mockResolvedValue(mockProfile);
 
-      const result = await ProfileService.getProfile("user-1");
+      const result = await ProfileService.getInstance().getProfile("user-1");
 
       expect(result).toEqual(mockProfile);
       expect(result?.birthday).toEqual(new Date("1985-12-25"));
@@ -273,7 +273,7 @@ describe("ProfileService", () => {
 
       (prisma.profile.findUnique as any).mockResolvedValue(mockProfile);
 
-      const result = await ProfileService.getProfile("user-1");
+      const result = await ProfileService.getInstance().getProfile("user-1");
 
       expect(result?.birthday).toBeNull();
     });
@@ -284,7 +284,7 @@ describe("ProfileService", () => {
       const dbError = new Error("Database connection failed");
       (prisma.profile.findUnique as any).mockRejectedValue(dbError);
 
-      await expect(ProfileService.getOrCreateProfile("user-1")).rejects.toThrow(
+      await expect(ProfileService.getInstance().getOrCreateProfile("user-1")).rejects.toThrow(
         "Database connection failed"
       );
     });
@@ -300,14 +300,18 @@ describe("ProfileService", () => {
       (prisma.profile.findUnique as any).mockResolvedValue(mockProfile);
       (prisma.profile.update as any).mockRejectedValue(dbError);
 
-      await expect(ProfileService.updateTheme("user-1", "dark")).rejects.toThrow("Update failed");
+      await expect(ProfileService.getInstance().updateTheme("user-1", "dark")).rejects.toThrow(
+        "Update failed"
+      );
     });
 
     it("should propagate database errors in getProfile", async () => {
       const dbError = new Error("Query failed");
       (prisma.profile.findUnique as any).mockRejectedValue(dbError);
 
-      await expect(ProfileService.getProfile("user-1")).rejects.toThrow("Query failed");
+      await expect(ProfileService.getInstance().getProfile("user-1")).rejects.toThrow(
+        "Query failed"
+      );
     });
   });
 
@@ -316,7 +320,7 @@ describe("ProfileService", () => {
       (prisma.profile.findUnique as any).mockResolvedValue(null);
       (prisma.profile.create as any).mockResolvedValue({});
 
-      await ProfileService.getOrCreateProfile("user-1");
+      await ProfileService.getInstance().getOrCreateProfile("user-1");
 
       expect(prisma.profile.create).toHaveBeenCalledWith({
         data: {
@@ -336,7 +340,7 @@ describe("ProfileService", () => {
       (prisma.profile.findUnique as any).mockResolvedValue(null);
       (prisma.profile.create as any).mockResolvedValue({});
 
-      await ProfileService.getOrCreateProfile("user-1");
+      await ProfileService.getInstance().getOrCreateProfile("user-1");
 
       expect(prisma.profile.create).toHaveBeenCalledWith({
         data: {

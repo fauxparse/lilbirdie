@@ -17,10 +17,20 @@ export interface ConversionResult {
 }
 
 export class CurrencyService {
-  private static readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-  private static readonly API_URL = "https://api.exchangerate-api.com/v4/latest";
+  private static instance: CurrencyService;
+  private readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  private readonly API_URL = "https://api.exchangerate-api.com/v4/latest";
 
-  static async getExchangeRate(fromCurrency: string, toCurrency: string): Promise<number> {
+  private constructor() {}
+
+  public static getInstance(): CurrencyService {
+    if (!CurrencyService.instance) {
+      CurrencyService.instance = new CurrencyService();
+    }
+    return CurrencyService.instance;
+  }
+
+  async getExchangeRate(fromCurrency: string, toCurrency: string): Promise<number> {
     if (fromCurrency === toCurrency) {
       return 1;
     }
@@ -90,7 +100,7 @@ export class CurrencyService {
     }
   }
 
-  private static async fetchRateFromAPI(fromCurrency: string, toCurrency: string): Promise<number> {
+  private async fetchRateFromAPI(fromCurrency: string, toCurrency: string): Promise<number> {
     const response = await fetch(`${this.API_URL}/${fromCurrency}`);
 
     if (!response.ok) {
@@ -106,7 +116,7 @@ export class CurrencyService {
     return data.rates[toCurrency];
   }
 
-  static async convertPrice(
+  async convertPrice(
     amount: number,
     fromCurrency: string,
     toCurrency: string
@@ -124,7 +134,7 @@ export class CurrencyService {
     };
   }
 
-  static async refreshAllRates(): Promise<void> {
+  async refreshAllRates(): Promise<void> {
     const currencies = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "NZD"];
 
     for (const fromCurrency of currencies) {

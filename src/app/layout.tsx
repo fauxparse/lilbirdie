@@ -36,7 +36,7 @@ export default function RootLayout({
             </ThemeProvider>
           </AuthProvider>
         </QueryProvider>
-        <Toaster richColors />
+        <Toaster expand />
       </body>
     </html>
   );

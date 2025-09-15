@@ -9,7 +9,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       headers: request.headers,
     });
 
-    const items = await WishlistItemService.getItemsByWishlistId(id, session?.user?.id);
+    const items = await WishlistItemService.getInstance().getItemsByWishlistId(
+      id,
+      session?.user?.id
+    );
 
     return NextResponse.json(items);
   } catch (error) {
@@ -41,7 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    const item = await WishlistItemService.createItem(id, session.user.id, {
+    const item = await WishlistItemService.getInstance().createItem(id, session.user.id, {
       name: name.trim(),
       description: description?.trim(),
       url: url?.trim(),

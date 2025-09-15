@@ -17,7 +17,10 @@ export async function GET(
     const viewerId = session?.user?.id;
 
     // Get the wishlist by permalink
-    const wishlist = await WishlistService.getWishlistByPermalink(permalink, viewerId);
+    const wishlist = await WishlistService.getInstance().getWishlistByPermalink(
+      permalink,
+      viewerId
+    );
 
     if (!wishlist) {
       return NextResponse.json({ error: "Wishlist not found" }, { status: 404 });

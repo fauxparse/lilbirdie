@@ -65,7 +65,7 @@ describe("WishlistService", () => {
 
       (prisma.wishlist.findMany as any).mockResolvedValue(mockWishlists);
 
-      const result = await WishlistService.getUserWishlists("user-1");
+      const result = await WishlistService.getInstance().getUserWishlists("user-1");
 
       expect(prisma.wishlist.findMany).toHaveBeenCalledWith({
         where: { ownerId: "user-1" },
@@ -108,7 +108,10 @@ describe("WishlistService", () => {
 
       (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
 
-      const result = await WishlistService.getWishlistByPermalink("public-wishlist", "user-2");
+      const result = await WishlistService.getInstance().getWishlistByPermalink(
+        "public-wishlist",
+        "user-2"
+      );
 
       expect(prisma.wishlist.findUnique).toHaveBeenCalledWith({
         where: { permalink: "public-wishlist" },
@@ -141,7 +144,10 @@ describe("WishlistService", () => {
 
       (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
 
-      const result = await WishlistService.getWishlistByPermalink("private-wishlist", "user-2");
+      const result = await WishlistService.getInstance().getWishlistByPermalink(
+        "private-wishlist",
+        "user-2"
+      );
 
       expect(result).toBeNull();
     });
@@ -156,7 +162,10 @@ describe("WishlistService", () => {
 
       (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
 
-      const result = await WishlistService.getWishlistByPermalink("private-wishlist", "user-1");
+      const result = await WishlistService.getInstance().getWishlistByPermalink(
+        "private-wishlist",
+        "user-1"
+      );
 
       expect(result).toEqual(mockWishlist);
     });
@@ -179,7 +188,10 @@ describe("WishlistService", () => {
       (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
       (prisma.friendship.findFirst as any).mockResolvedValue(mockFriendship);
 
-      const result = await WishlistService.getWishlistByPermalink("friends-wishlist", "user-2");
+      const result = await WishlistService.getInstance().getWishlistByPermalink(
+        "friends-wishlist",
+        "user-2"
+      );
 
       expect(prisma.friendship.findFirst).toHaveBeenCalledWith({
         where: {
@@ -203,7 +215,10 @@ describe("WishlistService", () => {
       (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
       (prisma.friendship.findFirst as any).mockResolvedValue(null);
 
-      const result = await WishlistService.getWishlistByPermalink("friends-wishlist", "user-2");
+      const result = await WishlistService.getInstance().getWishlistByPermalink(
+        "friends-wishlist",
+        "user-2"
+      );
 
       expect(result).toBeNull();
     });
@@ -211,7 +226,10 @@ describe("WishlistService", () => {
     it("should return null when wishlist does not exist", async () => {
       (prisma.wishlist.findUnique as any).mockResolvedValue(null);
 
-      const result = await WishlistService.getWishlistByPermalink("nonexistent", "user-1");
+      const result = await WishlistService.getInstance().getWishlistByPermalink(
+        "nonexistent",
+        "user-1"
+      );
 
       expect(result).toBeNull();
     });
@@ -226,7 +244,7 @@ describe("WishlistService", () => {
 
       (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
 
-      await WishlistService.getWishlistByPermalink("public-wishlist");
+      await WishlistService.getInstance().getWishlistByPermalink("public-wishlist");
 
       expect(prisma.wishlist.findUnique).toHaveBeenCalledWith({
         where: { permalink: "public-wishlist" },
@@ -272,7 +290,7 @@ describe("WishlistService", () => {
         isDefault: false,
       };
 
-      const result = await WishlistService.createWishlist("user-1", wishlistData);
+      const result = await WishlistService.getInstance().createWishlist("user-1", wishlistData);
 
       expect(prisma.wishlist.findUnique).toHaveBeenCalledWith({
         where: { permalink: "my-test-wishlist" },
@@ -324,7 +342,7 @@ describe("WishlistService", () => {
         privacy: "PUBLIC",
       };
 
-      await WishlistService.createWishlist("user-1", wishlistData);
+      await WishlistService.getInstance().createWishlist("user-1", wishlistData);
 
       expect(prisma.wishlist.findUnique).toHaveBeenCalledWith({ where: { permalink: "test" } });
       expect(prisma.wishlist.findUnique).toHaveBeenCalledWith({ where: { permalink: "test-1" } });
@@ -359,7 +377,7 @@ describe("WishlistService", () => {
         isDefault: true,
       };
 
-      await WishlistService.createWishlist("user-1", wishlistData);
+      await WishlistService.getInstance().createWishlist("user-1", wishlistData);
 
       expect(prisma.wishlist.updateMany).toHaveBeenCalledWith({
         where: { ownerId: "user-1", isDefault: true },
@@ -379,7 +397,7 @@ describe("WishlistService", () => {
         privacy: "PUBLIC",
       };
 
-      await WishlistService.createWishlist("user-1", wishlistData);
+      await WishlistService.getInstance().createWishlist("user-1", wishlistData);
 
       expect(prisma.wishlist.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -417,7 +435,11 @@ describe("WishlistService", () => {
         privacy: "PUBLIC",
       };
 
-      const result = await WishlistService.updateWishlist("wishlist-1", "user-1", updateData);
+      const result = await WishlistService.getInstance().updateWishlist(
+        "wishlist-1",
+        "user-1",
+        updateData
+      );
 
       expect(prisma.wishlist.findFirst).toHaveBeenCalledWith({
         where: { id: "wishlist-1", ownerId: "user-1" },
@@ -447,7 +469,11 @@ describe("WishlistService", () => {
         title: "Updated Title",
       };
 
-      const result = await WishlistService.updateWishlist("wishlist-1", "user-2", updateData);
+      const result = await WishlistService.getInstance().updateWishlist(
+        "wishlist-1",
+        "user-2",
+        updateData
+      );
 
       expect(prisma.wishlist.update).not.toHaveBeenCalled();
       expect(result).toBeNull();
@@ -473,7 +499,7 @@ describe("WishlistService", () => {
         isDefault: true,
       };
 
-      await WishlistService.updateWishlist("wishlist-1", "user-1", updateData);
+      await WishlistService.getInstance().updateWishlist("wishlist-1", "user-1", updateData);
 
       expect(prisma.wishlist.updateMany).toHaveBeenCalledWith({
         where: { ownerId: "user-1", isDefault: true },
@@ -498,7 +524,7 @@ describe("WishlistService", () => {
       (prisma.wishlist.findFirst as any).mockResolvedValue(mockWishlist);
       (prisma.wishlist.delete as any).mockResolvedValue(mockDeletedWishlist);
 
-      const result = await WishlistService.deleteWishlist("wishlist-1", "user-1");
+      const result = await WishlistService.getInstance().deleteWishlist("wishlist-1", "user-1");
 
       expect(prisma.wishlist.findFirst).toHaveBeenCalledWith({
         where: { id: "wishlist-1", ownerId: "user-1" },
@@ -514,7 +540,7 @@ describe("WishlistService", () => {
     it("should return null when user is not owner", async () => {
       (prisma.wishlist.findFirst as any).mockResolvedValue(null);
 
-      const result = await WishlistService.deleteWishlist("wishlist-1", "user-2");
+      const result = await WishlistService.getInstance().deleteWishlist("wishlist-1", "user-2");
 
       expect(prisma.wishlist.delete).not.toHaveBeenCalled();
       expect(result).toBeNull();
@@ -530,9 +556,9 @@ describe("WishlistService", () => {
       (prisma.wishlist.findFirst as any).mockResolvedValue(mockWishlist);
       (prisma.wishlist.findMany as any).mockResolvedValue([]); // No other wishlists
 
-      await expect(WishlistService.deleteWishlist("wishlist-1", "user-1")).rejects.toThrow(
-        "Cannot delete the only wishlist"
-      );
+      await expect(
+        WishlistService.getInstance().deleteWishlist("wishlist-1", "user-1")
+      ).rejects.toThrow("Cannot delete the only wishlist");
     });
 
     it("should set another wishlist as default when deleting default wishlist", async () => {
@@ -552,7 +578,7 @@ describe("WishlistService", () => {
       (prisma.wishlist.update as any).mockResolvedValue(otherWishlists[0]);
       (prisma.wishlist.delete as any).mockResolvedValue(mockWishlist);
 
-      await WishlistService.deleteWishlist("wishlist-1", "user-1");
+      await WishlistService.getInstance().deleteWishlist("wishlist-1", "user-1");
 
       expect(prisma.wishlist.findMany).toHaveBeenCalledWith({
         where: { ownerId: "user-1", id: { not: "wishlist-1" } },

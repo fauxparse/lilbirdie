@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const profile = await ProfileService.getOrCreateProfile(session.user.id);
+    const profile = await ProfileService.getInstance().getOrCreateProfile(session.user.id);
 
     return NextResponse.json(profile);
   } catch (error) {
@@ -37,19 +37,19 @@ export async function PATCH(request: NextRequest) {
     let updatedProfile;
 
     if (preferredCurrency) {
-      updatedProfile = await ProfileService.updatePreferredCurrency(
+      updatedProfile = await ProfileService.getInstance().updatePreferredCurrency(
         session.user.id,
         preferredCurrency
       );
     }
 
     if (theme) {
-      updatedProfile = await ProfileService.updateTheme(session.user.id, theme);
+      updatedProfile = await ProfileService.getInstance().updateTheme(session.user.id, theme);
     }
 
     // If both were provided, get the final state
     if (preferredCurrency && theme) {
-      updatedProfile = await ProfileService.getOrCreateProfile(session.user.id);
+      updatedProfile = await ProfileService.getInstance().getOrCreateProfile(session.user.id);
     }
 
     return NextResponse.json(updatedProfile);

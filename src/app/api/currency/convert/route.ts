@@ -23,7 +23,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Perform conversion
-    const result = await CurrencyService.convertPrice(amount, fromCurrency, toCurrency);
+    const result = await CurrencyService.getInstance().convertPrice(
+      amount,
+      fromCurrency,
+      toCurrency
+    );
 
     return NextResponse.json(result);
   } catch (error) {

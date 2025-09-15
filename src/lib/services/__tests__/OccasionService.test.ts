@@ -1,5 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OccasionService } from "../OccasionService";
 import type { CreateOccasionData, UpdateOccasionData } from "../OccasionService";
 
@@ -57,7 +56,7 @@ describe("OccasionService", () => {
         startYear: 2015,
       };
 
-      const result = await OccasionService.createOccasion("user-1", occasionData);
+      const result = await OccasionService.getInstance().createOccasion("user-1", occasionData);
 
       expect(prisma.occasion.create).toHaveBeenCalledWith({
         data: {
@@ -115,7 +114,7 @@ describe("OccasionService", () => {
         entityId: "wishlist-1",
       };
 
-      await OccasionService.createOccasion("user-1", occasionData);
+      await OccasionService.getInstance().createOccasion("user-1", occasionData);
 
       expect(prisma.occasion.create).toHaveBeenCalledWith({
         data: {
@@ -160,7 +159,7 @@ describe("OccasionService", () => {
 
       (prisma.occasion.findMany as any).mockResolvedValue(mockOccasions);
 
-      const result = await OccasionService.getUserOccasions("user-1");
+      const result = await OccasionService.getInstance().getUserOccasions("user-1");
 
       expect(prisma.occasion.findMany).toHaveBeenCalledWith({
         where: { ownerId: "user-1" },
@@ -196,7 +195,7 @@ describe("OccasionService", () => {
 
       (prisma.occasion.findUnique as any).mockResolvedValue(mockOccasion);
 
-      const result = await OccasionService.getOccasionById("occ-1", "user-1");
+      const result = await OccasionService.getInstance().getOccasionById("occ-1", "user-1");
 
       expect(prisma.occasion.findUnique).toHaveBeenCalledWith({
         where: { id: "occ-1" },
@@ -219,7 +218,7 @@ describe("OccasionService", () => {
 
       (prisma.occasion.findUnique as any).mockResolvedValue(mockOccasion);
 
-      const result = await OccasionService.getOccasionById("occ-1", "user-1");
+      const result = await OccasionService.getInstance().getOccasionById("occ-1", "user-1");
 
       expect(result).toBeNull();
     });
@@ -227,7 +226,7 @@ describe("OccasionService", () => {
     it("should return null if occasion not found", async () => {
       (prisma.occasion.findUnique as any).mockResolvedValue(null);
 
-      const result = await OccasionService.getOccasionById("nonexistent", "user-1");
+      const result = await OccasionService.getInstance().getOccasionById("nonexistent", "user-1");
 
       expect(result).toBeNull();
     });
@@ -255,7 +254,11 @@ describe("OccasionService", () => {
         date: new Date("2024-07-15"),
       };
 
-      const result = await OccasionService.updateOccasion("occ-1", "user-1", updateData);
+      const result = await OccasionService.getInstance().updateOccasion(
+        "occ-1",
+        "user-1",
+        updateData
+      );
 
       expect(prisma.occasion.update).toHaveBeenCalledWith({
         where: { id: "occ-1" },
@@ -278,7 +281,9 @@ describe("OccasionService", () => {
 
       (prisma.occasion.findUnique as any).mockResolvedValue(mockOccasion);
 
-      const result = await OccasionService.updateOccasion("occ-1", "user-1", { title: "Updated" });
+      const result = await OccasionService.getInstance().updateOccasion("occ-1", "user-1", {
+        title: "Updated",
+      });
 
       expect(prisma.occasion.update).not.toHaveBeenCalled();
       expect(result).toBeNull();
@@ -296,7 +301,7 @@ describe("OccasionService", () => {
       (prisma.occasion.findUnique as any).mockResolvedValue(mockOccasion);
       (prisma.occasion.delete as any).mockResolvedValue({});
 
-      const result = await OccasionService.deleteOccasion("occ-1", "user-1");
+      const result = await OccasionService.getInstance().deleteOccasion("occ-1", "user-1");
 
       expect(prisma.occasion.delete).toHaveBeenCalledWith({
         where: { id: "occ-1" },
@@ -313,7 +318,7 @@ describe("OccasionService", () => {
 
       (prisma.occasion.findUnique as any).mockResolvedValue(mockOccasion);
 
-      const result = await OccasionService.deleteOccasion("occ-1", "user-1");
+      const result = await OccasionService.getInstance().deleteOccasion("occ-1", "user-1");
 
       expect(prisma.occasion.delete).not.toHaveBeenCalled();
       expect(result).toBe(false);
@@ -360,7 +365,7 @@ describe("OccasionService", () => {
 
       (prisma.occasion.findMany as any).mockResolvedValue(mockOccasions);
 
-      const result = await OccasionService.getUpcomingOccasions("user-1", 12);
+      const result = await OccasionService.getInstance().getUpcomingOccasions("user-1", 12);
 
       expect(result).toHaveLength(2);
       expect(result[0].nextOccurrence?.toDateString()).toEqual(
@@ -392,7 +397,7 @@ describe("OccasionService", () => {
 
       (prisma.occasion.findMany as any).mockResolvedValue(mockOccasions);
 
-      const result = await OccasionService.getUpcomingOccasions("user-1", 12);
+      const result = await OccasionService.getInstance().getUpcomingOccasions("user-1", 12);
 
       expect(result).toHaveLength(0); // Past non-recurring event should be filtered out
 
@@ -405,7 +410,11 @@ describe("OccasionService", () => {
       const futureDate = new Date("2025-06-15");
       const fromDate = new Date("2024-01-01");
 
-      const result = OccasionService.calculateNextOccurrence(futureDate, false, fromDate);
+      const result = OccasionService.getInstance().calculateNextOccurrence(
+        futureDate,
+        false,
+        fromDate
+      );
 
       expect(result).toEqual(futureDate);
     });
@@ -414,7 +423,11 @@ describe("OccasionService", () => {
       const pastDate = new Date("2023-06-15");
       const fromDate = new Date("2024-01-01");
 
-      const result = OccasionService.calculateNextOccurrence(pastDate, false, fromDate);
+      const result = OccasionService.getInstance().calculateNextOccurrence(
+        pastDate,
+        false,
+        fromDate
+      );
 
       expect(result).toBeNull();
     });
@@ -423,7 +436,11 @@ describe("OccasionService", () => {
       const originalDate = new Date("2023-06-15T00:00:00Z");
       const fromDate = new Date("2024-01-01T00:00:00Z");
 
-      const result = OccasionService.calculateNextOccurrence(originalDate, true, fromDate);
+      const result = OccasionService.getInstance().calculateNextOccurrence(
+        originalDate,
+        true,
+        fromDate
+      );
 
       expect(result?.toDateString()).toEqual(new Date("2024-06-15").toDateString());
     });
@@ -432,7 +449,11 @@ describe("OccasionService", () => {
       const originalDate = new Date("2023-06-15T00:00:00Z");
       const fromDate = new Date("2024-07-01T00:00:00Z"); // After June 15th
 
-      const result = OccasionService.calculateNextOccurrence(originalDate, true, fromDate);
+      const result = OccasionService.getInstance().calculateNextOccurrence(
+        originalDate,
+        true,
+        fromDate
+      );
 
       expect(result?.toDateString()).toEqual(new Date("2025-06-15").toDateString());
     });
@@ -444,7 +465,7 @@ describe("OccasionService", () => {
       const startYear = 2015;
       const asOf = new Date("2024-07-01"); // After birthday
 
-      const age = OccasionService.calculateAge(birthDate, startYear, asOf);
+      const age = OccasionService.getInstance().calculateAge(birthDate, startYear, asOf);
 
       expect(age).toBe(9);
     });
@@ -454,7 +475,7 @@ describe("OccasionService", () => {
       const startYear = 2015;
       const asOf = new Date("2024-05-01"); // Before birthday
 
-      const age = OccasionService.calculateAge(birthDate, startYear, asOf);
+      const age = OccasionService.getInstance().calculateAge(birthDate, startYear, asOf);
 
       expect(age).toBe(8);
     });
@@ -463,7 +484,7 @@ describe("OccasionService", () => {
       const birthDate = new Date("2015-06-15");
       const asOf = new Date("2024-07-01");
 
-      const age = OccasionService.calculateAge(birthDate, undefined, asOf);
+      const age = OccasionService.getInstance().calculateAge(birthDate, undefined, asOf);
 
       expect(age).toBeNull();
     });
@@ -489,7 +510,7 @@ describe("OccasionService", () => {
 
       (prisma.occasion.create as any).mockResolvedValue(mockOccasion);
 
-      await OccasionService.createBirthdayOccasion(
+      await OccasionService.getInstance().createBirthdayOccasion(
         "user-1",
         "Emma's Birthday",
         new Date("2015-06-15"),
@@ -538,7 +559,7 @@ describe("OccasionService", () => {
 
       (prisma.occasion.create as any).mockResolvedValue(mockOccasion);
 
-      await OccasionService.createAnniversaryOccasion(
+      await OccasionService.getInstance().createAnniversaryOccasion(
         "user-1",
         "Wedding Anniversary",
         new Date("2020-03-14"),
@@ -586,7 +607,7 @@ describe("OccasionService", () => {
 
       (prisma.occasion.create as any).mockResolvedValue(mockOccasion);
 
-      await OccasionService.createGlobalOccasion("user-1", "CHRISTMAS");
+      await OccasionService.getInstance().createGlobalOccasion("user-1", "CHRISTMAS");
 
       expect(prisma.occasion.create).toHaveBeenCalledWith({
         data: {
@@ -624,7 +645,7 @@ describe("OccasionService", () => {
 
       (prisma.occasion.create as any).mockResolvedValue(mockOccasion);
 
-      await OccasionService.createGlobalOccasion("user-1", "VALENTINES_DAY");
+      await OccasionService.getInstance().createGlobalOccasion("user-1", "VALENTINES_DAY");
 
       expect(prisma.occasion.create).toHaveBeenCalledWith({
         data: {

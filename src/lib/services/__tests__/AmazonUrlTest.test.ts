@@ -1,16 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UrlScrapingService } from '../UrlScrapingService';
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { UrlScrapingService } from "../UrlScrapingService";
 
 // Mock console.log to capture debug output
-const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
-describe('Amazon URL Specific Test', () => {
+describe("Amazon URL Specific Test", () => {
   beforeEach(() => {
     consoleSpy.mockClear();
   });
 
-  it('should correctly extract A$59.17 from the specific Amazon AU URL', async () => {
-    const testUrl = 'https://www.amazon.com.au/Susanna-Collection-Piranesi-Jonathan-Strange/dp/9124220264';
+  it("should correctly extract A$59.17 from the specific Amazon AU URL", async () => {
+    const testUrl =
+      "https://www.amazon.com.au/Susanna-Collection-Piranesi-Jonathan-Strange/dp/9124220264";
 
     // Mock the fetch to return the actual response we expect
     const mockFetch = vi.fn();
@@ -51,36 +52,36 @@ describe('Amazon URL Specific Test', () => {
       text: () => Promise.resolve(mockHtml),
     });
 
-    const result = await UrlScrapingService.scrapeUrl(testUrl);
+    const result = await UrlScrapingService.getInstance().scrapeUrl(testUrl);
 
     // Log the console output for debugging
-    console.log('Console logs during extraction:');
-    consoleSpy.mock.calls.forEach(call => {
+    console.log("Console logs during extraction:");
+    consoleSpy.mock.calls.forEach((call) => {
       console.log(call);
     });
 
-    expect(result).not.toHaveProperty('error');
+    expect(result).not.toHaveProperty("error");
 
-    if ('price' in result) {
-      console.log('Extracted price:', result.price);
-      console.log('Expected: ~59.17, Got:', result.price);
+    if ("price" in result) {
+      console.log("Extracted price:", result.price);
+      console.log("Expected: ~59.17, Got:", result.price);
 
       // The price should be close to 59.17, not 199.50
       expect(result.price).toBeCloseTo(59.17, 2);
-      expect(result.currency).toBe('AUD');
+      expect(result.currency).toBe("AUD");
     } else {
-      throw new Error('Expected price extraction but got error: ' + JSON.stringify(result));
+      throw new Error("Expected price extraction but got error: " + JSON.stringify(result));
     }
   });
 
-  it('should handle multiple Amazon price formats and choose the correct one', async () => {
+  it("should handle multiple Amazon price formats and choose the correct one", async () => {
     const mockFetch = vi.fn();
     global.fetch = mockFetch;
 
     // Test with multiple price scenarios that Amazon might present
     const testCases = [
       {
-        name: 'split price format',
+        name: "split price format",
         html: `
           <span id="productTitle">Test Product</span>
           <span class="a-price-whole">59</span>
@@ -89,7 +90,7 @@ describe('Amazon URL Specific Test', () => {
         expectedPrice: 59.17,
       },
       {
-        name: 'a-offscreen format',
+        name: "a-offscreen format",
         html: `
           <span id="productTitle">Test Product</span>
           <span class="a-offscreen">A$59.17</span>
@@ -97,7 +98,7 @@ describe('Amazon URL Specific Test', () => {
         expectedPrice: 59.17,
       },
       {
-        name: 'multiple prices - should pick median reasonable price',
+        name: "multiple prices - should pick median reasonable price",
         html: `
           <span id="productTitle">Test Product</span>
           <span class="a-offscreen">A$199.50</span>
@@ -116,18 +117,20 @@ describe('Amazon URL Specific Test', () => {
         text: () => Promise.resolve(`<html><body>${testCase.html}</body></html>`),
       });
 
-      const result = await UrlScrapingService.scrapeUrl('https://amazon.com.au/test');
+      const result = await UrlScrapingService.getInstance().scrapeUrl("https://amazon.com.au/test");
 
       console.log(`\n--- Test case: ${testCase.name} ---`);
-      console.log(`Expected: ${testCase.expectedPrice}, Got: ${'price' in result ? result.price : 'ERROR'}`);
+      console.log(
+        `Expected: ${testCase.expectedPrice}, Got: ${"price" in result ? result.price : "ERROR"}`
+      );
 
       // Show debug logs from the service
-      console.log('Debug logs from service:');
+      console.log("Debug logs from service:");
       consoleSpy.mock.calls.forEach((call, index) => {
         console.log(`  ${index + 1}:`, call[0]);
       });
 
-      if ('price' in result) {
+      if ("price" in result) {
         if (result.price !== testCase.expectedPrice) {
           console.log(`MISMATCH: Expected ${testCase.expectedPrice}, got ${result.price}`);
         }
@@ -136,7 +139,7 @@ describe('Amazon URL Specific Test', () => {
     }
   });
 
-  it('should debug the actual price extraction patterns', async () => {
+  it("should debug the actual price extraction patterns", async () => {
     const mockFetch = vi.fn();
     global.fetch = mockFetch;
 
@@ -174,15 +177,15 @@ describe('Amazon URL Specific Test', () => {
       text: () => Promise.resolve(problematicHtml),
     });
 
-    const result = await UrlScrapingService.scrapeUrl('https://amazon.com.au/test');
+    const result = await UrlScrapingService.getInstance().scrapeUrl("https://amazon.com.au/test");
 
     // Debug output
-    console.log('All console logs from price extraction:');
+    console.log("All console logs from price extraction:");
     consoleSpy.mock.calls.forEach((call, index) => {
       console.log(`${index + 1}:`, call);
     });
 
-    if ('price' in result) {
+    if ("price" in result) {
       console.log(`Final extracted price: ${result.price}`);
       console.log(`This should be 59.17, not 199.50`);
     }

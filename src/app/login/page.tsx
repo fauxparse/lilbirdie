@@ -6,25 +6,31 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Separator } from "@/components/ui/Separator";
 import { signIn, signUp } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
+    setErrorMessage("");
     try {
       await signIn.social({
         provider: "google",
         callbackURL: "/",
       });
+      // If successful, Better Auth should handle the redirect
     } catch (error) {
       console.error("Google sign in error:", error);
+      setErrorMessage("Google sign in failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -32,9 +38,10 @@ export default function LoginPage() {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
 
     if (isSignUp && password !== confirmPassword) {
-      alert("Passwords don't match");
+      setErrorMessage("Passwords don't match");
       return;
     }
 
@@ -42,7 +49,7 @@ export default function LoginPage() {
     try {
       console.log("Attempting auth with:", { email, isSignUp, name: isSignUp ? name : undefined });
 
-      let result;
+      let result: any;
       if (isSignUp) {
         result = await signUp.email({
           email,
@@ -63,26 +70,26 @@ export default function LoginPage() {
       // Check if the result contains an error
       if (result.error) {
         console.error("Auth error in result:", result.error);
-        let errorMessage = isSignUp ? "Sign up failed" : "Sign in failed";
+        let error = isSignUp ? "Sign up failed" : "Sign in failed";
         if (result.error.message) {
-          errorMessage += `: ${result.error.message}`;
+          error += `: ${result.error.message}`;
         } else if (result.error.status) {
-          errorMessage += `: ${result.error.status} ${result.error.statusText || ""}`;
+          error += `: ${result.error.status} ${result.error.statusText || ""}`;
         }
-        alert(errorMessage);
+        setErrorMessage(error);
         return;
       }
 
-      // If we get here, it succeeded
-      alert(isSignUp ? "Sign up successful!" : "Sign in successful!");
+      // If we get here, it succeeded - redirect to home
+      router.push("/");
     } catch (error) {
       console.error("Email auth error:", error);
       // Try to extract the actual error message
-      let errorMessage = isSignUp ? "Sign up failed" : "Sign in failed";
+      let errorMsg = isSignUp ? "Sign up failed" : "Sign in failed";
       if (error && typeof error === "object" && "message" in error) {
-        errorMessage += `: ${error.message}`;
+        errorMsg += `: ${error.message}`;
       }
-      alert(errorMessage);
+      setErrorMessage(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -100,6 +107,11 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {errorMessage && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+              {errorMessage}
+            </div>
+          )}
           <form onSubmit={handleEmailAuth} className="space-y-4">
             {isSignUp && (
               <div className="space-y-2">

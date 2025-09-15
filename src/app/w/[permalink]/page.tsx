@@ -3,9 +3,20 @@
 import { useAuth } from "@/components/AuthProvider";
 import { ItemForm, type ItemFormData } from "@/components/ItemForm";
 import { WishlistItemCard } from "@/components/WishlistItemCard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/AlertDialog";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import type { WishlistItemWithRelations } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Gift, Plus, User, X } from "lucide-react";
 import Link from "next/link";
@@ -98,7 +109,9 @@ export default function PublicWishlistPage({
 
   // Item management state
   const [showAddItem, setShowAddItem] = useState(false);
-  const [editingItem, setEditingItem] = useState<WishlistItem | null>(null);
+  const [editingItem, setEditingItem] = useState<WishlistItemWithRelations | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   // Add item mutation
   const addItemMutation = useMutation({
@@ -190,8 +203,15 @@ export default function PublicWishlistPage({
   };
 
   const handleDeleteItem = (itemId: string) => {
-    if (confirm("Are you sure you want to delete this item?")) {
-      deleteItemMutation.mutate(itemId);
+    setItemToDelete(itemId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      deleteItemMutation.mutate(itemToDelete);
+      setItemToDelete(null);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -349,9 +369,9 @@ export default function PublicWishlistPage({
                 mode="edit"
                 initialData={{
                   name: editingItem.name,
-                  description: editingItem.description,
-                  url: editingItem.url,
-                  imageUrl: editingItem.imageUrl,
+                  description: editingItem.description || undefined,
+                  url: editingItem.url || undefined,
+                  imageUrl: editingItem.imageUrl || undefined,
                   price:
                     typeof editingItem.price === "number"
                       ? editingItem.price
@@ -386,7 +406,8 @@ export default function PublicWishlistPage({
             {wishlist.items.map((item) => (
               <WishlistItemCard
                 key={item.id}
-                item={item}
+                itemId={item.id}
+                wishlistPermalink={permalink}
                 isOwner={isOwner}
                 onClaim={handleClaim}
                 onEdit={isOwner ? setEditingItem : undefined}
@@ -397,6 +418,21 @@ export default function PublicWishlistPage({
           </div>
         )}
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this item? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

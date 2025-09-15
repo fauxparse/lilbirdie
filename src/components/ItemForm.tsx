@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
@@ -51,11 +50,7 @@ export function ItemForm({
 
   // Currency conversion
   const { preferredCurrency } = useUserPreferredCurrency();
-  const { convertedPrice, convertedCurrency } = useCurrencyConversion(
-    Number(price) || 0,
-    currency,
-    preferredCurrency
-  );
+  const { convertedPrice } = useCurrencyConversion(Number(price) || 0, currency, preferredCurrency);
 
   const getCurrencySymbol = (currency: string): string => {
     switch (currency) {
@@ -163,12 +158,17 @@ export function ItemForm({
     } catch (err) {
       if (err && typeof err === "object" && "error" in err) {
         // Structured error from API
-        const apiError = err as any;
+        const apiError = err as {
+          error: string;
+          errorType?: string;
+          suggestion?: string;
+          canRetry?: boolean;
+        };
         setScrapingError({
-          message: apiError.error as string,
-          errorType: apiError.errorType as string,
-          suggestion: apiError.suggestion as string,
-          canRetry: apiError.canRetry as boolean,
+          message: apiError.error,
+          errorType: apiError.errorType || "",
+          suggestion: apiError.suggestion || "",
+          canRetry: apiError.canRetry || false,
         });
       } else {
         // Generic error

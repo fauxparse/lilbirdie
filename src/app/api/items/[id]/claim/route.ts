@@ -13,7 +13,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const claim = await WishlistItemService.claimItem(id, session.user.id);
+    const claim = await WishlistItemService.getInstance().claimItem(id, session.user.id);
 
     return NextResponse.json({
       success: true,
@@ -52,7 +52,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await WishlistItemService.unclaimItem(id, session.user.id);
+    await WishlistItemService.getInstance().unclaimItem(id, session.user.id);
 
     return NextResponse.json({
       success: true,

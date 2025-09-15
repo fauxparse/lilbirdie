@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const occasion = await OccasionService.getOccasionById(id, session.user.id);
+    const occasion = await OccasionService.getInstance().getOccasionById(id, session.user.id);
 
     if (!occasion) {
       return NextResponse.json({ error: "Occasion not found" }, { status: 404 });
@@ -73,7 +73,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const occasion = await OccasionService.updateOccasion(id, session.user.id, {
+    const occasion = await OccasionService.getInstance().updateOccasion(id, session.user.id, {
       title: title?.trim(),
       date: parsedDate,
       type: type as OccasionType | undefined,
@@ -106,7 +106,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const deleted = await OccasionService.deleteOccasion(id, session.user.id);
+    const deleted = await OccasionService.getInstance().deleteOccasion(id, session.user.id);
 
     if (!deleted) {
       return NextResponse.json({ error: "Occasion not found" }, { status: 404 });

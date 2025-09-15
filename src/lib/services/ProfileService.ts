@@ -1,7 +1,18 @@
 import { prisma } from "../db";
 
 export class ProfileService {
-  static async getOrCreateProfile(userId: string) {
+  private static instance: ProfileService;
+
+  private constructor() {}
+
+  public static getInstance(): ProfileService {
+    if (!ProfileService.instance) {
+      ProfileService.instance = new ProfileService();
+    }
+    return ProfileService.instance;
+  }
+
+  async getOrCreateProfile(userId: string) {
     let profile = await prisma.profile.findUnique({
       where: { userId },
     });
@@ -19,8 +30,8 @@ export class ProfileService {
     return profile;
   }
 
-  static async updateTheme(userId: string, theme: string) {
-    const profile = await ProfileService.getOrCreateProfile(userId);
+  async updateTheme(userId: string, theme: string) {
+    const profile = await this.getOrCreateProfile(userId);
 
     return await prisma.profile.update({
       where: { id: profile.id },
@@ -28,14 +39,14 @@ export class ProfileService {
     });
   }
 
-  static async getProfile(userId: string) {
+  async getProfile(userId: string) {
     return await prisma.profile.findUnique({
       where: { userId },
     });
   }
 
-  static async updatePreferredCurrency(userId: string, currency: string) {
-    const profile = await ProfileService.getOrCreateProfile(userId);
+  async updatePreferredCurrency(userId: string, currency: string) {
+    const profile = await this.getOrCreateProfile(userId);
 
     return await prisma.profile.update({
       where: { id: profile.id },

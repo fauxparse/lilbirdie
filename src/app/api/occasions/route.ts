@@ -18,11 +18,14 @@ export async function GET(request: NextRequest) {
 
     if (upcoming === "true") {
       const months = Number.parseInt(searchParams.get("months") || "3", 10);
-      const occasions = await OccasionService.getUpcomingOccasions(session.user.id, months);
+      const occasions = await OccasionService.getInstance().getUpcomingOccasions(
+        session.user.id,
+        months
+      );
       return NextResponse.json(occasions);
     }
 
-    const occasions = await OccasionService.getUserOccasions(session.user.id);
+    const occasions = await OccasionService.getInstance().getUserOccasions(session.user.id);
     return NextResponse.json(occasions);
   } catch (error) {
     console.error("Error fetching occasions:", error);
@@ -78,7 +81,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const occasion = await OccasionService.createOccasion(session.user.id, {
+    const occasion = await OccasionService.getInstance().createOccasion(session.user.id, {
       title: title.trim(),
       date: parsedDate,
       type: type as OccasionType,

@@ -24,7 +24,18 @@ export interface UpdateOccasionData {
 }
 
 export class OccasionService {
-  static async createOccasion(ownerId: string, data: CreateOccasionData) {
+  private static instance: OccasionService;
+
+  private constructor() {}
+
+  public static getInstance(): OccasionService {
+    if (!OccasionService.instance) {
+      OccasionService.instance = new OccasionService();
+    }
+    return OccasionService.instance;
+  }
+
+  async createOccasion(ownerId: string, data: CreateOccasionData) {
     return await prisma.occasion.create({
       data: {
         ...data,
@@ -38,7 +49,7 @@ export class OccasionService {
     });
   }
 
-  static async getUserOccasions(userId: string) {
+  async getUserOccasions(userId: string) {
     return await prisma.occasion.findMany({
       where: { ownerId: userId },
       include: {
@@ -50,7 +61,7 @@ export class OccasionService {
     });
   }
 
-  static async getOccasionById(id: string, userId?: string) {
+  async getOccasionById(id: string, userId?: string) {
     const occasion = await prisma.occasion.findUnique({
       where: { id },
       include: {
@@ -72,8 +83,8 @@ export class OccasionService {
     return occasion;
   }
 
-  static async updateOccasion(id: string, userId: string, data: UpdateOccasionData) {
-    const occasion = await OccasionService.getOccasionById(id, userId);
+  async updateOccasion(id: string, userId: string, data: UpdateOccasionData) {
+    const occasion = await this.getOccasionById(id, userId);
     if (!occasion || occasion.ownerId !== userId) {
       return null;
     }
@@ -89,8 +100,8 @@ export class OccasionService {
     });
   }
 
-  static async deleteOccasion(id: string, userId: string) {
-    const occasion = await OccasionService.getOccasionById(id, userId);
+  async deleteOccasion(id: string, userId: string) {
+    const occasion = await this.getOccasionById(id, userId);
     if (!occasion || occasion.ownerId !== userId) {
       return false;
     }
@@ -102,7 +113,7 @@ export class OccasionService {
     return true;
   }
 
-  static async getUpcomingOccasions(userId: string, months = 3) {
+  async getUpcomingOccasions(userId: string, months = 3) {
     const now = new Date();
     const futureDate = new Date();
     futureDate.setMonth(now.getMonth() + months);
@@ -120,7 +131,7 @@ export class OccasionService {
     // Calculate next occurrence for each occasion
     const upcomingOccasions = occasions
       .map((occasion) => {
-        const nextOccurrence = OccasionService.calculateNextOccurrence(
+        const nextOccurrence = this.calculateNextOccurrence(
           occasion.date,
           occasion.isRecurring,
           now
@@ -136,7 +147,7 @@ export class OccasionService {
     return upcomingOccasions;
   }
 
-  static calculateNextOccurrence(
+  calculateNextOccurrence(
     originalDate: Date,
     isRecurring: boolean,
     fromDate: Date = new Date()
@@ -161,7 +172,7 @@ export class OccasionService {
     return nextDate;
   }
 
-  static calculateAge(birthDate: Date, startYear?: number, asOf: Date = new Date()): number | null {
+  calculateAge(birthDate: Date, startYear?: number, asOf: Date = new Date()): number | null {
     if (!startYear) return null;
 
     const birthYear = startYear;
@@ -178,7 +189,7 @@ export class OccasionService {
   }
 
   // Helper methods for creating common occasion types
-  static async createBirthdayOccasion(
+  async createBirthdayOccasion(
     ownerId: string,
     title: string,
     birthDate: Date,
@@ -186,7 +197,7 @@ export class OccasionService {
     entityType?: EntityType,
     entityId?: string
   ) {
-    return OccasionService.createOccasion(ownerId, {
+    return this.createOccasion(ownerId, {
       title,
       date: birthDate,
       type: "BIRTHDAY",
@@ -197,14 +208,14 @@ export class OccasionService {
     });
   }
 
-  static async createAnniversaryOccasion(
+  async createAnniversaryOccasion(
     ownerId: string,
     title: string,
     anniversaryDate: Date,
     entityType?: EntityType,
     entityId?: string
   ) {
-    return OccasionService.createOccasion(ownerId, {
+    return this.createOccasion(ownerId, {
       title,
       date: anniversaryDate,
       type: "ANNIVERSARY",
@@ -214,7 +225,7 @@ export class OccasionService {
     });
   }
 
-  static async createGlobalOccasion(ownerId: string, type: "CHRISTMAS" | "VALENTINES_DAY") {
+  async createGlobalOccasion(ownerId: string, type: "CHRISTMAS" | "VALENTINES_DAY") {
     const dates = {
       CHRISTMAS: new Date(new Date().getFullYear(), 11, 25), // Dec 25
       VALENTINES_DAY: new Date(new Date().getFullYear(), 1, 14), // Feb 14
@@ -225,7 +236,7 @@ export class OccasionService {
       VALENTINES_DAY: "Valentine's Day",
     };
 
-    return OccasionService.createOccasion(ownerId, {
+    return this.createOccasion(ownerId, {
       title: titles[type],
       date: dates[type],
       type,

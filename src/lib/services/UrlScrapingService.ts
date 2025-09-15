@@ -9,15 +9,25 @@ interface ScrapedData {
 
 interface ScrapingError {
   error: string;
-  errorType: 'validation' | 'network' | 'timeout' | 'blocked' | 'parsing' | 'unknown';
+  errorType: "validation" | "network" | "timeout" | "blocked" | "parsing" | "unknown";
   suggestion?: string;
   canRetry?: boolean;
 }
 
 export class UrlScrapingService {
-  private static readonly TIMEOUT_DURATION = 10000; // 10 seconds
+  private static instance: UrlScrapingService;
+  private readonly TIMEOUT_DURATION = 10000; // 10 seconds
 
-  static async scrapeUrl(url: string): Promise<ScrapedData | ScrapingError> {
+  private constructor() {}
+
+  public static getInstance(): UrlScrapingService {
+    if (!UrlScrapingService.instance) {
+      UrlScrapingService.instance = new UrlScrapingService();
+    }
+    return UrlScrapingService.instance;
+  }
+
+  async scrapeUrl(url: string): Promise<ScrapedData | ScrapingError> {
     try {
       // Validate URL format
       let parsedUrl: URL;
@@ -34,7 +44,12 @@ export class UrlScrapingService {
 
       // Check if URL is from a supported domain type
       const hostname = parsedUrl.hostname.toLowerCase();
-      if (hostname === 'localhost' || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('127.')) {
+      if (
+        hostname === "localhost" ||
+        hostname.startsWith("192.168.") ||
+        hostname.startsWith("10.") ||
+        hostname.startsWith("127.")
+      ) {
         return {
           error: "Local URLs are not supported",
           errorType: "validation",
@@ -61,13 +76,14 @@ export class UrlScrapingService {
           return {
             error: "Request timeout",
             errorType: "timeout",
-            suggestion: "The website took too long to respond. Try again or check if the URL is correct.",
+            suggestion:
+              "The website took too long to respond. Try again or check if the URL is correct.",
             canRetry: true,
           };
         }
 
         // Network errors
-        if (error instanceof TypeError && error.message.includes('fetch')) {
+        if (error instanceof TypeError && error.message.includes("fetch")) {
           return {
             error: "Unable to connect to website",
             errorType: "network",
@@ -84,26 +100,27 @@ export class UrlScrapingService {
       if (!response.ok) {
         let errorMessage = "Failed to access website";
         let suggestion = "Try again later or check if the URL is correct.";
-        let errorType: ScrapingError['errorType'] = 'network';
+        let errorType: ScrapingError["errorType"] = "network";
         let canRetry = true;
 
         switch (response.status) {
           case 403:
             errorMessage = "Access denied by website";
-            suggestion = "This website blocks automated requests. Try copying the product details manually.";
-            errorType = 'blocked';
+            suggestion =
+              "This website blocks automated requests. Try copying the product details manually.";
+            errorType = "blocked";
             canRetry = false;
             break;
           case 404:
             errorMessage = "Page not found";
             suggestion = "Please check if the URL is correct and the page still exists.";
-            errorType = 'network';
+            errorType = "network";
             canRetry = false;
             break;
           case 429:
             errorMessage = "Too many requests";
             suggestion = "Please wait a moment before trying again.";
-            errorType = 'blocked';
+            errorType = "blocked";
             canRetry = true;
             break;
           case 500:
@@ -111,7 +128,7 @@ export class UrlScrapingService {
           case 503:
             errorMessage = "Website is currently unavailable";
             suggestion = "The website is having issues. Please try again later.";
-            errorType = 'network';
+            errorType = "network";
             canRetry = true;
             break;
           default:
@@ -130,7 +147,7 @@ export class UrlScrapingService {
       const html = await response.text();
 
       // Check if this is Amazon and use specialized scraping
-      if (hostname.includes('amazon.')) {
+      if (hostname.includes("amazon.")) {
         return this.scrapeAmazon(html, url);
       }
 
@@ -138,13 +155,18 @@ export class UrlScrapingService {
       const scrapedData = this.extractMetadata(html, url);
 
       // Check if we got any useful data
-      const hasUsefulData = scrapedData.title !== 'Untitled' || scrapedData.description || scrapedData.price || scrapedData.imageUrl;
+      const hasUsefulData =
+        scrapedData.title !== "Untitled" ||
+        scrapedData.description ||
+        scrapedData.price ||
+        scrapedData.imageUrl;
 
       if (!hasUsefulData) {
         return {
           error: "No product information found",
           errorType: "parsing",
-          suggestion: "This page doesn't seem to contain product information. Try copying the details manually.",
+          suggestion:
+            "This page doesn't seem to contain product information. Try copying the details manually.",
           canRetry: false,
         };
       }
@@ -161,7 +183,7 @@ export class UrlScrapingService {
     }
   }
 
-  private static scrapeAmazon(html: string, originalUrl: string): ScrapedData {
+  private scrapeAmazon(html: string, originalUrl: string): ScrapedData {
     const data: ScrapedData = {
       title: "Untitled",
       url: originalUrl,
@@ -215,8 +237,12 @@ export class UrlScrapingService {
 
     // First, try to find Amazon's split price format (whole.fraction)
     // Look for all whole/fraction pairs that might be on the page
-    const wholeMatches = [...html.matchAll(/<span[^>]*class="[^"]*a-price-whole[^"]*"[^>]*>([0-9,]+)<\/span>/gi)];
-    const fractionMatches = [...html.matchAll(/<span[^>]*class="[^"]*a-price-fraction[^"]*"[^>]*>([0-9]+)<\/span>/gi)];
+    const wholeMatches = [
+      ...html.matchAll(/<span[^>]*class="[^"]*a-price-whole[^"]*"[^>]*>([0-9,]+)<\/span>/gi),
+    ];
+    const fractionMatches = [
+      ...html.matchAll(/<span[^>]*class="[^"]*a-price-fraction[^"]*"[^>]*>([0-9]+)<\/span>/gi),
+    ];
 
     // Combine whole and fraction prices - assume they appear in matching order
     const minPairs = Math.min(wholeMatches.length, fractionMatches.length);
@@ -224,7 +250,7 @@ export class UrlScrapingService {
       const wholePrice = wholeMatches[i][1].replace(/,/g, "");
       const fraction = fractionMatches[i][1];
       const combinedPrice = Number.parseFloat(`${wholePrice}.${fraction}`);
-      if (!isNaN(combinedPrice) && combinedPrice > 0) {
+      if (!Number.isNaN(combinedPrice) && combinedPrice > 0) {
         foundPrices.push(combinedPrice);
       }
     }
@@ -236,7 +262,7 @@ export class UrlScrapingService {
         for (const match of matches) {
           const priceStr = match[1].replace(/,/g, "");
           const price = Number.parseFloat(priceStr);
-          if (!isNaN(price) && price > 0 && price < 1000000) {
+          if (!Number.isNaN(price) && price > 0 && price < 1000000) {
             foundPrices.push(price);
           }
         }
@@ -245,7 +271,7 @@ export class UrlScrapingService {
         if (match) {
           const priceStr = match[1].replace(/,/g, "");
           const price = Number.parseFloat(priceStr);
-          if (!isNaN(price) && price > 0 && price < 1000000) {
+          if (!Number.isNaN(price) && price > 0 && price < 1000000) {
             foundPrices.push(price);
           }
         }
@@ -272,7 +298,7 @@ export class UrlScrapingService {
         for (const match of matches) {
           const priceStr = match[1];
           const price = Number.parseFloat(priceStr);
-          if (!isNaN(price) && price >= 1.0 && price < 1000000) {
+          if (!Number.isNaN(price) && price >= 1.0 && price < 1000000) {
             foundPrices.push(price);
           }
         }
@@ -282,7 +308,7 @@ export class UrlScrapingService {
     if (foundPrices.length > 0) {
       // Smart price selection for Amazon
       // Filter out very low prices (shipping, small items) and very high prices (bundles, premium editions)
-      const reasonablePrices = foundPrices.filter(price => price >= 5.00 && price <= 500.00);
+      const reasonablePrices = foundPrices.filter((price) => price >= 5.0 && price <= 500.0);
 
       if (reasonablePrices.length > 0) {
         // For Amazon, don't just take the highest - try to find the most likely main product price
@@ -324,15 +350,20 @@ export class UrlScrapingService {
 
     // Smart currency detection for Amazon domains
     const hostname = new URL(originalUrl).hostname.toLowerCase();
-    if (hostname.includes('amazon.com.au')) {
+    if (hostname.includes("amazon.com.au")) {
       data.currency = "AUD";
-    } else if (hostname.includes('amazon.co.uk')) {
+    } else if (hostname.includes("amazon.co.uk")) {
       data.currency = "GBP";
-    } else if (hostname.includes('amazon.ca')) {
+    } else if (hostname.includes("amazon.ca")) {
       data.currency = "CAD";
-    } else if (hostname.includes('amazon.co.jp')) {
+    } else if (hostname.includes("amazon.co.jp")) {
       data.currency = "JPY";
-    } else if (hostname.includes('amazon.de') || hostname.includes('amazon.fr') || hostname.includes('amazon.it') || hostname.includes('amazon.es')) {
+    } else if (
+      hostname.includes("amazon.de") ||
+      hostname.includes("amazon.fr") ||
+      hostname.includes("amazon.it") ||
+      hostname.includes("amazon.es")
+    ) {
       data.currency = "EUR";
     } else {
       data.currency = "USD";
@@ -341,7 +372,7 @@ export class UrlScrapingService {
     return data;
   }
 
-  private static extractMetadata(html: string, originalUrl: string): ScrapedData {
+  private extractMetadata(html: string, originalUrl: string): ScrapedData {
     const data: ScrapedData = {
       url: originalUrl,
       title: "Untitled",
@@ -414,7 +445,7 @@ export class UrlScrapingService {
         for (const match of matches) {
           const priceStr = match[1].replace(/,/g, "");
           const price = Number.parseFloat(priceStr);
-          if (!isNaN(price) && price > 0 && price < 1000000) {
+          if (!Number.isNaN(price) && price > 0 && price < 1000000) {
             foundPrices.push(price);
           }
         }
@@ -423,7 +454,7 @@ export class UrlScrapingService {
         if (match) {
           const priceStr = match[1].replace(/,/g, "");
           const price = Number.parseFloat(priceStr);
-          if (!isNaN(price) && price > 0 && price < 1000000) {
+          if (!Number.isNaN(price) && price > 0 && price < 1000000) {
             foundPrices.push(price);
           }
         }
@@ -431,7 +462,7 @@ export class UrlScrapingService {
     }
 
     if (foundPrices.length > 0) {
-      const reasonablePrices = foundPrices.filter(price => price >= 1.00);
+      const reasonablePrices = foundPrices.filter((price) => price >= 1.0);
       if (reasonablePrices.length > 0) {
         data.price = Math.max(...reasonablePrices);
       } else {
@@ -451,7 +482,13 @@ export class UrlScrapingService {
       data.currency = "CAD";
     } else if (hostname.endsWith(".jp")) {
       data.currency = "JPY";
-    } else if (hostname.includes(".eu") || hostname.endsWith(".de") || hostname.endsWith(".fr") || hostname.endsWith(".it") || hostname.endsWith(".es")) {
+    } else if (
+      hostname.includes(".eu") ||
+      hostname.endsWith(".de") ||
+      hostname.endsWith(".fr") ||
+      hostname.endsWith(".it") ||
+      hostname.endsWith(".es")
+    ) {
       data.currency = "EUR";
     } else if (hostname.endsWith(".com") || hostname.endsWith(".us")) {
       data.currency = "USD";
@@ -470,7 +507,7 @@ export class UrlScrapingService {
     return data;
   }
 
-  private static cleanText(text: string): string {
+  private cleanText(text: string): string {
     return text
       .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")

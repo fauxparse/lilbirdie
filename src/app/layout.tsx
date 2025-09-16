@@ -3,8 +3,10 @@ import "./globals.css";
 import { AppHeader } from "@/components/AppHeader";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider } from "@/components/AuthProvider";
+import { MotionProvider } from "@/components/MotionProvider";
 import { QueryProvider } from "@/components/QueryProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ModalProvider } from "@/components/ui/Modal";
 import { SidebarInset, SidebarProvider } from "@/components/ui/Sidebar";
 import { Toaster } from "sonner";
 
@@ -24,15 +26,19 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <ThemeProvider>
-              <SidebarProvider defaultOpen={false}>
-                <AppSidebar />
-                <SidebarInset>
-                  <AppHeader />
-                  <main className="flex flex-col flex-1 items-center w-full p-4 bg-background text-foreground">
-                    {children}
-                  </main>
-                </SidebarInset>
-              </SidebarProvider>
+              <MotionProvider>
+                <ModalProvider>
+                  <SidebarProvider defaultOpen={false}>
+                    <AppSidebar />
+                    <SidebarInset>
+                      <AppHeader />
+                      <main className="flex flex-col flex-1 items-center w-full p-4 bg-background text-foreground">
+                        {children}
+                      </main>
+                    </SidebarInset>
+                  </SidebarProvider>
+                </ModalProvider>
+              </MotionProvider>
             </ThemeProvider>
           </AuthProvider>
         </QueryProvider>

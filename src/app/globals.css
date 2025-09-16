@@ -125,6 +125,9 @@
   --color-sidebar-border: var(--color-slate-300);
   --color-sidebar-ring: var(--color-pink-500);
 
+  /* Modal */
+  --color-modal-background: var(--color-slate-50);
+
   --color-star: var(--color-yellow-500);
 
   --color-avatar-background: var(--color-slate-200);
@@ -190,6 +193,9 @@
   --color-sidebar-accent-foreground: var(--color-slate-50);
   --color-sidebar-border: var(--color-slate-700);
   --color-sidebar-ring: var(--color-pink-400);
+
+  /* Modal - Dark Mode */
+  --color-modal-background: var(--color-slate-700);
 
   --color-avatar-background: var(--color-slate-700);
 }

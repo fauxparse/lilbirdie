@@ -1,3 +1,4 @@
+import { ClaimWithUser, WishlistWithItems } from "@/types";
 import { WishlistPrivacy } from "@prisma/client";
 import { prisma } from "../db";
 import { PrivacyService } from "./PrivacyService";
@@ -17,9 +18,15 @@ export interface UpdateWishlistData {
 }
 
 export class WishlistService {
-  private static instance: WishlistService;
+  private static instance: WishlistService | undefined;
+
+  private privacyService = PrivacyService.getInstance();
 
   private constructor() {}
+
+  public static resetInstance() {
+    WishlistService.instance = undefined;
+  }
 
   public static getInstance(): WishlistService {
     if (!WishlistService.instance) {
@@ -45,7 +52,7 @@ export class WishlistService {
   }
 
   async getWishlistByPermalink(permalink: string, viewerId?: string) {
-    const wishlist = await prisma.wishlist.findUnique({
+    const wishlist = (await prisma.wishlist.findUnique({
       where: { permalink },
       include: {
         owner: {
@@ -68,7 +75,7 @@ export class WishlistService {
           orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
         },
       },
-    });
+    })) as WishlistWithItems | null;
 
     if (!wishlist) {
       return null;
@@ -96,37 +103,41 @@ export class WishlistService {
     }
 
     // Apply privacy redaction to claims user data
-    const privacyService = PrivacyService.getInstance();
-
     for (const item of wishlist.items) {
       if (item.claims && Array.isArray(item.claims) && item.claims.length > 0) {
         // Type guard to ensure we have claims with user data
         const claimsWithUser = item.claims.filter(
-          (claim): claim is any => claim && typeof claim === "object" && "user" in claim
+          (claim): claim is ClaimWithUser => claim && typeof claim === "object" && "user" in claim
         );
 
         if (claimsWithUser.length > 0) {
-          const claimsWithUserData = claimsWithUser.map((claim) => ({
-            id: claim.id,
-            userId: claim.userId,
-            itemId: claim.itemId,
-            wishlistId: claim.wishlistId,
-            createdAt: claim.createdAt,
-            user: claim.user,
-          }));
-          const redactedClaims = await privacyService.redactClaimsUserData(
+          const claimsWithUserData = claimsWithUser.map(
+            (claim) =>
+              ({
+                id: claim.id,
+                userId: claim.userId,
+                itemId: claim.itemId,
+                wishlistId: claim.wishlistId,
+                createdAt: claim.createdAt,
+                user: claim.user,
+                sent: false,
+                sentAt: null,
+              }) satisfies ClaimWithUser
+          );
+          const redactedClaims = await this.privacyService.redactClaimsUserData(
             claimsWithUserData,
             viewerId || ""
           );
-          (item as any).claims = redactedClaims;
+          item.claims = redactedClaims;
         }
       }
     }
 
     // Redact owner data if not a friend (but not for public wishlists)
     if (viewerId && wishlist.ownerId !== viewerId && wishlist.privacy !== "PUBLIC") {
-      const isOwnerFriend = await privacyService.areFriends(viewerId, wishlist.ownerId);
-      (wishlist as any).owner = privacyService.redactUserData(wishlist.owner, isOwnerFriend);
+      const isOwnerFriend = await this.privacyService.areFriends(viewerId, wishlist.ownerId);
+      wishlist.owner =
+        wishlist.owner && this.privacyService.redactUserData(wishlist.owner, isOwnerFriend);
     }
 
     return wishlist;

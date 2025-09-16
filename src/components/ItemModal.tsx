@@ -69,7 +69,7 @@ export function ItemModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Animated Backdrop */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: esc key works */}
       <div
         className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
           isAnimating ? "opacity-100" : "opacity-0"

@@ -1,24 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CreateWishlistItemData, UpdateWishlistItemData } from "../../../types";
 import { WishlistItemService } from "../WishlistItemService";
-import type { CreateWishlistItemData, UpdateWishlistItemData } from "../WishlistItemService";
 
 // Mock Prisma for unit tests
 vi.mock("@/lib/db", () => ({
   prisma: {
-    wishlistItem: {
-      findUnique: vi.fn(),
+    wishlist: {
       findFirst: vi.fn(),
+    },
+    wishlistItem: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
-      delete: vi.fn(),
     },
     claim: {
       findFirst: vi.fn(),
       create: vi.fn(),
       delete: vi.fn(),
-    },
-    friendship: {
-      findMany: vi.fn(),
     },
   },
 }));
@@ -43,6 +42,12 @@ describe("WishlistItemService", () => {
     vi.clearAllMocks();
     mockPrivacyService = {
       redactClaimsUserData: vi.fn(),
+      areFriends: vi.fn().mockResolvedValue(false),
+      redactUserData: vi
+        .fn()
+        .mockImplementation((userData, isAllowed) =>
+          isAllowed ? userData : { ...userData, name: null, image: null }
+        ),
     };
     (PrivacyService.getInstance as any).mockReturnValue(mockPrivacyService);
   });
@@ -66,30 +71,46 @@ describe("WishlistItemService", () => {
         deletedAt: null,
         wishlist: {
           id: "wishlist-1",
-          title: "My Wishlist",
+          privacy: "PUBLIC",
+          ownerId: "user-1",
           owner: {
             id: "user-1",
             name: "John Doe",
-            email: "john@example.com",
             image: null,
           },
         },
+        claims: [],
       };
 
-      (prisma.wishlistItem.findUnique as any).mockResolvedValue(mockItem);
+      (prisma.wishlistItem.findFirst as any).mockResolvedValue(mockItem);
 
       const result = await WishlistItemService.getInstance().getItemById("item-1");
 
-      expect(prisma.wishlistItem.findUnique).toHaveBeenCalledWith({
-        where: { id: "item-1" },
+      expect(prisma.wishlistItem.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: "item-1",
+          isDeleted: false,
+        },
         include: {
-          claims: false,
           wishlist: {
-            select: {
-              id: true,
-              title: true,
+            include: {
               owner: {
-                select: { id: true, name: true, email: true, image: true },
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
+              },
+            },
+          },
+          claims: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
               },
             },
           },
@@ -97,7 +118,6 @@ describe("WishlistItemService", () => {
       });
 
       expect(result).toEqual(mockItem);
-      expect(mockPrivacyService.redactClaimsUserData).not.toHaveBeenCalled();
     });
 
     it("should fetch wishlist item with redacted claims when viewerId provided", async () => {
@@ -115,18 +135,17 @@ describe("WishlistItemService", () => {
             user: {
               id: "user-2",
               name: "Friend User",
-              email: "friend@example.com",
               image: null,
             },
           },
         ],
         wishlist: {
           id: "wishlist-1",
-          title: "My Wishlist",
+          privacy: "PUBLIC",
+          ownerId: "user-1",
           owner: {
             id: "user-1",
             name: "John Doe",
-            email: "john@example.com",
             image: null,
           },
         },
@@ -143,56 +162,58 @@ describe("WishlistItemService", () => {
         },
       ];
 
-      (prisma.wishlistItem.findUnique as any).mockResolvedValue(mockItem);
+      const mockRedactedOwner = {
+        id: "user-1",
+        name: null,
+        image: null,
+      };
+
+      (prisma.wishlistItem.findFirst as any).mockResolvedValue(mockItem);
       mockPrivacyService.redactClaimsUserData.mockResolvedValue(mockRedactedClaims);
+      mockPrivacyService.areFriends.mockResolvedValue(false);
+      mockPrivacyService.redactUserData.mockReturnValue(mockRedactedOwner);
 
       const result = await WishlistItemService.getInstance().getItemById("item-1", "viewer-1");
 
-      expect(prisma.wishlistItem.findUnique).toHaveBeenCalledWith({
-        where: { id: "item-1" },
-        include: {
-          claims: {
-            include: {
-              user: {
-                select: { id: true, name: true, email: true, image: true },
-              },
-            },
-          },
-          wishlist: {
-            select: {
-              id: true,
-              title: true,
-              owner: {
-                select: { id: true, name: true, email: true, image: true },
-              },
-            },
-          },
-        },
-      });
-
       expect(mockPrivacyService.redactClaimsUserData).toHaveBeenCalledWith(
-        mockItem.claims,
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: "claim-1",
+            userId: "user-2",
+            itemId: "item-1",
+            wishlistId: "wishlist-1",
+            user: expect.objectContaining({
+              id: "user-2",
+              name: "Friend User",
+              image: null,
+            }),
+          }),
+        ]),
         "viewer-1"
       );
 
-      expect(result).toEqual({
-        ...mockItem,
-        claims: mockRedactedClaims,
-      });
+      expect(mockPrivacyService.areFriends).toHaveBeenCalledWith("viewer-1", "user-1");
+
+      expect(result.claims).toEqual(mockRedactedClaims);
+      expect(result.wishlist.owner).toEqual(mockRedactedOwner);
     });
 
-    it("should return null when item does not exist", async () => {
-      (prisma.wishlistItem.findUnique as any).mockResolvedValue(null);
+    it("should throw error when item does not exist", async () => {
+      (prisma.wishlistItem.findFirst as any).mockResolvedValue(null);
 
-      const result = await WishlistItemService.getInstance().getItemById("nonexistent");
-
-      expect(result).toBeNull();
-      expect(mockPrivacyService.redactClaimsUserData).not.toHaveBeenCalled();
+      await expect(WishlistItemService.getInstance().getItemById("nonexistent")).rejects.toThrow(
+        "Item not found"
+      );
     });
   });
 
   describe("createItem", () => {
     it("should create wishlist item", async () => {
+      const mockWishlist = {
+        id: "wishlist-1",
+        ownerId: "user-1",
+      };
+
       const mockCreatedItem = {
         id: "item-1",
         name: "New Item",
@@ -209,18 +230,9 @@ describe("WishlistItemService", () => {
         updatedAt: new Date(),
         deletedAt: null,
         claims: [],
-        wishlist: {
-          id: "wishlist-1",
-          title: "My Wishlist",
-          owner: {
-            id: "user-1",
-            name: "John Doe",
-            email: "john@example.com",
-            image: null,
-          },
-        },
       };
 
+      (prisma.wishlist.findFirst as any).mockResolvedValue(mockWishlist);
       (prisma.wishlistItem.create as any).mockResolvedValue(mockCreatedItem);
 
       const itemData: CreateWishlistItemData = {
@@ -236,29 +248,38 @@ describe("WishlistItemService", () => {
 
       const result = await WishlistItemService.getInstance().createItem(
         "wishlist-1",
-        "user-1", // userId parameter
+        "user-1",
         itemData
       );
 
+      expect(prisma.wishlist.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: "wishlist-1",
+          ownerId: "user-1",
+        },
+      });
+
       expect(prisma.wishlistItem.create).toHaveBeenCalledWith({
         data: {
-          ...itemData,
+          name: "New Item",
+          description: "New description",
+          url: "https://example.com",
+          imageUrl: "https://example.com/image.jpg",
+          price: expect.any(Object), // Prisma.Decimal
+          currency: "USD",
+          priority: 2,
+          tags: ["new", "test"],
           wishlistId: "wishlist-1",
         },
         include: {
           claims: {
             include: {
               user: {
-                select: { id: true, name: true, email: true, image: true },
-              },
-            },
-          },
-          wishlist: {
-            select: {
-              id: true,
-              title: true,
-              owner: {
-                select: { id: true, name: true, email: true, image: true },
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
               },
             },
           },
@@ -269,8 +290,16 @@ describe("WishlistItemService", () => {
     });
   });
 
-  describe("updateWishlistItem", () => {
+  describe("updateItem", () => {
     it("should update wishlist item and apply privacy redaction", async () => {
+      const mockExistingItem = {
+        id: "item-1",
+        isDeleted: false,
+        wishlist: {
+          ownerId: "user-1",
+        },
+      };
+
       const mockUpdatedItem = {
         id: "item-1",
         name: "Updated Item",
@@ -286,21 +315,10 @@ describe("WishlistItemService", () => {
             user: {
               id: "user-2",
               name: "Friend User",
-              email: "friend@example.com",
               image: null,
             },
           },
         ],
-        wishlist: {
-          id: "wishlist-1",
-          title: "My Wishlist",
-          owner: {
-            id: "user-1",
-            name: "John Doe",
-            email: "john@example.com",
-            image: null,
-          },
-        },
       };
 
       const mockRedactedClaims = [
@@ -314,6 +332,7 @@ describe("WishlistItemService", () => {
         },
       ];
 
+      (prisma.wishlistItem.findFirst as any).mockResolvedValue(mockExistingItem);
       (prisma.wishlistItem.update as any).mockResolvedValue(mockUpdatedItem);
       mockPrivacyService.redactClaimsUserData.mockResolvedValue(mockRedactedClaims);
 
@@ -322,29 +341,37 @@ describe("WishlistItemService", () => {
         description: "Updated description",
       };
 
-      const result = await WishlistItemService.getInstance().updateWishlistItem(
+      const result = await WishlistItemService.getInstance().updateItem(
         "item-1",
-        updateData,
-        "viewer-1"
+        "user-1",
+        updateData
       );
+
+      expect(prisma.wishlistItem.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: "item-1",
+          isDeleted: false,
+        },
+        include: {
+          wishlist: true,
+        },
+      });
 
       expect(prisma.wishlistItem.update).toHaveBeenCalledWith({
         where: { id: "item-1" },
-        data: updateData,
+        data: {
+          name: "Updated Item",
+          description: "Updated description",
+        },
         include: {
           claims: {
             include: {
               user: {
-                select: { id: true, name: true, email: true, image: true },
-              },
-            },
-          },
-          wishlist: {
-            select: {
-              id: true,
-              title: true,
-              owner: {
-                select: { id: true, name: true, email: true, image: true },
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
               },
             },
           },
@@ -352,8 +379,20 @@ describe("WishlistItemService", () => {
       });
 
       expect(mockPrivacyService.redactClaimsUserData).toHaveBeenCalledWith(
-        mockUpdatedItem.claims,
-        "viewer-1"
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: "claim-1",
+            userId: "user-2",
+            itemId: "item-1",
+            wishlistId: "wishlist-1",
+            user: expect.objectContaining({
+              id: "user-2",
+              name: "Friend User",
+              image: null,
+            }),
+          }),
+        ]),
+        "user-1"
       );
 
       expect(result).toEqual({
@@ -362,31 +401,31 @@ describe("WishlistItemService", () => {
       });
     });
 
-    it("should not apply privacy redaction when no viewerId provided", async () => {
+    it("should not apply privacy redaction when no claims", async () => {
+      const mockExistingItem = {
+        id: "item-1",
+        isDeleted: false,
+        wishlist: {
+          ownerId: "user-1",
+        },
+      };
+
       const mockUpdatedItem = {
         id: "item-1",
         name: "Updated Item",
         claims: [],
-        wishlist: {
-          id: "wishlist-1",
-          title: "My Wishlist",
-          owner: {
-            id: "user-1",
-            name: "John Doe",
-            email: "john@example.com",
-            image: null,
-          },
-        },
       };
 
+      (prisma.wishlistItem.findFirst as any).mockResolvedValue(mockExistingItem);
       (prisma.wishlistItem.update as any).mockResolvedValue(mockUpdatedItem);
 
       const updateData: UpdateWishlistItemData = {
         name: "Updated Item",
       };
 
-      const result = await WishlistItemService.getInstance().updateWishlistItem(
+      const result = await WishlistItemService.getInstance().updateItem(
         "item-1",
+        "user-1",
         updateData
       );
 
@@ -395,34 +434,38 @@ describe("WishlistItemService", () => {
     });
   });
 
-  describe("deleteWishlistItem", () => {
-    it("should soft delete wishlist item and apply privacy redaction", async () => {
+  describe("deleteItem", () => {
+    it("should soft delete wishlist item", async () => {
+      const mockExistingItem = {
+        id: "item-1",
+        isDeleted: false,
+        wishlist: {
+          ownerId: "user-1",
+        },
+      };
+
       const mockDeletedItem = {
         id: "item-1",
         name: "Deleted Item",
         isDeleted: true,
         deletedAt: new Date(),
         wishlistId: "wishlist-1",
-        claims: [],
-        wishlist: {
-          id: "wishlist-1",
-          title: "My Wishlist",
-          owner: {
-            id: "user-1",
-            name: "John Doe",
-            email: "john@example.com",
-            image: null,
-          },
-        },
       };
 
+      (prisma.wishlistItem.findFirst as any).mockResolvedValue(mockExistingItem);
       (prisma.wishlistItem.update as any).mockResolvedValue(mockDeletedItem);
-      mockPrivacyService.redactClaimsUserData.mockResolvedValue([]);
 
-      const result = await WishlistItemService.getInstance().deleteWishlistItem(
-        "item-1",
-        "viewer-1"
-      );
+      const result = await WishlistItemService.getInstance().deleteItem("item-1", "user-1");
+
+      expect(prisma.wishlistItem.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: "item-1",
+          isDeleted: false,
+        },
+        include: {
+          wishlist: true,
+        },
+      });
 
       expect(prisma.wishlistItem.update).toHaveBeenCalledWith({
         where: { id: "item-1" },
@@ -430,147 +473,143 @@ describe("WishlistItemService", () => {
           isDeleted: true,
           deletedAt: expect.any(Date),
         },
-        include: {
-          claims: {
-            include: {
-              user: {
-                select: { id: true, name: true, email: true, image: true },
-              },
-            },
-          },
-          wishlist: {
-            select: {
-              id: true,
-              title: true,
-              owner: {
-                select: { id: true, name: true, email: true, image: true },
-              },
-            },
-          },
-        },
       });
 
-      expect(mockPrivacyService.redactClaimsUserData).toHaveBeenCalledWith(
-        mockDeletedItem.claims,
-        "viewer-1"
-      );
-
-      expect(result).toEqual({
-        ...mockDeletedItem,
-        claims: [],
-      });
+      expect(result).toEqual(mockDeletedItem);
     });
   });
 
   describe("claimItem", () => {
-    it("should create claim and return item with redacted claims", async () => {
+    it("should create claim and return claim with user data", async () => {
+      const mockItem = {
+        id: "item-1",
+        name: "Claimed Item",
+        wishlistId: "wishlist-1",
+        claims: [],
+        wishlist: {
+          id: "wishlist-1",
+          privacy: "PUBLIC",
+          ownerId: "user-1",
+          owner: {
+            id: "user-1",
+            name: "John Doe",
+            image: null,
+          },
+        },
+      };
+
       const mockClaim = {
         id: "claim-1",
         userId: "user-2",
         itemId: "item-1",
         wishlistId: "wishlist-1",
         createdAt: new Date(),
-      };
-
-      const mockItem = {
-        id: "item-1",
-        name: "Claimed Item",
-        wishlistId: "wishlist-1",
-        claims: [
-          {
-            ...mockClaim,
-            user: {
-              id: "user-2",
-              name: "Claimer",
-              email: "claimer@example.com",
-              image: null,
-            },
-          },
-        ],
-        wishlist: {
-          id: "wishlist-1",
-          title: "My Wishlist",
-          owner: {
-            id: "user-1",
-            name: "John Doe",
-            email: "john@example.com",
-            image: null,
-          },
+        user: {
+          id: "user-2",
+          name: "Claimer",
+          image: null,
+        },
+        item: {
+          id: "item-1",
+          name: "Claimed Item",
         },
       };
 
-      const mockRedactedClaims = [
-        {
-          ...mockClaim,
-          user: {
-            id: "user-2",
-            name: "Claimer",
-            email: "claimer@example.com",
-            image: null,
-          }, // Not redacted for self
-        },
-      ];
-
+      // Mock getItemById call
+      (prisma.wishlistItem.findFirst as any).mockResolvedValue(mockItem);
+      // Mock existing claim check
+      (prisma.claim.findFirst as any).mockResolvedValue(null);
+      // Mock claim creation
       (prisma.claim.create as any).mockResolvedValue(mockClaim);
-      (prisma.wishlistItem.findUnique as any).mockResolvedValue(mockItem);
-      mockPrivacyService.redactClaimsUserData.mockResolvedValue(mockRedactedClaims);
 
       const result = await WishlistItemService.getInstance().claimItem("item-1", "user-2");
 
-      expect(prisma.claim.create).toHaveBeenCalledWith({
-        data: {
-          userId: "user-2",
+      expect(prisma.claim.findFirst).toHaveBeenCalledWith({
+        where: {
           itemId: "item-1",
-          wishlistId: "wishlist-1",
+          userId: "user-2",
         },
       });
 
-      expect(mockPrivacyService.redactClaimsUserData).toHaveBeenCalledWith(
-        mockItem.claims,
-        "user-2"
-      );
-
-      expect(result).toEqual({
-        ...mockItem,
-        claims: mockRedactedClaims,
+      expect(prisma.claim.create).toHaveBeenCalledWith({
+        data: {
+          itemId: "item-1",
+          userId: "user-2",
+          wishlistId: "wishlist-1",
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+          item: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
       });
+
+      expect(result).toEqual(mockClaim);
     });
 
-    it("should return null when item does not exist", async () => {
+    it("should throw error when item does not exist", async () => {
       (prisma.wishlistItem.findFirst as any).mockResolvedValue(null);
 
-      const result = await WishlistItemService.getInstance().claimItem("nonexistent", "user-2");
+      await expect(
+        WishlistItemService.getInstance().claimItem("nonexistent", "user-2")
+      ).rejects.toThrow("Item not found");
 
-      expect(result).toBeNull();
       expect(prisma.claim.create).not.toHaveBeenCalled();
     });
 
-    it("should return null when user tries to claim their own item", async () => {
+    it("should throw error when user tries to claim their own item", async () => {
       const mockItem = {
         id: "item-1",
         wishlistId: "wishlist-1",
+        claims: [],
         wishlist: {
+          id: "wishlist-1",
+          privacy: "PUBLIC",
           ownerId: "user-1",
+          owner: {
+            id: "user-1",
+            name: "John Doe",
+            image: null,
+          },
         },
       };
 
       (prisma.wishlistItem.findFirst as any).mockResolvedValue(mockItem);
 
-      const result = await WishlistItemService.getInstance().claimItem(
-        "item-1",
-        "user-1" // Same as owner
-      );
+      await expect(
+        WishlistItemService.getInstance().claimItem(
+          "item-1",
+          "user-1" // Same as owner
+        )
+      ).rejects.toThrow("Cannot claim your own item");
 
-      expect(result).toBeNull();
       expect(prisma.claim.create).not.toHaveBeenCalled();
     });
 
-    it("should return null when user already has a claim", async () => {
+    it("should throw error when user already has a claim", async () => {
       const mockItem = {
         id: "item-1",
         wishlistId: "wishlist-1",
+        claims: [],
         wishlist: {
+          id: "wishlist-1",
+          privacy: "PUBLIC",
           ownerId: "user-1",
+          owner: {
+            id: "user-1",
+            name: "John Doe",
+            image: null,
+          },
         },
       };
 
@@ -583,73 +622,66 @@ describe("WishlistItemService", () => {
       (prisma.wishlistItem.findFirst as any).mockResolvedValue(mockItem);
       (prisma.claim.findFirst as any).mockResolvedValue(mockExistingClaim);
 
-      const result = await WishlistItemService.getInstance().claimItem("item-1", "user-2");
+      await expect(WishlistItemService.getInstance().claimItem("item-1", "user-2")).rejects.toThrow(
+        "Item already claimed by you"
+      );
 
-      expect(result).toBeNull();
       expect(prisma.claim.create).not.toHaveBeenCalled();
     });
   });
 
   describe("unclaimItem", () => {
-    it("should delete claim and return item with redacted claims", async () => {
-      const mockDeletedClaim = {
-        id: "claim-1",
+    it("should delete claim and return deleted claim", async () => {
+      const mockClaim = {
+        id: "existing-claim",
         userId: "user-2",
         itemId: "item-1",
         wishlistId: "wishlist-1",
-      };
-
-      const mockItem = {
-        id: "item-1",
-        name: "Unclaimed Item",
-        wishlistId: "wishlist-1",
-        claims: [], // No claims after unclaiming
-        wishlist: {
-          id: "wishlist-1",
-          title: "My Wishlist",
-          owner: {
-            id: "user-1",
-            name: "John Doe",
-            email: "john@example.com",
-            image: null,
-          },
+        user: {
+          id: "user-2",
+          name: "Claimer",
+          image: null,
         },
       };
 
-      (prisma.claim.delete as any).mockResolvedValue(mockDeletedClaim);
-      (prisma.wishlistItem.findUnique as any).mockResolvedValue(mockItem);
-      mockPrivacyService.redactClaimsUserData.mockResolvedValue([]);
+      (prisma.claim.findFirst as any).mockResolvedValue(mockClaim);
+      (prisma.claim.delete as any).mockResolvedValue(mockClaim);
 
       const result = await WishlistItemService.getInstance().unclaimItem("item-1", "user-2");
+
+      expect(prisma.claim.findFirst).toHaveBeenCalledWith({
+        where: {
+          itemId: "item-1",
+          userId: "user-2",
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+      });
 
       expect(prisma.claim.delete).toHaveBeenCalledWith({
         where: {
-          userId_itemId: {
-            userId: "user-2",
-            itemId: "item-1",
-          },
+          id: "existing-claim",
         },
       });
 
-      expect(mockPrivacyService.redactClaimsUserData).toHaveBeenCalledWith(
-        mockItem.claims,
-        "user-2"
-      );
-
-      expect(result).toEqual({
-        ...mockItem,
-        claims: [],
-      });
+      expect(result).toEqual(mockClaim);
     });
 
-    it("should return null when claim does not exist", async () => {
-      const mockError = new Error("Record to delete does not exist");
-      (prisma.claim.delete as any).mockRejectedValue(mockError);
+    it("should throw error when claim does not exist", async () => {
+      (prisma.claim.findFirst as any).mockResolvedValue(null);
 
-      const result = await WishlistItemService.getInstance().unclaimItem("item-1", "user-2");
+      await expect(
+        WishlistItemService.getInstance().unclaimItem("item-1", "user-2")
+      ).rejects.toThrow("Claim not found");
 
-      expect(result).toBeNull();
-      expect(mockPrivacyService.redactClaimsUserData).not.toHaveBeenCalled();
+      expect(prisma.claim.delete).not.toHaveBeenCalled();
     });
   });
 });

@@ -200,7 +200,9 @@ describe("PrivacyService", () => {
         userId: "user-1",
         itemId: "item-1",
         wishlistId: "wishlist-1",
-        createdAt: "2024-01-01T00:00:00Z",
+        sent: false,
+        sentAt: null,
+        createdAt: new Date("2024-01-01T00:00:00Z"),
         user: {
           id: "user-1",
           name: "John Doe",
@@ -212,7 +214,9 @@ describe("PrivacyService", () => {
         userId: "user-2",
         itemId: "item-1",
         wishlistId: "wishlist-1",
-        createdAt: "2024-01-02T00:00:00Z",
+        sent: false,
+        sentAt: null,
+        createdAt: new Date("2024-01-02T00:00:00Z"),
         user: {
           id: "user-2",
           name: "Jane Smith",

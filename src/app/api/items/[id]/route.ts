@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
+import { UpdateWishlistItemData } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -37,7 +38,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body = await request.json();
     const { name, description, url, imageUrl, price, currency, priority, tags } = body;
 
-    const updateData: any = {};
+    const updateData: UpdateWishlistItemData = {};
 
     if (name !== undefined) {
       if (name.trim() === "") {

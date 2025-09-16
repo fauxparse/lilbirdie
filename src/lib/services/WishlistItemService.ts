@@ -164,27 +164,23 @@ export class WishlistItemService {
 
     if (item.claims && item.claims.length > 0) {
       const claimsWithUserData = item.claims.map((claim) => ({
-        id: claim.id,
-        userId: claim.userId,
-        itemId: claim.itemId,
-        wishlistId: claim.wishlistId,
-        createdAt: claim.createdAt,
-        user: claim.user,
+        ...claim,
+        user: { ...claim.user },
       }));
       const redactedClaims = await privacyService.redactClaimsUserData(
         claimsWithUserData,
         viewerId || ""
       );
-      (item as any).claims = redactedClaims;
+      item.claims = redactedClaims as typeof item.claims;
     }
 
     // Redact wishlist owner data if not a friend
     if (viewerId && item.wishlist.ownerId !== viewerId) {
       const isOwnerFriend = await privacyService.areFriends(viewerId, item.wishlist.ownerId);
-      (item.wishlist as any).owner = privacyService.redactUserData(
+      item.wishlist.owner = privacyService.redactUserData(
         item.wishlist.owner,
         isOwnerFriend
-      );
+      ) as typeof item.wishlist.owner;
     }
 
     return item;
@@ -258,11 +254,13 @@ export class WishlistItemService {
         userId: claim.userId,
         itemId: claim.itemId,
         wishlistId: claim.wishlistId,
+        sent: claim.sent,
+        sentAt: claim.sentAt,
         createdAt: claim.createdAt,
         user: claim.user,
       }));
       const redactedClaims = await privacyService.redactClaimsUserData(claimsWithUserData, userId);
-      (updatedItem as any).claims = redactedClaims;
+      updatedItem.claims = redactedClaims as typeof updatedItem.claims;
     }
 
     return updatedItem;

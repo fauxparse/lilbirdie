@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { ProfileService } from "@/lib/services/ProfileService";
+import { Profile } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -34,24 +35,20 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const { preferredCurrency, theme } = body;
 
-    let updatedProfile;
+    const updates: Partial<Profile> = {};
 
     if (preferredCurrency) {
-      updatedProfile = await ProfileService.getInstance().updatePreferredCurrency(
-        session.user.id,
-        preferredCurrency
-      );
+      updates.preferredCurrency = preferredCurrency;
     }
 
     if (theme) {
-      updatedProfile = await ProfileService.getInstance().updateTheme(session.user.id, theme);
+      updates.theme = theme;
     }
 
-    // If both were provided, get the final state
-    if (preferredCurrency && theme) {
-      updatedProfile = await ProfileService.getInstance().getOrCreateProfile(session.user.id);
-    }
-
+    const updatedProfile = await ProfileService.getInstance().updateProfile(
+      session.user.id,
+      updates
+    );
     return NextResponse.json(updatedProfile);
   } catch (error) {
     console.error("Profile update error:", error);

@@ -146,13 +146,17 @@ export class UrlScrapingService {
 
       const html = await response.text();
 
+      // Limit HTML size to prevent memory issues (1MB limit)
+      const maxHtmlSize = 1024 * 1024; // 1MB
+      const htmlToProcess = html.length > maxHtmlSize ? html.substring(0, maxHtmlSize) : html;
+
       // Check if this is Amazon and use specialized scraping
       if (hostname.includes("amazon.")) {
-        return this.scrapeAmazon(html, url);
+        return this.scrapeAmazon(htmlToProcess, url);
       }
 
       // Extract OpenGraph and meta data for other sites
-      const scrapedData = this.extractMetadata(html, url);
+      const scrapedData = this.extractMetadata(htmlToProcess, url);
 
       // Check if we got any useful data
       const hasUsefulData =
@@ -193,15 +197,14 @@ export class UrlScrapingService {
     // Amazon-specific selectors
     const amazonSelectors = {
       title: [
-        /#productTitle[^>]*>([^<]+)</i,
+        /<[^>]*id="productTitle"[^>]*>([^<]+)</i,
         /data-automation-id="title"[^>]*>([^<]+)</i,
         /<h1[^>]*class="[^"]*product[^"]*title[^"]*"[^>]*>([^<]+)</i,
         /<span[^>]*id="productTitle"[^>]*>([^<]+)</i,
       ],
       price: [
         // Amazon price classes and selectors (comprehensive patterns)
-        /<span[^>]*class="[^"]*a-price-whole[^"]*"[^>]*>([0-9,]+)<\/span>/i,
-        /<span[^>]*class="[^"]*a-price-fraction[^"]*"[^>]*>([0-9]+)<\/span>/i,
+        // Note: a-price-whole and a-price-fraction are handled separately in combination logic
         /<span[^>]*class="[^"]*a-offscreen[^"]*"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})<\/span>/i,
         /<span[^>]*class="[^"]*a-price-range-price[^"]*"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})<\/span>/i,
         /data-automation-id="price"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})/i,
@@ -209,11 +212,11 @@ export class UrlScrapingService {
         // Amazon-specific price containers
         /<span[^>]*id="[^"]*price[^"]*"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})/i,
         /<div[^>]*class="[^"]*price[^"]*"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})/i,
-        // Generic currency patterns (broader search)
-        /(?:A\$|AU\$|NZ\$|CA\$)\s*([0-9,]+\.?\d{0,2})/gi,
-        /\$\s*([0-9,]+\.?\d{0,2})/gi,
-        /£\s*([0-9,]+\.?\d{0,2})/gi,
-        /€\s*([0-9,]+\.?\d{0,2})/gi,
+        // Generic currency patterns (broader search) - removed global flags to prevent memory issues
+        /(?:A\$|AU\$|NZ\$|CA\$)\s*([0-9,]+\.?\d{0,2})/i,
+        /\$\s*([0-9,]+\.?\d{0,2})/i,
+        /£\s*([0-9,]+\.?\d{0,2})/i,
+        /€\s*([0-9,]+\.?\d{0,2})/i,
       ],
       image: [
         /"hiRes":"([^"]+)"/i,
@@ -234,6 +237,7 @@ export class UrlScrapingService {
 
     // Extract price with Amazon-specific handling
     const foundPrices: number[] = [];
+    const maxPricesToFind = 50; // Prevent excessive price collection
 
     // First, try to find Amazon's split price format (whole.fraction)
     // Look for all whole/fraction pairs that might be on the page
@@ -246,7 +250,7 @@ export class UrlScrapingService {
 
     // Combine whole and fraction prices - assume they appear in matching order
     const minPairs = Math.min(wholeMatches.length, fractionMatches.length);
-    for (let i = 0; i < minPairs; i++) {
+    for (let i = 0; i < minPairs && foundPrices.length < maxPricesToFind; i++) {
       const wholePrice = wholeMatches[i][1].replace(/,/g, "");
       const fraction = fractionMatches[i][1];
       const combinedPrice = Number.parseFloat(`${wholePrice}.${fraction}`);
@@ -255,10 +259,14 @@ export class UrlScrapingService {
       }
     }
 
-    // Then try other patterns
+    // Then try other patterns - use a safer approach for multiple matches
     for (const pattern of amazonSelectors.price) {
-      if (pattern.global) {
-        const matches = [...html.matchAll(pattern)];
+      if (foundPrices.length >= maxPricesToFind) break;
+
+      // For a-offscreen patterns, manually search for multiple occurrences
+      if (pattern.source.includes("a-offscreen")) {
+        const regex = new RegExp(pattern.source, "gi"); // Create global version for this specific case
+        const matches = [...html.matchAll(regex)].slice(0, 10); // Limit to 10 matches
         for (const match of matches) {
           const priceStr = match[1].replace(/,/g, "");
           const price = Number.parseFloat(priceStr);
@@ -267,6 +275,7 @@ export class UrlScrapingService {
           }
         }
       } else {
+        // For other patterns, use single match
         const match = html.match(pattern);
         if (match) {
           const priceStr = match[1].replace(/,/g, "");
@@ -281,21 +290,24 @@ export class UrlScrapingService {
     // Additional fallback patterns specifically for Amazon
     if (foundPrices.length === 0) {
       const fallbackPatterns = [
-        // Look for any decimal numbers after A$ or AU$ in the HTML
-        /A\$\s*([0-9]+\.?[0-9]*)/gi,
-        /AU\$\s*([0-9]+\.?[0-9]*)/gi,
+        // Look for any decimal numbers after A$ or AU$ in the HTML - removed global flags
+        /A\$\s*([0-9]+\.?[0-9]*)/i,
+        /AU\$\s*([0-9]+\.?[0-9]*)/i,
         // Look for price in any span or div containing "price" in class
-        /<[^>]*class="[^"]*price[^"]*"[^>]*>[^0-9]*([0-9]+\.?[0-9]*)/gi,
+        /<[^>]*class="[^"]*price[^"]*"[^>]*>[^0-9]*([0-9]+\.?[0-9]*)/i,
         // Look for JSON-like structures with price
-        /"displayPrice":"[^"]*?([0-9]+\.?[0-9]*)/gi,
-        /"price":"[^"]*?([0-9]+\.?[0-9]*)/gi,
+        /"displayPrice":"[^"]*?([0-9]+\.?[0-9]*)/i,
+        /"price":"[^"]*?([0-9]+\.?[0-9]*)/i,
         // Look for data attributes containing price
-        /data-[^=]*price[^=]*="[^"]*?([0-9]+\.?[0-9]*)/gi,
+        /data-[^=]*price[^=]*="[^"]*?([0-9]+\.?[0-9]*)/i,
       ];
 
       for (const pattern of fallbackPatterns) {
-        const matches = [...html.matchAll(pattern)];
-        for (const match of matches) {
+        if (foundPrices.length >= maxPricesToFind) break;
+
+        // Since we removed global flags, use single match instead of matchAll
+        const match = html.match(pattern);
+        if (match) {
           const priceStr = match[1];
           const price = Number.parseFloat(priceStr);
           if (!Number.isNaN(price) && price >= 1.0 && price < 1000000) {
@@ -382,7 +394,7 @@ export class UrlScrapingService {
     // Helper function to extract content from meta tags
     const extractMeta = (property: string, attribute = "property") => {
       const regex = new RegExp(
-        `<meta\\\\s+${attribute}=[\"']${property}[\"']\\\\s+content=[\"']([^\"']+)[\"'][^>]*>`,
+        `<meta\\s+${attribute}=[\"']${property}[\"']\\s+content=[\"']([^\"']+)[\"'][^>]*>`,
         "i"
       );
       const match = html.match(regex);
@@ -398,17 +410,20 @@ export class UrlScrapingService {
 
     // Extract title
     data.title =
-      extractMeta("og:title") || extractMeta("twitter:title") || extractTag("title") || "Untitled";
+      extractMeta("og:title") ||
+      extractMeta("twitter:title", "name") ||
+      extractTag("title") ||
+      "Untitled";
 
     // Extract description
     data.description =
       extractMeta("og:description") ||
-      extractMeta("twitter:description") ||
+      extractMeta("twitter:description", "name") ||
       extractMeta("description", "name") ||
       undefined;
 
     // Extract image
-    const ogImage = extractMeta("og:image") || extractMeta("twitter:image");
+    const ogImage = extractMeta("og:image") || extractMeta("twitter:image", "name");
     if (ogImage) {
       try {
         data.imageUrl = new URL(ogImage, originalUrl).href;
@@ -420,28 +435,37 @@ export class UrlScrapingService {
     // Extract price - generic patterns for non-Amazon sites
     const pricePatterns = [
       // Schema.org structured data (highest priority)
-      /\"price\":\\s*\"?([0-9,]+\\.?\\d{0,2})\"?/i,
+      /"price":\s*"?([0-9,]+\.?\d{0,2})"?/i,
       // Common price class/id patterns
-      /class=\"[^\"]*price[^\"]*\"[^>]*>\\D*([0-9,]+\\.?\\d{0,2})/i,
-      /id=\"[^\"]*price[^\"]*\"[^>]*>\\D*([0-9,]+\\.?\\d{0,2})/i,
+      /class="[^"]*price[^"]*"[^>]*>\D*([0-9,]+\.?\d{0,2})/i,
+      /id="[^"]*price[^"]*"[^>]*>\D*([0-9,]+\.?\d{0,2})/i,
       // Price spans and divs
-      /<(?:span|div)[^>]*class=\"[^\"]*price[^\"]*\"[^>]*>\\D*([0-9,]+\\.?\\d{0,2})/i,
-      // Currency symbols with prices (more specific patterns first)
-      /NZ\\$\\s*([0-9,]+\\.?\\d{0,2})/gi,
-      /AU\\$\\s*([0-9,]+\\.?\\d{0,2})/gi,
-      /CA\\$\\s*([0-9,]+\\.?\\d{0,2})/gi,
-      /\\$\\s*([0-9,]+\\.?\\d{0,2})/g,
-      /£\\s*([0-9,]+\\.?\\d{0,2})/g,
-      /€\\s*([0-9,]+\\.?\\d{0,2})/g,
+      /<(?:span|div)[^>]*class="[^"]*price[^"]*"[^>]*>\D*([0-9,]+\.?\d{0,2})/i,
+      // Currency symbols with prices (more specific patterns first) - removed global flags
+      /NZ\$\s*([0-9,]+\.?\d{0,2})/i,
+      /AU\$\s*([0-9,]+\.?\d{0,2})/i,
+      /CA\$\s*([0-9,]+\.?\d{0,2})/i,
+      /\$\s*([0-9,]+\.?\d{0,2})/i,
+      /£\s*([0-9,]+\.?\d{0,2})/i,
+      /€\s*([0-9,]+\.?\d{0,2})/i,
       // Generic price patterns (lowest priority)
-      /price[^>]*>\\D*([0-9,]+\\.?\\d{0,2})/i,
-      /price.*?([0-9,]+\\.?\\d{0,2})/i,
+      /price[^>]*>\D*([0-9,]+\.?\d{0,2})/i,
+      /price.*?([0-9,]+\.?\d{0,2})/i,
     ];
 
     const foundPrices: number[] = [];
+    const maxPricesToFind = 30; // Prevent excessive price collection
     for (const pattern of pricePatterns) {
-      if (pattern.global) {
-        const matches = [...html.matchAll(pattern)];
+      if (foundPrices.length >= maxPricesToFind) break;
+
+      // For patterns that might have multiple matches, use a safer approach
+      if (
+        pattern.source.includes("\\$") ||
+        pattern.source.includes("£") ||
+        pattern.source.includes("€")
+      ) {
+        const regex = new RegExp(pattern.source, "gi"); // Create global version for currency patterns
+        const matches = [...html.matchAll(regex)].slice(0, 10); // Limit to 10 matches
         for (const match of matches) {
           const priceStr = match[1].replace(/,/g, "");
           const price = Number.parseFloat(priceStr);
@@ -450,6 +474,7 @@ export class UrlScrapingService {
           }
         }
       } else {
+        // For other patterns, use single match
         const match = html.match(pattern);
         if (match) {
           const priceStr = match[1].replace(/,/g, "");

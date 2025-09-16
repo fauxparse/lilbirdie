@@ -69,7 +69,7 @@ export default function NewWishlistPage() {
         onSubmit={handleSubmit}
         isSubmitting={createWishlistMutation.isPending}
         error={createWishlistMutation.error?.message || null}
-        cancelHref="/wishlists"
+        onCancel={() => router.push("/wishlists")}
       />
     </div>
   );

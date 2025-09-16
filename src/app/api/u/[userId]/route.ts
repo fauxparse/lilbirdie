@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { PrivacyService } from "@/lib/services/PrivacyService";
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -78,7 +79,7 @@ export async function GET(
     }
 
     // Get visible wishlists based on relationship
-    let whereClause: any = {
+    let whereClause: Prisma.WishlistWhereInput = {
       ownerId: userId,
       privacy: "PUBLIC",
     };

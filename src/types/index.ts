@@ -3,17 +3,19 @@ import type { Claim, User, Wishlist, WishlistItem } from "@prisma/client";
 // Base types from Prisma
 export type { User, WishlistItem, Claim, Wishlist };
 
+export interface Profile {
+  id: string;
+  userId: string;
+  birthday: Date | null;
+  preferredCurrency: string;
+  theme: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Extended types with relations
 export interface UserWithProfile extends User {
-  profile?: {
-    id: string;
-    userId: string;
-    birthday: Date | null;
-    preferredCurrency: string;
-    theme: string;
-    createdAt: Date;
-    updatedAt: Date;
-  };
+  profile?: Profile;
 }
 
 export interface ClaimWithUser extends Claim {

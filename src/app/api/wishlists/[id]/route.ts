@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { WishlistService } from "@/lib/services/WishlistService";
+import { UpdateWishlistData, WishlistService } from "@/lib/services/WishlistService";
 import { WishlistPrivacy } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -40,7 +40,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body = await request.json();
     const { title, description, privacy, isDefault } = body;
 
-    const updateData: any = {};
+    const updateData: UpdateWishlistData = {};
 
     if (title !== undefined) {
       if (title.trim() === "") {

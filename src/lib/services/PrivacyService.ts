@@ -1,3 +1,4 @@
+import { ClaimWithUser } from "@/types";
 import { prisma } from "../db";
 
 export interface UserData {
@@ -75,16 +76,18 @@ export class PrivacyService {
     });
 
     // Initialize all as not friends
-    otherUserIds.forEach((userId) => friendshipMap.set(userId, false));
+    for (const userId of otherUserIds) {
+      friendshipMap.set(userId, false);
+    }
 
     // Mark actual friends
-    friendships.forEach((friendship) => {
+    for (const friendship of friendships) {
       if (friendship.userId === viewerId) {
         friendshipMap.set(friendship.friendId, true);
       } else {
         friendshipMap.set(friendship.userId, true);
       }
-    });
+    }
 
     return friendshipMap;
   }
@@ -117,35 +120,19 @@ export class PrivacyService {
    * Process claims data to redact non-friend user information
    */
   async redactClaimsUserData(
-    claims: Array<{
-      id: string;
-      userId: string;
-      itemId: string;
-      wishlistId: string;
-      createdAt: string | Date;
-      user: UserData;
-    }>,
+    claims: Array<ClaimWithUser>,
     viewerId: string
-  ): Promise<
-    Array<{
-      id: string;
-      userId: string;
-      itemId: string;
-      wishlistId: string;
-      createdAt: string | Date;
-      user: RedactedUserData;
-    }>
-  > {
+  ): Promise<Array<ClaimWithUser>> {
     if (claims.length === 0) {
       return [];
     }
 
-    const userIds = claims.map((claim) => claim.user.id);
+    const userIds = claims.map((claim) => claim.userId);
     const friendshipMap = await this.checkFriendships(viewerId, userIds);
 
     return claims.map((claim) => ({
       ...claim,
-      user: this.redactUserData(claim.user, friendshipMap.get(claim.user.id) || false),
+      user: claim.user && this.redactUserData(claim.user, friendshipMap.get(claim.userId) || false),
     }));
   }
 }

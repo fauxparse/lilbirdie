@@ -72,7 +72,7 @@ export default function EditWishlistPage({ params }: EditWishlistPageProps) {
       toast.success("Wishlist updated successfully!");
 
       // Navigate back to the wishlist
-      router.push(`/wishlists/${updatedWishlist.permalink}` as any);
+      router.push(`/w/${updatedWishlist.permalink}`);
     },
   });
 
@@ -131,7 +131,7 @@ export default function EditWishlistPage({ params }: EditWishlistPageProps) {
       <div className="container mx-auto p-6 max-w-2xl">
         <div className="mb-6">
           <Button variant="ghost" asChild className="mb-4">
-            <Link href={`/wishlists/${permalink}` as any}>
+            <Link href={`/w/${permalink}`}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Wishlist
             </Link>
@@ -147,7 +147,7 @@ export default function EditWishlistPage({ params }: EditWishlistPageProps) {
     <div className="container mx-auto p-6 max-w-2xl">
       <div className="mb-6">
         <Button variant="ghost" asChild className="mb-4">
-          <Link href={`/wishlists/${permalink}` as any}>
+          <Link href={`/w/${permalink}`}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Wishlist
           </Link>
@@ -167,7 +167,7 @@ export default function EditWishlistPage({ params }: EditWishlistPageProps) {
         onSubmit={handleSubmit}
         isSubmitting={updateWishlistMutation.isPending}
         error={updateWishlistMutation.error?.message || null}
-        cancelHref={`/wishlists/${permalink}`}
+        onCancel={() => router.push(`/w/${permalink}`)}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+import { Profile } from "@/types";
 import { prisma } from "../db";
 
 export class ProfileService {
@@ -42,6 +43,15 @@ export class ProfileService {
   async getProfile(userId: string) {
     return await prisma.profile.findUnique({
       where: { userId },
+    });
+  }
+
+  async updateProfile(userId: string, data: Partial<Profile>) {
+    const profile = await this.getOrCreateProfile(userId);
+
+    return await prisma.profile.update({
+      where: { id: profile.id },
+      data,
     });
   }
 

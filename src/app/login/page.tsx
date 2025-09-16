@@ -49,7 +49,9 @@ export default function LoginPage() {
     try {
       console.log("Attempting auth with:", { email, isSignUp, name: isSignUp ? name : undefined });
 
-      let result: any;
+      let result:
+        | Awaited<ReturnType<typeof signUp.email>>
+        | Awaited<ReturnType<typeof signIn.email>>;
       if (isSignUp) {
         result = await signUp.email({
           email,

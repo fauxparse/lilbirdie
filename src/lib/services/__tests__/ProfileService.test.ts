@@ -26,7 +26,7 @@ describe("ProfileService", () => {
         id: "profile-1",
         userId: "user-1",
         birthday: null,
-        preferredCurrency: "USD",
+        preferredCurrency: "NZD",
         theme: "dark",
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-01"),
@@ -49,7 +49,7 @@ describe("ProfileService", () => {
         id: "profile-1",
         userId: "user-1",
         birthday: null,
-        preferredCurrency: "USD",
+        preferredCurrency: "NZD",
         theme: "system",
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-01"),
@@ -68,7 +68,7 @@ describe("ProfileService", () => {
         data: {
           userId: "user-1",
           theme: "system",
-          preferredCurrency: "USD",
+          preferredCurrency: "NZD",
         },
       });
 
@@ -80,7 +80,7 @@ describe("ProfileService", () => {
         id: "profile-1",
         userId: "user-1",
         birthday: null,
-        preferredCurrency: "USD",
+        preferredCurrency: "NZD",
         theme: "light",
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-01"),
@@ -103,7 +103,7 @@ describe("ProfileService", () => {
         id: "profile-1",
         userId: "user-1",
         birthday: null,
-        preferredCurrency: "USD",
+        preferredCurrency: "NZD",
         theme: "system",
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-01"),
@@ -137,7 +137,7 @@ describe("ProfileService", () => {
         id: "profile-1",
         userId: "user-1",
         birthday: null,
-        preferredCurrency: "USD",
+        preferredCurrency: "NZD",
         theme: "system",
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-01"),
@@ -163,7 +163,7 @@ describe("ProfileService", () => {
         data: {
           userId: "user-1",
           theme: "system",
-          preferredCurrency: "USD",
+          preferredCurrency: "NZD",
         },
       });
 
@@ -265,7 +265,7 @@ describe("ProfileService", () => {
         id: "profile-1",
         userId: "user-1",
         birthday: null,
-        preferredCurrency: "USD",
+        preferredCurrency: "NZD",
         theme: "system",
         createdAt: new Date("2024-01-01"),
         updatedAt: new Date("2024-01-01"),
@@ -326,7 +326,7 @@ describe("ProfileService", () => {
         data: {
           userId: "user-1",
           theme: "system",
-          preferredCurrency: "USD",
+          preferredCurrency: "NZD",
         },
       });
     });
@@ -334,7 +334,7 @@ describe("ProfileService", () => {
     it("should verify all default field values are set correctly", async () => {
       const expectedDefaults = {
         theme: "system",
-        preferredCurrency: "USD",
+        preferredCurrency: "NZD",
       };
 
       (prisma.profile.findUnique as any).mockResolvedValue(null);

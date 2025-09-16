@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { server } from "../../../test/mocks/server";
 import { UrlScrapingService } from "../UrlScrapingService";
 
 // Mock fetch globally
@@ -6,12 +7,22 @@ const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 describe("UrlScrapingService", () => {
+  // Disable MSW for this test suite since we're testing external HTTP requests
+  beforeAll(() => {
+    server.close();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  // Re-enable MSW after this test suite
+  afterAll(() => {
+    server.listen({ onUnhandledRequest: "error" });
   });
 
   describe("URL Validation", () => {
@@ -286,7 +297,7 @@ describe("UrlScrapingService", () => {
         title: "Amazon Test Product",
         url: "https://amazon.com.au/product/test",
         imageUrl: "https://images-na.ssl-images-amazon.com/images/I/test.jpg",
-        price: 59,
+        price: 59.17,
         currency: "AUD",
       });
     });
@@ -343,7 +354,7 @@ describe("UrlScrapingService", () => {
       expect(result).toEqual({
         title: "UK Product",
         url: "https://amazon.co.uk/product",
-        price: 25,
+        price: 25.99,
         currency: "GBP",
       });
     });

@@ -1,5 +1,4 @@
 "use client";
-
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -8,7 +7,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { Switch } from "@/components/ui/Switch";
 import { Textarea } from "@/components/ui/Textarea";
 import { Lock, Users } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type Privacy = "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE";
@@ -27,7 +25,7 @@ export interface WishlistFormProps {
   isSubmitting?: boolean;
   error?: string | null;
   submitLabel?: string;
-  cancelHref: string;
+  onCancel: () => void;
 }
 
 export function WishlistForm({
@@ -37,7 +35,7 @@ export function WishlistForm({
   isSubmitting = false,
   error = null,
   submitLabel,
-  cancelHref,
+  onCancel,
 }: WishlistFormProps) {
   const [title, setTitle] = useState(initialData.title || "");
   const [description, setDescription] = useState(initialData.description || "");
@@ -148,8 +146,8 @@ export function WishlistForm({
             <Button type="submit" disabled={!title.trim() || isSubmitting} className="flex-1">
               {isSubmitting ? submittingLabel : submitLabel || defaultSubmitLabel}
             </Button>
-            <Button type="button" variant="outline" asChild>
-              <Link href={cancelHref as any}>Cancel</Link>
+            <Button type="button" variant="outline" asChild onClick={onCancel}>
+              Cancel
             </Button>
           </div>
 

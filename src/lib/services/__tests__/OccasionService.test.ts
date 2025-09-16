@@ -41,7 +41,6 @@ describe("OccasionService", () => {
         owner: {
           id: "user-1",
           name: "Test User",
-          email: "test@example.com",
           image: null,
         },
       };
@@ -72,7 +71,7 @@ describe("OccasionService", () => {
         },
         include: {
           owner: {
-            select: { id: true, name: true, email: true, image: true },
+            select: { id: true, name: true, image: true },
           },
         },
       });
@@ -97,7 +96,6 @@ describe("OccasionService", () => {
         owner: {
           id: "user-1",
           name: "Test User",
-          email: "test@example.com",
           image: null,
         },
       };
@@ -130,7 +128,7 @@ describe("OccasionService", () => {
         },
         include: {
           owner: {
-            select: { id: true, name: true, email: true, image: true },
+            select: { id: true, name: true, image: true },
           },
         },
       });
@@ -165,7 +163,7 @@ describe("OccasionService", () => {
         where: { ownerId: "user-1" },
         include: {
           owner: {
-            select: { id: true, name: true, email: true, image: true },
+            select: { id: true, name: true, image: true },
           },
         },
         orderBy: { date: "asc" },
@@ -201,7 +199,7 @@ describe("OccasionService", () => {
         where: { id: "occ-1" },
         include: {
           owner: {
-            select: { id: true, name: true, email: true, image: true },
+            select: { id: true, name: true, image: true },
           },
         },
       });
@@ -265,7 +263,7 @@ describe("OccasionService", () => {
         data: updateData,
         include: {
           owner: {
-            select: { id: true, name: true, email: true, image: true },
+            select: { id: true, name: true, image: true },
           },
         },
       });
@@ -532,7 +530,7 @@ describe("OccasionService", () => {
         },
         include: {
           owner: {
-            select: { id: true, name: true, email: true, image: true },
+            select: { id: true, name: true, image: true },
           },
         },
       });
@@ -579,7 +577,7 @@ describe("OccasionService", () => {
         },
         include: {
           owner: {
-            select: { id: true, name: true, email: true, image: true },
+            select: { id: true, name: true, image: true },
           },
         },
       });
@@ -619,7 +617,7 @@ describe("OccasionService", () => {
         },
         include: {
           owner: {
-            select: { id: true, name: true, email: true, image: true },
+            select: { id: true, name: true, image: true },
           },
         },
       });
@@ -657,7 +655,7 @@ describe("OccasionService", () => {
         },
         include: {
           owner: {
-            select: { id: true, name: true, email: true, image: true },
+            select: { id: true, name: true, image: true },
           },
         },
       });

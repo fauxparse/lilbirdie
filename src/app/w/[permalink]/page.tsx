@@ -114,7 +114,10 @@ export default function PublicWishlistPage({
 
       // Snapshot the previous values
       const previousItemData = queryClient.getQueryData<WishlistItemResponse>(["item", itemId]);
-      const previousWishlistData = queryClient.getQueryData<PublicWishlist>(["public-wishlist", permalink]);
+      const previousWishlistData = queryClient.getQueryData<PublicWishlist>([
+        "public-wishlist",
+        permalink,
+      ]);
 
       // Create optimistic claim object
       const optimisticClaim = {
@@ -128,7 +131,7 @@ export default function PublicWishlistPage({
           name: user?.name || "",
           email: user?.email || "",
           image: user?.image || null,
-        }
+        },
       };
 
       // Optimistically update individual item cache
@@ -179,8 +182,8 @@ export default function PublicWishlistPage({
         const updatedClaims =
           action === "claim"
             ? [
-                ...currentClaims.filter(claim => claim.id && !claim.id.startsWith('optimistic-')),
-                response.claim
+                ...currentClaims.filter((claim) => claim.id && !claim.id.startsWith("optimistic-")),
+                response.claim,
               ]
             : currentClaims.filter((claim) => claim.userId !== response.claim.userId);
 
@@ -203,8 +206,10 @@ export default function PublicWishlistPage({
                 const updatedClaims =
                   action === "claim"
                     ? [
-                        ...currentClaims.filter(claim => claim.id && !claim.id.startsWith('optimistic-')),
-                        response.claim
+                        ...currentClaims.filter(
+                          (claim) => claim.id && !claim.id.startsWith("optimistic-")
+                        ),
+                        response.claim,
                       ]
                     : currentClaims.filter((claim) => claim.userId !== response.claim.userId);
 

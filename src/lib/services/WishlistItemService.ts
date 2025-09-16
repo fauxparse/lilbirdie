@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import type { CreateWishlistItemData, UpdateWishlistItemData } from "../../types";
 import { prisma } from "../db";
+import { PrivacyService } from "./PrivacyService";
 
 export class WishlistItemService {
   private static instance: WishlistItemService;
@@ -46,7 +47,6 @@ export class WishlistItemService {
               select: {
                 id: true,
                 name: true,
-                email: true,
                 image: true,
               },
             },
@@ -67,7 +67,6 @@ export class WishlistItemService {
           select: {
             id: true,
             name: true,
-            email: true,
           },
         },
       },
@@ -105,7 +104,6 @@ export class WishlistItemService {
                     select: {
                       id: true,
                       name: true,
-                      email: true,
                     },
                   },
                 },
@@ -128,7 +126,7 @@ export class WishlistItemService {
               select: {
                 id: true,
                 name: true,
-                email: true,
+                image: true,
               },
             },
           },
@@ -139,7 +137,6 @@ export class WishlistItemService {
               select: {
                 id: true,
                 name: true,
-                email: true,
                 image: true,
               },
             },
@@ -160,6 +157,34 @@ export class WishlistItemService {
     if (item.wishlist.privacy === "FRIENDS_ONLY" && item.wishlist.ownerId !== viewerId) {
       // TODO: Check friendship when friends system is implemented
       // For now, allow access
+    }
+
+    // Apply privacy redaction to claims user data
+    const privacyService = PrivacyService.getInstance();
+
+    if (item.claims && item.claims.length > 0) {
+      const claimsWithUserData = item.claims.map((claim) => ({
+        id: claim.id,
+        userId: claim.userId,
+        itemId: claim.itemId,
+        wishlistId: claim.wishlistId,
+        createdAt: claim.createdAt,
+        user: claim.user,
+      }));
+      const redactedClaims = await privacyService.redactClaimsUserData(
+        claimsWithUserData,
+        viewerId || ""
+      );
+      (item as any).claims = redactedClaims;
+    }
+
+    // Redact wishlist owner data if not a friend
+    if (viewerId && item.wishlist.ownerId !== viewerId) {
+      const isOwnerFriend = await privacyService.areFriends(viewerId, item.wishlist.ownerId);
+      (item.wishlist as any).owner = privacyService.redactUserData(
+        item.wishlist.owner,
+        isOwnerFriend
+      );
     }
 
     return item;
@@ -206,7 +231,7 @@ export class WishlistItemService {
     if (data.priority !== undefined) updateData.priority = data.priority;
     if (data.tags !== undefined) updateData.tags = data.tags;
 
-    return await prisma.wishlistItem.update({
+    const updatedItem = await prisma.wishlistItem.update({
       where: { id: itemId },
       data: updateData,
       include: {
@@ -216,7 +241,6 @@ export class WishlistItemService {
               select: {
                 id: true,
                 name: true,
-                email: true,
                 image: true,
               },
             },
@@ -224,6 +248,24 @@ export class WishlistItemService {
         },
       },
     });
+
+    // Apply privacy redaction to claims user data
+    const privacyService = PrivacyService.getInstance();
+
+    if (updatedItem.claims && updatedItem.claims.length > 0) {
+      const claimsWithUserData = updatedItem.claims.map((claim) => ({
+        id: claim.id,
+        userId: claim.userId,
+        itemId: claim.itemId,
+        wishlistId: claim.wishlistId,
+        createdAt: claim.createdAt,
+        user: claim.user,
+      }));
+      const redactedClaims = await privacyService.redactClaimsUserData(claimsWithUserData, userId);
+      (updatedItem as any).claims = redactedClaims;
+    }
+
+    return updatedItem;
   }
 
   async deleteItem(itemId: string, userId: string) {
@@ -290,7 +332,7 @@ export class WishlistItemService {
           select: {
             id: true,
             name: true,
-            email: true,
+            image: true,
           },
         },
         item: {
@@ -314,7 +356,6 @@ export class WishlistItemService {
           select: {
             id: true,
             name: true,
-            email: true,
             image: true,
           },
         },

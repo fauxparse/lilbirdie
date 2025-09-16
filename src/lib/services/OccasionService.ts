@@ -43,7 +43,7 @@ export class OccasionService {
       },
       include: {
         owner: {
-          select: { id: true, name: true, email: true, image: true },
+          select: { id: true, name: true, image: true },
         },
       },
     });
@@ -54,7 +54,7 @@ export class OccasionService {
       where: { ownerId: userId },
       include: {
         owner: {
-          select: { id: true, name: true, email: true, image: true },
+          select: { id: true, name: true, image: true },
         },
       },
       orderBy: { date: "asc" },
@@ -66,7 +66,7 @@ export class OccasionService {
       where: { id },
       include: {
         owner: {
-          select: { id: true, name: true, email: true, image: true },
+          select: { id: true, name: true, image: true },
         },
       },
     });
@@ -94,7 +94,7 @@ export class OccasionService {
       data,
       include: {
         owner: {
-          select: { id: true, name: true, email: true, image: true },
+          select: { id: true, name: true, image: true },
         },
       },
     });
@@ -123,7 +123,7 @@ export class OccasionService {
       where: { ownerId: userId },
       include: {
         owner: {
-          select: { id: true, name: true, email: true, image: true },
+          select: { id: true, name: true, image: true },
         },
       },
     });

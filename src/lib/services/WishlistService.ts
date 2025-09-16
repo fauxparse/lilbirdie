@@ -1,5 +1,6 @@
 import { WishlistPrivacy } from "@prisma/client";
 import { prisma } from "../db";
+import { PrivacyService } from "./PrivacyService";
 
 export interface CreateWishlistData {
   title: string;
@@ -48,7 +49,7 @@ export class WishlistService {
       where: { permalink },
       include: {
         owner: {
-          select: { id: true, name: true, email: true, image: true },
+          select: { id: true, name: true, image: true },
         },
         items: {
           where: { isDeleted: false },
@@ -58,7 +59,7 @@ export class WishlistService {
                   where: { userId: { not: viewerId } }, // Hide viewer's own claims
                   include: {
                     user: {
-                      select: { id: true, name: true, email: true, image: true },
+                      select: { id: true, name: true, image: true },
                     },
                   },
                 }
@@ -92,6 +93,40 @@ export class WishlistService {
       if (!friendship) {
         return null;
       }
+    }
+
+    // Apply privacy redaction to claims user data
+    const privacyService = PrivacyService.getInstance();
+
+    for (const item of wishlist.items) {
+      if (item.claims && Array.isArray(item.claims) && item.claims.length > 0) {
+        // Type guard to ensure we have claims with user data
+        const claimsWithUser = item.claims.filter(
+          (claim): claim is any => claim && typeof claim === "object" && "user" in claim
+        );
+
+        if (claimsWithUser.length > 0) {
+          const claimsWithUserData = claimsWithUser.map((claim) => ({
+            id: claim.id,
+            userId: claim.userId,
+            itemId: claim.itemId,
+            wishlistId: claim.wishlistId,
+            createdAt: claim.createdAt,
+            user: claim.user,
+          }));
+          const redactedClaims = await privacyService.redactClaimsUserData(
+            claimsWithUserData,
+            viewerId || ""
+          );
+          (item as any).claims = redactedClaims;
+        }
+      }
+    }
+
+    // Redact owner data if not a friend (but not for public wishlists)
+    if (viewerId && wishlist.ownerId !== viewerId && wishlist.privacy !== "PUBLIC") {
+      const isOwnerFriend = await privacyService.areFriends(viewerId, wishlist.ownerId);
+      (wishlist as any).owner = privacyService.redactUserData(wishlist.owner, isOwnerFriend);
     }
 
     return wishlist;

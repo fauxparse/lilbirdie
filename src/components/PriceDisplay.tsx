@@ -1,6 +1,6 @@
 "use client";
-
-import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Tooltip } from "./ui/Tooltip";
 
 interface PriceDisplayProps {
   originalPrice: number;
@@ -11,16 +11,16 @@ interface PriceDisplayProps {
   showOriginalFirst?: boolean;
 }
 
-const getCurrencySymbol = (currency: string): string => {
+const getCurrencySymbol = (currency: string, preferredCurrency?: string): string => {
   switch (currency) {
     case "NZD":
-      return "NZ$";
+      return preferredCurrency === "NZD" ? "$" : "NZ$";
     case "USD":
-      return "$";
+      return preferredCurrency === "USD" ? "$" : "US$";
     case "AUD":
-      return "A$";
+      return preferredCurrency === "AUD" ? "$" : "A$";
     case "CAD":
-      return "C$";
+      return preferredCurrency === "CAD" ? "$" : "CA$";
     case "EUR":
       return "€";
     case "GBP":
@@ -38,39 +38,27 @@ export function PriceDisplay({
   convertedPrice,
   convertedCurrency,
   className = "font-medium text-base",
-  showOriginalFirst = false,
 }: PriceDisplayProps) {
-  const [showConverted, setShowConverted] = useState(!showOriginalFirst);
-
   // If no conversion available or currencies are the same, just show original
   if (!convertedPrice || !convertedCurrency || originalCurrency === convertedCurrency) {
     return (
       <span className={className}>
-        {getCurrencySymbol(originalCurrency)}
-        {originalPrice.toFixed(2)}
+        {`${getCurrencySymbol(originalCurrency, convertedCurrency)}${originalPrice.toFixed(2)}`}
       </span>
     );
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => setShowConverted(!showConverted)}
-      className={`${className} cursor-pointer hover:opacity-70 transition-opacity text-left`}
-      title={`Click to toggle between ${originalCurrency} and ${convertedCurrency}`}
-    >
-      {showConverted ? (
+    <Tooltip.Root>
+      <Tooltip.Trigger className={cn(className, "cursor-help")}>
         <span>
-          ~{getCurrencySymbol(convertedCurrency)}
-          {convertedPrice.toFixed(2)} ({getCurrencySymbol(originalCurrency)}
-          {originalPrice.toFixed(2)})
+          {`~${getCurrencySymbol(convertedCurrency, convertedCurrency)}${convertedPrice.toFixed(2)}`}
         </span>
-      ) : (
-        <span>
-          {getCurrencySymbol(originalCurrency)}
-          {originalPrice.toFixed(2)}
-        </span>
-      )}
-    </button>
+      </Tooltip.Trigger>
+      <Tooltip.Content>
+        Converted from{" "}
+        <span>{`${getCurrencySymbol(originalCurrency)}${originalPrice.toFixed(2)}`}</span>
+      </Tooltip.Content>
+    </Tooltip.Root>
   );
 }

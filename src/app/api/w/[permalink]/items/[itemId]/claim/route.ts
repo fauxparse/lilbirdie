@@ -78,7 +78,6 @@ export async function POST(
           select: {
             id: true,
             name: true,
-            email: true,
             image: true,
           },
         },
@@ -148,7 +147,6 @@ export async function DELETE(
           select: {
             id: true,
             name: true,
-            email: true,
             image: true,
           },
         },

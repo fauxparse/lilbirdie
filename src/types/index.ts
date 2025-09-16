@@ -17,7 +17,11 @@ export interface UserWithProfile extends User {
 }
 
 export interface ClaimWithUser extends Claim {
-  user: Pick<User, "id" | "name" | "email" | "image">;
+  user: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  } | null;
 }
 
 export interface WishlistItemWithClaims extends WishlistItem {
@@ -29,13 +33,21 @@ export interface WishlistItemWithRelations extends WishlistItem {
   wishlist?: {
     id: string;
     title: string;
-    owner: Pick<User, "id" | "name" | "email">;
+    owner: {
+      id: string;
+      name: string | null;
+      image: string | null;
+    } | null;
   };
 }
 
 export interface WishlistWithItems extends Wishlist {
   items: WishlistItemWithClaims[];
-  owner: Pick<User, "id" | "name" | "email">;
+  owner: {
+    id: string;
+    name: string | null;
+    image: string | null;
+  } | null;
 }
 
 // API response types

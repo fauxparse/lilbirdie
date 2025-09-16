@@ -14,8 +14,16 @@ import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { useUserPreferredCurrency } from "@/hooks/useUserPreferredCurrency";
 import { HandOff } from "@/icons/HandOff";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { sortBy } from "es-toolkit";
-import { Edit, ExternalLink, Hand, MoreVertical, Trash } from "lucide-react";
+import { sortBy, uniq, upperFirst } from "es-toolkit";
+import {
+  Edit,
+  ExternalLink,
+  Hand,
+  MoreVertical,
+  ShoppingCart,
+  Trash,
+  UserRound,
+} from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import type { WishlistItemCardProps, WishlistItemResponse, WishlistResponse } from "../types";
@@ -52,17 +60,17 @@ export function WishlistItemCard({
   const { preferredCurrency, isLoading: isCurrencyLoading } = useUserPreferredCurrency();
   const { convertedPrice, convertedCurrency } = useCurrencyConversion(
     Number(item?.price) || 0,
-    item?.currency || "USD",
+    item?.currency || "NZD",
     preferredCurrency
   );
 
   const claims = useMemo(() => {
-    return sortBy(item?.claims || [], [(c) => (c.userId === user?.id ? -1 : 0)]);
+    return sortBy(item?.claims || [], [(c) => (c.userId === user?.id ? -1 : !c.user ? 1 : 0)]);
   }, [item?.claims, user?.id]);
 
   const claimNames = useMemo(() => {
-    const names = claims.map((c) =>
-      c.user.id === user?.id ? "You" : c.user.name || "Someone else"
+    const names = uniq(
+      claims.map((c) => (c.userId === user?.id ? "You" : c.user?.name || "someone else"))
     );
 
     if (names.length === 0) {
@@ -70,12 +78,12 @@ export function WishlistItemCard({
     }
 
     if (names.length === 1) {
-      return names[0];
+      return upperFirst(names[0]);
     }
     if (names.length === 2) {
-      return `${names[0]} and ${names[1]}`;
+      return upperFirst(`${names[0]} and ${names[1]}`);
     }
-    return `${names[0]} and ${names.length - 1} other people`;
+    return upperFirst(`${names[0]} and ${names.length - 1} other people`);
   }, [claims, user]);
 
   const isClaimed = claims.length > 0;
@@ -237,34 +245,39 @@ export function WishlistItemCard({
 
       <CardContent className="row-start-2 row-span-1 col-start-1 col-span-1 space-y-3 p-4 pt-4">
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg line-clamp-2 leading-1.2">
-            {item.url ? (
-              <a href={item.url} target="_blank" rel="noopener noreferrer">
-                {item.name}
-              </a>
-            ) : (
-              item.name
-            )}
-          </CardTitle>
+          <CardTitle className="text-lg line-clamp-2 leading-1.2">{item.name}</CardTitle>
         </div>
         {item.description && (
           <p className="text-sm text-muted-foreground line-clamp-3">{item.description}</p>
         )}
       </CardContent>
-      <CardFooter className="row-start-3 row-span-1 col-start-1 col-span-1 grid grid-cols-2 grid-rows-1 px-4 py-4 items-end">
+      <CardFooter className="row-start-3 row-span-1 col-start-1 col-span-1 grid grid-cols-2 grid-rows-2 gap-1 px-4 py-4 items-center">
+        <div className="col-start-1 col-span-2">
+          {item.url && (
+            <a
+              href={item.url}
+              className="text-sm text-muted-foreground flex items-center gap-2"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              {new URL(item.url).hostname}
+            </a>
+          )}
+        </div>
         {item.price && !isCurrencyLoading && (
           <PriceDisplay
             originalPrice={Number(item.price)}
             originalCurrency={item.currency}
             convertedPrice={convertedPrice || undefined}
             convertedCurrency={convertedCurrency || undefined}
-            className="font-medium text-base col-start-1 row-start-1"
+            className="font-medium text-base text-muted-foreground col-start-1 justify-self-start"
           />
         )}
         <StarInput
           value={item.priority || 0}
           onChange={setPriority}
-          className="col-start-2 row-start-1 justify-self-end"
+          className="col-start-2 justify-self-end"
         />
       </CardFooter>
       {isClaimed && !isOwner && (
@@ -276,11 +289,15 @@ export function WishlistItemCard({
                   key={claim.id}
                   className="h-10 w-10 bg-avatar-background shadow-[0_0_0_2px_var(--color-background)] not-last:-ml-2"
                 >
-                  {claim.user.image && (
-                    <AvatarImage src={claim.user.image} alt={claim.user.name || claim.user.email} />
+                  {claim.user?.image && (
+                    <AvatarImage src={claim.user.image} alt={claim.user.name || "User"} />
                   )}
                   <AvatarFallback className="text-xs">
-                    {(claim.user.name || claim.user.email).charAt(0).toUpperCase()}
+                    {claim.user ? (
+                      (claim.user.name || "?").charAt(0).toUpperCase()
+                    ) : (
+                      <UserRound className="h-6 w-6 text-muted-foreground" />
+                    )}
                   </AvatarFallback>
                 </Avatar>
               ))}

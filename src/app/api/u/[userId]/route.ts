@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { PrivacyService } from "@/lib/services/PrivacyService";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -114,8 +115,13 @@ export async function GET(
       orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
     });
 
+    // Apply privacy redaction if not a friend or self
+    const privacyService = PrivacyService.getInstance();
+    const isFriendOrSelf = viewerId === userId || friendshipStatus === "friends";
+    const redactedUser = privacyService.redactUserData(user, isFriendOrSelf);
+
     return NextResponse.json({
-      user,
+      user: redactedUser,
       friendshipStatus,
       wishlists,
       isOwnProfile: viewerId === userId,

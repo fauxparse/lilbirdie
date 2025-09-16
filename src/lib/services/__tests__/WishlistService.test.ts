@@ -16,16 +16,37 @@ vi.mock("@/lib/db", () => ({
     },
     friendship: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }));
 
-// Import the mocked prisma
+// Mock PrivacyService
+vi.mock("../PrivacyService", () => ({
+  PrivacyService: {
+    getInstance: vi.fn(() => ({
+      areFriends: vi.fn(),
+      redactUserData: vi.fn(),
+      redactClaimsUserData: vi.fn(),
+    })),
+  },
+}));
+
+// Import the mocked modules
 import { prisma } from "@/lib/db";
+import { PrivacyService } from "../PrivacyService";
 
 describe("WishlistService", () => {
+  let mockPrivacyService: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrivacyService = {
+      areFriends: vi.fn(),
+      redactUserData: vi.fn(),
+      redactClaimsUserData: vi.fn(),
+    };
+    (PrivacyService.getInstance as any).mockReturnValue(mockPrivacyService);
   });
 
   describe("getUserWishlists", () => {
@@ -117,14 +138,18 @@ describe("WishlistService", () => {
         where: { permalink: "public-wishlist" },
         include: {
           owner: {
-            select: { id: true, name: true, email: true, image: true },
+            select: { id: true, name: true, image: true },
           },
           items: {
             where: { isDeleted: false },
             include: {
               claims: {
                 where: { userId: { not: "user-2" } },
-                select: { userId: true, createdAt: true },
+                include: {
+                  user: {
+                    select: { id: true, name: true, image: true },
+                  },
+                },
               },
             },
             orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
@@ -157,7 +182,8 @@ describe("WishlistService", () => {
         id: "wishlist-1",
         privacy: "PRIVATE",
         ownerId: "user-1",
-        owner: { id: "user-1", name: "John Doe", email: "john@example.com", image: null },
+        owner: { id: "user-1", name: "John Doe", image: null },
+        items: [],
       };
 
       (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
@@ -175,7 +201,8 @@ describe("WishlistService", () => {
         id: "wishlist-1",
         privacy: "FRIENDS_ONLY",
         ownerId: "user-1",
-        owner: { id: "user-1", name: "John Doe", email: "john@example.com", image: null },
+        owner: { id: "user-1", name: "John Doe", image: null },
+        items: [],
       };
 
       const mockFriendship = {
@@ -239,7 +266,8 @@ describe("WishlistService", () => {
         id: "wishlist-1",
         privacy: "PUBLIC",
         ownerId: "user-1",
-        owner: { id: "user-1", name: "John Doe", email: "john@example.com", image: null },
+        owner: { id: "user-1", name: "John Doe", image: null },
+        items: [],
       };
 
       (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
@@ -250,7 +278,7 @@ describe("WishlistService", () => {
         where: { permalink: "public-wishlist" },
         include: {
           owner: {
-            select: { id: true, name: true, email: true, image: true },
+            select: { id: true, name: true, image: true },
           },
           items: {
             where: { isDeleted: false },
@@ -591,6 +619,268 @@ describe("WishlistService", () => {
 
       expect(prisma.wishlist.delete).toHaveBeenCalledWith({
         where: { id: "wishlist-1" },
+      });
+    });
+  });
+
+  describe("Privacy Integration", () => {
+    describe("getWishlistByPermalink with privacy redaction", () => {
+      it("should redact owner data for non-friends on friends-only wishlist", async () => {
+        const mockWishlist = {
+          id: "wishlist-1",
+          title: "Friends Only Wishlist",
+          privacy: "FRIENDS_ONLY",
+          ownerId: "user-1",
+          owner: {
+            id: "user-1",
+            name: "John Doe",
+            image: "avatar.jpg",
+          },
+          items: [],
+        };
+
+        (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
+        (prisma.friendship.findFirst as any).mockResolvedValue({ id: "friendship-1" }); // Friends for access check
+        mockPrivacyService.areFriends.mockResolvedValue(false); // Not friends for redaction
+        mockPrivacyService.redactUserData.mockReturnValue(null); // Redact for non-friend
+
+        const result = await WishlistService.getInstance().getWishlistByPermalink(
+          "friends-wishlist",
+          "user-2" // Different user (non-friend for redaction)
+        );
+
+        expect(mockPrivacyService.areFriends).toHaveBeenCalledWith("user-2", "user-1");
+        expect(mockPrivacyService.redactUserData).toHaveBeenCalledWith(
+          mockWishlist.owner,
+          false // isFriend for privacy check
+        );
+        expect(result?.owner).toBeNull();
+      });
+
+      it("should not redact owner data for friends on friends-only wishlist", async () => {
+        const mockWishlist = {
+          id: "wishlist-1",
+          privacy: "FRIENDS_ONLY",
+          ownerId: "user-1",
+          owner: {
+            id: "user-1",
+            name: "John Doe",
+            image: "avatar.jpg",
+          },
+          items: [],
+        };
+
+        (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
+        (prisma.friendship.findFirst as any).mockResolvedValue({ id: "friendship-1" }); // Friends for access check
+        mockPrivacyService.areFriends.mockResolvedValue(true); // Friends for privacy check
+        mockPrivacyService.redactUserData.mockReturnValue(mockWishlist.owner); // Don't redact for friend
+
+        const result = await WishlistService.getInstance().getWishlistByPermalink(
+          "friends-wishlist",
+          "user-2"
+        );
+
+        expect(mockPrivacyService.areFriends).toHaveBeenCalledWith("user-2", "user-1");
+        expect(mockPrivacyService.redactUserData).toHaveBeenCalledWith(mockWishlist.owner, true);
+        expect(result?.owner).toEqual(mockWishlist.owner);
+      });
+
+      it("should not redact owner data on public wishlists", async () => {
+        const mockWishlist = {
+          id: "wishlist-1",
+          privacy: "PUBLIC",
+          ownerId: "user-1",
+          owner: {
+            id: "user-1",
+            name: "John Doe",
+            image: "avatar.jpg",
+          },
+          items: [],
+        };
+
+        (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
+
+        const result = await WishlistService.getInstance().getWishlistByPermalink(
+          "public-wishlist",
+          "user-2"
+        );
+
+        // Privacy service should not be called for public wishlists
+        expect(mockPrivacyService.areFriends).not.toHaveBeenCalled();
+        expect(mockPrivacyService.redactUserData).not.toHaveBeenCalled();
+        expect(result?.owner).toEqual(mockWishlist.owner);
+      });
+
+      it("should not redact owner data when viewing own wishlist", async () => {
+        const mockWishlist = {
+          id: "wishlist-1",
+          privacy: "PRIVATE",
+          ownerId: "user-1",
+          owner: {
+            id: "user-1",
+            name: "John Doe",
+            image: "avatar.jpg",
+          },
+          items: [],
+        };
+
+        (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
+
+        const result = await WishlistService.getInstance().getWishlistByPermalink(
+          "private-wishlist",
+          "user-1" // Same user as owner
+        );
+
+        // Privacy service should not be called when viewing own wishlist
+        expect(mockPrivacyService.areFriends).not.toHaveBeenCalled();
+        expect(mockPrivacyService.redactUserData).not.toHaveBeenCalled();
+        expect(result?.owner).toEqual(mockWishlist.owner);
+      });
+    });
+
+    describe("getWishlistByPermalink with claims privacy redaction", () => {
+      it("should properly handle claims data privacy when viewerId is provided", async () => {
+        const mockWishlist = {
+          id: "wishlist-1",
+          privacy: "PUBLIC",
+          ownerId: "user-1",
+          owner: {
+            id: "user-1",
+            name: "Owner",
+            image: null,
+          },
+          items: [
+            {
+              id: "item-1",
+              name: "Test Item",
+              claims: [
+                {
+                  id: "claim-1",
+                  userId: "user-2",
+                  itemId: "item-1",
+                  wishlistId: "wishlist-1",
+                  createdAt: new Date(),
+                  user: {
+                    id: "user-2",
+                    name: "Friend User",
+                    image: null,
+                  },
+                },
+                {
+                  id: "claim-2",
+                  userId: "user-3",
+                  itemId: "item-1",
+                  wishlistId: "wishlist-1",
+                  createdAt: new Date(),
+                  user: {
+                    id: "user-3",
+                    name: "Non-Friend User",
+                    image: null,
+                  },
+                },
+              ],
+            },
+          ],
+        };
+
+        const mockRedactedClaims = [
+          {
+            id: "claim-1",
+            userId: "user-2",
+            itemId: "item-1",
+            wishlistId: "wishlist-1",
+            createdAt: mockWishlist.items[0].claims[0].createdAt,
+            user: {
+              id: "user-2",
+              name: "Friend User",
+              email: "friend@example.com",
+              image: null,
+            }, // Friend - not redacted
+          },
+          {
+            id: "claim-2",
+            userId: "user-3",
+            itemId: "item-1",
+            wishlistId: "wishlist-1",
+            createdAt: mockWishlist.items[0].claims[1].createdAt,
+            user: null, // Non-friend - redacted
+          },
+        ];
+
+        (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
+        mockPrivacyService.areFriends.mockResolvedValue(false); // Not friends with owner
+        mockPrivacyService.redactUserData.mockReturnValue(null); // Redact owner
+        mockPrivacyService.redactClaimsUserData.mockResolvedValue(mockRedactedClaims);
+
+        const result = await WishlistService.getInstance().getWishlistByPermalink(
+          "public-wishlist",
+          "viewer-1"
+        );
+
+        // Verify the PrivacyService redaction was applied
+        expect(mockPrivacyService.redactClaimsUserData).toHaveBeenCalledWith(
+          expect.arrayContaining([
+            expect.objectContaining({
+              id: "claim-1",
+              userId: "user-2",
+              user: expect.objectContaining({ id: "user-2" }),
+            }),
+            expect.objectContaining({
+              id: "claim-2",
+              userId: "user-3",
+              user: expect.objectContaining({ id: "user-3" }),
+            }),
+          ]),
+          "viewer-1"
+        );
+        expect(result?.items[0].claims).toEqual(mockRedactedClaims);
+      });
+
+      it("should not include claims data when no viewerId provided", async () => {
+        const mockWishlist = {
+          id: "wishlist-1",
+          privacy: "PUBLIC",
+          ownerId: "user-1",
+          owner: {
+            id: "user-1",
+            name: "Owner",
+            image: null,
+          },
+          items: [
+            {
+              id: "item-1",
+              name: "Test Item",
+              // No claims included when viewerId not provided
+            },
+          ],
+        };
+
+        (prisma.wishlist.findUnique as any).mockResolvedValue(mockWishlist);
+        mockPrivacyService.redactUserData.mockReturnValue(mockWishlist.owner);
+
+        const result = await WishlistService.getInstance().getWishlistByPermalink(
+          "public-wishlist"
+          // No viewerId provided
+        );
+
+        // Verify claims query was set to false
+        expect(prisma.wishlist.findUnique).toHaveBeenCalledWith({
+          where: { permalink: "public-wishlist" },
+          include: {
+            owner: {
+              select: { id: true, name: true, image: true },
+            },
+            items: {
+              where: { isDeleted: false },
+              include: {
+                claims: false, // Should be false when no viewerId
+              },
+              orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+            },
+          },
+        });
+
+        expect(result?.items[0]).not.toHaveProperty("claims");
       });
     });
   });

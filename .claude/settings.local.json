@@ -27,7 +27,11 @@
       "Bash(npx tsx:*)",
       "Bash(pnpm test:*)",
       "Bash(pnpm view:*)",
-      "WebFetch(domain:www.amazon.com.au)"
+      "WebFetch(domain:www.amazon.com.au)",
+      "Bash(find:*)",
+      "WebFetch(domain:tailwindcss-radix.vercel.app)",
+      "WebFetch(domain:ui.shadcn.com)",
+      "WebFetch(domain:www.radix-ui.com)"
     ],
     "deny": [],
     "ask": []

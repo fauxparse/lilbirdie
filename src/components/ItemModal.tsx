@@ -4,7 +4,7 @@ import { ItemForm, type ItemFormData } from "@/components/ItemForm";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface ItemModalProps {
   isOpen: boolean;
@@ -25,7 +25,28 @@ export function ItemModal({
   isSubmitting = false,
   error = null,
 }: ItemModalProps) {
-  // Handle escape key
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
+
+  // Handle modal open/close animations
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      // Small delay to trigger entrance animation
+      requestAnimationFrame(() => {
+        setIsAnimating(true);
+      });
+    } else {
+      setIsAnimating(false);
+      // Wait for exit animation to complete before removing from DOM
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+      }, 200); // Match the animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // Handle escape key and body scroll
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -44,16 +65,25 @@ export function ItemModal({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!shouldRender) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      {/* Animated Backdrop */}
+      <div
+        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
+          isAnimating ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={onClose}
+      />
 
-      {/* Modal */}
-      <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
-        <Card>
+      {/* Animated Modal */}
+      <div
+        className={`relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4 transition-all duration-200 ${
+          isAnimating ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 translate-y-4"
+        }`}
+      >
+        <Card className="animate-in slide-in-from-bottom-4 fade-in-0 duration-200">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -64,7 +94,12 @@ export function ItemModal({
                     : "Update the item details"}
                 </CardDescription>
               </div>
-              <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="h-8 w-8 p-0 hover:bg-accent transition-colors"
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>

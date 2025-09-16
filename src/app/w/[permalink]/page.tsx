@@ -93,6 +93,15 @@ export default function PublicWishlistPage({
     },
   });
 
+  // Populate individual item cache entries when wishlist data is available
+  React.useEffect(() => {
+    if (wishlist?.items) {
+      for (const item of wishlist.items) {
+        queryClient.setQueryData(["item", item.id], item);
+      }
+    }
+  }, [wishlist?.items, queryClient]);
+
   const claimMutation = useMutation({
     mutationFn: async ({ itemId, action }: { itemId: string; action: "claim" | "unclaim" }) => {
       const method = action === "claim" ? "POST" : "DELETE";

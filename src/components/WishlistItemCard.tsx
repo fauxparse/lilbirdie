@@ -42,20 +42,9 @@ export function WishlistItemCard({
   const { user } = useAuth();
 
   const queryClient = useQueryClient();
-  // Individual item query - will use cached data if available
-  const itemQuery = useQuery<WishlistItemResponse>({
-    queryKey: ["item", itemId],
-    queryFn: async (): Promise<WishlistItemResponse> => {
-      const response = await fetch(`/api/items/${itemId}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch item");
-      }
-      return response.json();
-    },
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-  });
 
-  const item = itemQuery.data;
+  // Get item from cache only - data should be populated by parent wishlist query
+  const item = queryClient.getQueryData<WishlistItemResponse>(["item", itemId]);
 
   const { preferredCurrency, isLoading: isCurrencyLoading } = useUserPreferredCurrency();
   const { convertedPrice, convertedCurrency } = useCurrencyConversion(
@@ -131,32 +120,12 @@ export function WishlistItemCard({
     },
   });
 
-  // Handle loading and error states
-  if (itemQuery.isLoading) {
-    return (
-      <Card className="group">
-        <CardHeader className="pb-3">
-          <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-            <div className="h-6 bg-gray-200 rounded w-full mb-2" />
-            <div className="h-4 bg-gray-200 rounded w-1/2" />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
-            <div className="h-8 bg-gray-200 rounded w-full" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (itemQuery.isError || !item) {
+  // Early return if item data not available in cache
+  if (!item) {
     return (
       <Card className="group">
         <CardContent className="p-6">
-          <p className="text-red-500 text-center">Failed to load item</p>
+          <p className="text-muted-foreground text-center">Item data not available</p>
         </CardContent>
       </Card>
     );

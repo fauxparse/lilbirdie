@@ -34,7 +34,7 @@ export default function NewWishlistPage() {
       // Invalidate wishlists query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["wishlists"] });
       // Navigate to the new wishlist
-      router.push(`/wishlists/${wishlist.permalink}` as any);
+      router.push(`/w/${wishlist.permalink}`);
     },
   });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCurrencyRates } from "./useCurrencyRates";
 
 interface ConversionData {
   convertedPrice: number | null;
@@ -14,83 +14,64 @@ export function useCurrencyConversion(
   originalCurrency: string,
   targetCurrency: string
 ): ConversionData {
-  const [data, setData] = useState<ConversionData>({
-    convertedPrice: null,
-    convertedCurrency: null,
-    isLoading: false,
-    error: null,
-  });
+  const { convertPrice, isLoading, error } = useCurrencyRates();
 
-  useEffect(() => {
-    // If same currency, no conversion needed
-    if (originalCurrency === targetCurrency) {
-      setData({
-        convertedPrice: originalPrice,
-        convertedCurrency: targetCurrency,
-        isLoading: false,
-        error: null,
-      });
-      return;
-    }
+  // If same currency, no conversion needed
+  if (originalCurrency === targetCurrency) {
+    return {
+      convertedPrice: originalPrice,
+      convertedCurrency: targetCurrency,
+      isLoading: false,
+      error: null,
+    };
+  }
 
-    // If no price or invalid price, don't attempt conversion
-    if (!originalPrice || originalPrice <= 0) {
-      setData({
-        convertedPrice: null,
-        convertedCurrency: null,
-        isLoading: false,
-        error: null,
-      });
-      return;
-    }
+  // If no price or invalid price, don't attempt conversion
+  if (!originalPrice || originalPrice <= 0) {
+    return {
+      convertedPrice: null,
+      convertedCurrency: null,
+      isLoading: false,
+      error: null,
+    };
+  }
 
-    // Start loading
-    setData((prev) => ({
-      ...prev,
+  // If still loading rates, show loading
+  if (isLoading) {
+    return {
+      convertedPrice: null,
+      convertedCurrency: null,
       isLoading: true,
       error: null,
-    }));
-
-    // Fetch conversion
-    const fetchConversion = async () => {
-      try {
-        const response = await fetch("/api/currency/convert", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            amount: originalPrice,
-            fromCurrency: originalCurrency,
-            toCurrency: targetCurrency,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Conversion failed: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        setData({
-          convertedPrice: result.convertedAmount,
-          convertedCurrency: result.convertedCurrency,
-          isLoading: false,
-          error: null,
-        });
-      } catch (error) {
-        console.error("Currency conversion error:", error);
-        setData({
-          convertedPrice: null,
-          convertedCurrency: null,
-          isLoading: false,
-          error: error instanceof Error ? error.message : "Conversion failed",
-        });
-      }
     };
+  }
 
-    fetchConversion();
-  }, [originalPrice, originalCurrency, targetCurrency]);
+  // If error loading rates
+  if (error) {
+    return {
+      convertedPrice: null,
+      convertedCurrency: null,
+      isLoading: false,
+      error: error instanceof Error ? error.message : "Failed to load exchange rates",
+    };
+  }
 
-  return data;
+  // Perform client-side conversion
+  const result = convertPrice(originalPrice, originalCurrency, targetCurrency);
+
+  if (!result) {
+    return {
+      convertedPrice: null,
+      convertedCurrency: null,
+      isLoading: false,
+      error: `No exchange rate available for ${originalCurrency} to ${targetCurrency}`,
+    };
+  }
+
+  return {
+    convertedPrice: result.convertedAmount,
+    convertedCurrency: result.convertedCurrency,
+    isLoading: false,
+    error: null,
+  };
 }

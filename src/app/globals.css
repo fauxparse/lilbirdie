@@ -138,6 +138,9 @@
 
   --color-avatar-background: var(--color-slate-200);
 
+  --color-tooltip-background: var(--color-slate-600);
+  --color-tooltip-foreground: var(--color-slate-50);
+
   /* Design Tokens */
   --radius: 0.5rem;
 

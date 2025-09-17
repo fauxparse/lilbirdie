@@ -1,16 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
+import { WishlistService } from "@/lib/services/WishlistService";
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ permalink: string }> }
+) {
   try {
-    const { id } = await params;
+    const { permalink } = await params;
     const session = await auth.api.getSession({
       headers: request.headers,
     });
 
+    // First resolve the permalink to get the wishlist
+    const wishlist = await WishlistService.getInstance().getWishlistByPermalink(
+      permalink,
+      session?.user?.id
+    );
+
+    if (!wishlist) {
+      return NextResponse.json({ error: "Wishlist not found" }, { status: 404 });
+    }
+
     const items = await WishlistItemService.getInstance().getItemsByWishlistId(
-      id,
+      wishlist.id,
       session?.user?.id
     );
 
@@ -26,9 +40,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ permalink: string }> }
+) {
   try {
-    const { id } = await params;
+    const { permalink } = await params;
     const session = await auth.api.getSession({
       headers: request.headers,
     });
@@ -44,7 +61,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    const item = await WishlistItemService.getInstance().createItem(id, session.user.id, {
+    // First resolve the permalink to get the wishlist
+    const wishlist = await WishlistService.getInstance().getWishlistByPermalink(
+      permalink,
+      session.user.id
+    );
+
+    if (!wishlist) {
+      return NextResponse.json({ error: "Wishlist not found" }, { status: 404 });
+    }
+
+    const item = await WishlistItemService.getInstance().createItem(wishlist.id, session.user.id, {
       name: name.trim(),
       description: description?.trim(),
       url: url?.trim(),

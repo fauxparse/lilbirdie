@@ -531,7 +531,11 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
         )}
       </div>
 
-      <AddItemModal isOpen={showAddItem} onClose={() => setShowAddItem(false)} />
+      <AddItemModal
+        isOpen={showAddItem}
+        onClose={() => setShowAddItem(false)}
+        wishlistPermalink={permalink}
+      />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

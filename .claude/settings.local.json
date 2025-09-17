@@ -31,7 +31,8 @@
       "Bash(find:*)",
       "WebFetch(domain:tailwindcss-radix.vercel.app)",
       "WebFetch(domain:ui.shadcn.com)",
-      "WebFetch(domain:www.radix-ui.com)"
+      "WebFetch(domain:www.radix-ui.com)",
+      "Bash(tsc:*)"
     ],
     "deny": [],
     "ask": []

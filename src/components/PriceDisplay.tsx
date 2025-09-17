@@ -42,23 +42,28 @@ export function PriceDisplay({
   // If no conversion available or currencies are the same, just show original
   if (!convertedPrice || !convertedCurrency || originalCurrency === convertedCurrency) {
     return (
-      <span className={className}>
-        {`${getCurrencySymbol(originalCurrency, convertedCurrency)}${originalPrice.toFixed(2)}`}
-      </span>
+      <span
+        className={className}
+      >{`${formatPrice(originalPrice, originalCurrency, originalCurrency)}`}</span>
     );
   }
 
   return (
     <Tooltip.Root>
       <Tooltip.Trigger className={cn(className, "cursor-help")}>
-        <span>
-          {`~${getCurrencySymbol(convertedCurrency, convertedCurrency)}${convertedPrice.toFixed(2)}`}
-        </span>
+        <span>{`~${formatPrice(convertedPrice, convertedCurrency)}`}</span>
       </Tooltip.Trigger>
       <Tooltip.Content>
-        Converted from{" "}
-        <span>{`${getCurrencySymbol(originalCurrency)}${originalPrice.toFixed(2)}`}</span>
+        Converted from <span>{formatPrice(originalPrice, originalCurrency)}</span>
       </Tooltip.Content>
     </Tooltip.Root>
   );
 }
+
+export const formatPrice = (
+  price: number,
+  currency: string,
+  preferredCurrency?: string
+): string => {
+  return `${getCurrencySymbol(currency, preferredCurrency)}${price.toFixed(2)}`;
+};

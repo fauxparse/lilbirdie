@@ -254,7 +254,7 @@ export function Modal({
               <motion.div
                 className={cn(
                   "fixed inset-0 flex items-center justify-center p-4",
-                  modalLevel.current === 0 ? "z-50 bg-black/50" : "z-[51] bg-transparent"
+                  modalLevel.current === 0 ? "z-50 bg-background/80" : "z-[51] bg-transparent"
                 )}
                 style={{
                   // Dynamic z-index for deeply nested modals

@@ -45,8 +45,14 @@ export const StarInput: React.FC<StarInputProps> = ({
             value={index + 1}
             checked={value === index + 1}
             onChange={(e) => {
-              console.log(index + 1, e.currentTarget.checked);
               if (e.currentTarget.checked) onChange(index + 1);
+            }}
+            onClick={(e) => {
+              if (e.currentTarget.checked) {
+                e.preventDefault();
+                e.stopPropagation();
+                onChange(0);
+              }
             }}
             disabled={disabled || undefined}
           />

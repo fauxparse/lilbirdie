@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { CurrencyService } from "@/lib/services/CurrencyService";
+import { CURRENCY_CODES } from "@/types/currency";
 
 export async function GET() {
   try {
     const currencyService = CurrencyService.getInstance();
 
     // Get all supported currencies
-    const currencies = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "NZD"];
+    const currencies = CURRENCY_CODES;
     const rates: Record<string, Record<string, number>> = {};
 
     // Build nested rate structure for efficient lookup

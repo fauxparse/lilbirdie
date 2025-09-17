@@ -1,10 +1,12 @@
-interface ScrapedData {
+import type { Currency } from "@/types/currency";
+
+export interface ScrapedData {
   name: string;
   description?: string;
   url: string;
   imageUrl?: string;
   price?: number;
-  currency: string;
+  currency?: Currency;
 }
 
 interface ScrapingError {
@@ -369,7 +371,7 @@ export class UrlScrapingService {
     } else if (hostname.includes("amazon.ca")) {
       data.currency = "CAD";
     } else if (hostname.includes("amazon.co.jp")) {
-      data.currency = "JPY";
+      data.currency = "USD"; // Map JPY to USD since JPY is not supported
     } else if (
       hostname.includes("amazon.de") ||
       hostname.includes("amazon.fr") ||
@@ -575,7 +577,7 @@ export class UrlScrapingService {
     } else if (hostname.endsWith(".ca")) {
       data.currency = "CAD";
     } else if (hostname.endsWith(".jp")) {
-      data.currency = "JPY";
+      data.currency = "USD"; // Map JPY to USD since JPY is not supported
     } else if (
       hostname.includes(".eu") ||
       hostname.endsWith(".de") ||

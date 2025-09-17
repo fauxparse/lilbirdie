@@ -171,7 +171,7 @@ describe("UrlScrapingService", () => {
       const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toEqual({
-        title: "Test Product",
+        name: "Test Product",
         description: "A great test product",
         url: "https://example.com",
         imageUrl: "https://example.com/image.jpg",
@@ -203,7 +203,7 @@ describe("UrlScrapingService", () => {
       const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.co.uk");
 
       expect(result).toEqual({
-        title: "Twitter Product",
+        name: "Twitter Product",
         description: "Twitter description",
         url: "https://example.co.uk",
         imageUrl: "https://example.co.uk/twitter-image.jpg",
@@ -233,7 +233,7 @@ describe("UrlScrapingService", () => {
       const result = await UrlScrapingService.getInstance().scrapeUrl("https://shop.co.nz/product");
 
       expect(result).toEqual({
-        title: "NZ Product",
+        name: "NZ Product",
         url: "https://shop.co.nz/product",
         price: 125.5,
         currency: "NZD",
@@ -294,7 +294,7 @@ describe("UrlScrapingService", () => {
       );
 
       expect(result).toEqual({
-        title: "Amazon Test Product",
+        name: "Amazon Test Product",
         url: "https://amazon.com.au/product/test",
         imageUrl: "https://images-na.ssl-images-amazon.com/images/I/test.jpg",
         price: 59.17,
@@ -323,7 +323,7 @@ describe("UrlScrapingService", () => {
       );
 
       expect(result).toEqual({
-        title: "Susanna Clarke Collection",
+        name: "Susanna Clarke Collection",
         url: "https://amazon.com.au/product",
         price: 59.17,
         currency: "AUD",
@@ -352,7 +352,7 @@ describe("UrlScrapingService", () => {
       );
 
       expect(result).toEqual({
-        title: "UK Product",
+        name: "UK Product",
         url: "https://amazon.co.uk/product",
         price: 25.99,
         currency: "GBP",
@@ -380,7 +380,7 @@ describe("UrlScrapingService", () => {
       const result = await UrlScrapingService.getInstance().scrapeUrl("https://amazon.com/product");
 
       expect(result).toEqual({
-        title: "Product with Multiple Prices",
+        name: "Product with Multiple Prices",
         url: "https://amazon.com/product",
         price: 59.99, // Should pick the highest reasonable price
         currency: "USD",
@@ -440,7 +440,7 @@ describe("UrlScrapingService", () => {
       }
     });
 
-    it("should choose highest reasonable price from multiple matches", async () => {
+    it("should choose lowest reasonable price from multiple matches to avoid unrelated content", async () => {
       const html = `
         <!DOCTYPE html>
         <html>
@@ -462,7 +462,124 @@ describe("UrlScrapingService", () => {
       const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toMatchObject({
-        price: 129.99,
+        price: 5.99, // Should pick the lowest reasonable price (first pattern match)
+      });
+    });
+
+    it("should avoid picking prices from unrelated content like Afterpay limits", async () => {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head><title>Kmart Product</title></head>
+        <body>
+          <span class="product-price-large">$29</span>
+          <div class="afterpay-info">On orders up to $2000</div>
+          <span class="shipping-info">Free shipping on orders over $65</span>
+        </body>
+        </html>
+      `;
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(html),
+      });
+
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://www.kmart.co.nz/product"
+      );
+
+      expect(result).toMatchObject({
+        price: 29, // Should pick the actual product price, not the Afterpay limit
+        currency: "NZD",
+      });
+    });
+
+    it("should ignore numbers without currency symbols (like ratings)", async () => {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head><title>Product with Ratings</title></head>
+        <body>
+          <span class="product-price-large">$29</span>
+          <div class="ratings">5(1)</div>
+          <span class="reviews">4.5 stars</span>
+          <div class="quantity">Available: 10</div>
+        </body>
+        </html>
+      `;
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(html),
+      });
+
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://www.kmart.co.nz/product"
+      );
+
+      expect(result).toMatchObject({
+        price: 29, // Should only pick the price with currency symbol, ignore ratings numbers
+        currency: "NZD",
+      });
+    });
+
+    it("should extract correct price from actual Kmart HTML structure", async () => {
+      // This is the actual HTML structure from the Kmart page
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Orchard Toys Bluey Shopping List Fun Memory Game</title>
+          <meta property="og:title" content="Orchard Toys Bluey Shopping List Fun Memory Game" />
+          <meta property="og:description" content="Join Bluey, Bingo, Bandit and Chilli on a fun-filled supermarket adventure" />
+        </head>
+        <body>
+          <h1>Orchard Toys Bluey Shopping List Fun Memory Game</h1>
+          <div class="product-price-large">$29</div>
+          <div class="ratings">5(1)</div>
+          <div class="afterpay-info">On orders up to $2000</div>
+          <div class="shipping-info">Eligible orders over $65* will receive free delivery</div>
+          <div class="price-ranges">
+            <span>Gifts $5 & Under</span>
+            <span>Gifts $10 & Under</span>
+            <span>Gifts $20 & Under</span>
+            <span>Gifts $30 & Under</span>
+            <span>Gifts $40 & Under</span>
+            <span>Gifts $40 & Over</span>
+          </div>
+          <div class="related-products">
+            <div class="product-card">
+              <span class="price">$10</span>
+              <h3>Related Product</h3>
+            </div>
+            <div class="product-card">
+              <span class="price">$15</span>
+              <h3>Another Product</h3>
+            </div>
+          </div>
+          <div class="you-may-also-like">
+            <div class="recommended-item">
+              <span class="item-price">$10</span>
+              <p>You may also like this item</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(html),
+      });
+
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://www.kmart.co.nz/product/orchard-toys-bluey-shopping-list-fun-memory-game-43580910/"
+      );
+
+      expect(result).toMatchObject({
+        name: "Orchard Toys Bluey Shopping List Fun Memory Game",
+        price: 29, // Should extract $29, not $10 from related products or $2000 from Afterpay
+        currency: "NZD",
       });
     });
   });
@@ -531,7 +648,7 @@ describe("UrlScrapingService", () => {
       const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toEqual({
-        title: "Product & Service <Special>",
+        name: "Product & Service <Special>",
         description: `Description with "quotes" and 'apostrophe'`,
         url: "https://example.com",
         price: 25.99,
@@ -560,7 +677,7 @@ describe("UrlScrapingService", () => {
       const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
 
       expect(result).toMatchObject({
-        title: "Product Title",
+        name: "Product Title",
       });
     });
   });

@@ -215,8 +215,8 @@ describe("Amazon URL Specific Test", () => {
     console.log("Complex page extraction result:", result);
     expect(result).not.toHaveProperty("error");
 
-    if ("title" in result) {
-      expect(result.title).toBe(
+    if ("name" in result) {
+      expect(result.name).toBe(
         "Susanna Clarke Collection 2 Books Set (Piranesi, Jonathan Strange and Mr Norrell)"
       );
     }

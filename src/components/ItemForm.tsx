@@ -1,13 +1,13 @@
 "use client";
 
+import { ExternalLink, Loader2, Star } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { useUserPreferredCurrency } from "@/hooks/useUserPreferredCurrency";
-import { ExternalLink, Loader2, Star } from "lucide-react";
-import { useEffect, useState } from "react";
 
 export interface ItemFormData {
   name: string;
@@ -218,7 +218,7 @@ export function ItemForm({
       imageUrl: imageUrl.trim() || undefined,
       price: price.trim() ? Number.parseFloat(price) : undefined,
       currency,
-      priority: Number.parseInt(priority) || 0,
+      priority: Number.parseInt(priority, 10) || 0,
       tags,
     });
   };

@@ -45,7 +45,6 @@ vi.mock("next/navigation", () => ({
 // Mock Next.js Image component
 vi.mock("next/image", () => ({
   default: ({ src, alt, ...props }: { src: string; alt: string; [key: string]: unknown }) => {
-    // biome-ignore lint/a11y/useAltText: false positive
     return <img src={src} alt={alt} {...props} />;
   },
 }));

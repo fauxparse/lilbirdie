@@ -1,7 +1,7 @@
-import { auth } from "@/lib/auth";
-import { UpdateWishlistData, WishlistService } from "@/lib/services/WishlistService";
 import { WishlistPrivacy } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { UpdateWishlistData, WishlistService } from "@/lib/services/WishlistService";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

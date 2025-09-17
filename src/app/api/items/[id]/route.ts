@@ -1,7 +1,7 @@
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
 import { UpdateWishlistItemData } from "@/types";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

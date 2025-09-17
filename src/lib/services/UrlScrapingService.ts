@@ -1,5 +1,5 @@
 interface ScrapedData {
-  title: string;
+  name: string;
   description?: string;
   url: string;
   imageUrl?: string;
@@ -160,7 +160,7 @@ export class UrlScrapingService {
 
       // Check if we got any useful data
       const hasUsefulData =
-        scrapedData.title !== "Untitled" ||
+        scrapedData.name !== "Untitled" ||
         scrapedData.description ||
         scrapedData.price ||
         scrapedData.imageUrl;
@@ -189,7 +189,7 @@ export class UrlScrapingService {
 
   private scrapeAmazon(html: string, originalUrl: string): ScrapedData {
     const data: ScrapedData = {
-      title: "Untitled",
+      name: "Untitled",
       url: originalUrl,
       currency: "USD",
     };
@@ -226,11 +226,11 @@ export class UrlScrapingService {
       ],
     };
 
-    // Extract title
+    // Extract name
     for (const pattern of amazonSelectors.title) {
       const match = html.match(pattern);
       if (match) {
-        data.title = this.cleanText(match[1]);
+        data.name = this.cleanText(match[1]);
         break;
       }
     }
@@ -387,14 +387,14 @@ export class UrlScrapingService {
   private extractMetadata(html: string, originalUrl: string): ScrapedData {
     const data: ScrapedData = {
       url: originalUrl,
-      title: "Untitled",
+      name: "Untitled",
       currency: "USD",
     };
 
     // Helper function to extract content from meta tags
     const extractMeta = (property: string, attribute = "property") => {
       const regex = new RegExp(
-        `<meta\\s+${attribute}=[\"']${property}[\"']\\s+content=[\"']([^\"']+)[\"'][^>]*>`,
+        `<meta\\s+${attribute}=["']${property}["']\\s+content=["']([^"']+)["'][^>]*>`,
         "i"
       );
       const match = html.match(regex);
@@ -408,8 +408,8 @@ export class UrlScrapingService {
       return match ? match[1].trim() : null;
     };
 
-    // Extract title
-    data.title =
+    // Extract name
+    data.name =
       extractMeta("og:title") ||
       extractMeta("twitter:title", "name") ||
       extractTag("title") ||
@@ -430,33 +430,88 @@ export class UrlScrapingService {
       } catch {
         data.imageUrl = ogImage;
       }
+    } else {
+      // Fallback: Look for Kmart-style preload images with imageSrcSet
+      const preloadImageMatch = html.match(
+        /<link[^>]*rel="preload"[^>]*as="image"[^>]*imageSrcSet="([^"]+)"/i
+      );
+      if (preloadImageMatch) {
+        // Extract the highest quality image from the srcset
+        const srcset = preloadImageMatch[1];
+        // Extract the best quality image that's 1024px wide or smaller
+        const urls = srcset.match(/https:\/\/[^\s]+/g);
+        if (urls && urls.length > 0) {
+          let bestUrl = null;
+          let bestWidth = 0;
+
+          // Look for the highest quality image that's 1024px or smaller
+          for (const url of urls) {
+            const widthMatch = url.match(/width:(\d+)/);
+            if (widthMatch) {
+              const width = Number.parseInt(widthMatch[1], 10);
+              if (width <= 1024 && width > bestWidth) {
+                bestWidth = width;
+                bestUrl = url;
+              }
+            }
+          }
+
+          // If no image 1024px or smaller found, fall back to the smallest available
+          if (!bestUrl) {
+            let smallestWidth = Number.POSITIVE_INFINITY;
+            for (const url of urls) {
+              const widthMatch = url.match(/width:(\d+)/);
+              if (widthMatch) {
+                const width = Number.parseInt(widthMatch[1], 10);
+                if (width < smallestWidth) {
+                  smallestWidth = width;
+                  bestUrl = url;
+                }
+              }
+            }
+          }
+
+          if (bestUrl) {
+            try {
+              data.imageUrl = new URL(bestUrl, originalUrl).href;
+            } catch {
+              data.imageUrl = bestUrl;
+            }
+          }
+        }
+      }
     }
 
-    // Extract price - generic patterns for non-Amazon sites
+    // Extract price - prioritize elements that contain ONLY price data with currency symbols
     const pricePatterns = [
       // Schema.org structured data (highest priority)
       /"price":\s*"?([0-9,]+\.?\d{0,2})"?/i,
-      // Common price class/id patterns
-      /class="[^"]*price[^"]*"[^>]*>\D*([0-9,]+\.?\d{0,2})/i,
-      /id="[^"]*price[^"]*"[^>]*>\D*([0-9,]+\.?\d{0,2})/i,
-      // Price spans and divs
-      /<(?:span|div)[^>]*class="[^"]*price[^"]*"[^>]*>\D*([0-9,]+\.?\d{0,2})/i,
-      // Currency symbols with prices (more specific patterns first) - removed global flags
-      /NZ\$\s*([0-9,]+\.?\d{0,2})/i,
-      /AU\$\s*([0-9,]+\.?\d{0,2})/i,
-      /CA\$\s*([0-9,]+\.?\d{0,2})/i,
-      /\$\s*([0-9,]+\.?\d{0,2})/i,
-      /£\s*([0-9,]+\.?\d{0,2})/i,
-      /€\s*([0-9,]+\.?\d{0,2})/i,
-      // Generic price patterns (lowest priority)
-      /price[^>]*>\D*([0-9,]+\.?\d{0,2})/i,
-      /price.*?([0-9,]+\.?\d{0,2})/i,
+      // Main product price elements (highest priority for main product)
+      /<(?:span|div)[^>]*class="[^"]*product-price-large[^"]*"[^>]*>\s*(?:NZ\$|AU\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})\s*<\/\w+>/i,
+      /<(?:span|div)[^>]*class="[^"]*main-price[^"]*"[^>]*>\s*(?:NZ\$|AU\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})\s*<\/\w+>/i,
+      /<(?:span|div)[^>]*class="[^"]*current-price[^"]*"[^>]*>\s*(?:NZ\$|AU\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})\s*<\/\w+>/i,
+      // Elements with price-specific classes that contain currency + price
+      /<(?:span|div)[^>]*class="[^"]*product-price[^"]*"[^>]*>\s*(?:NZ\$|AU\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})\s*<\/\w+>/i,
+      // Elements with price-specific IDs that contain currency + price
+      /<(?:span|div)[^>]*id="[^"]*price[^"]*"[^>]*>\s*(?:NZ\$|AU\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})\s*<\/\w+>/i,
+      // Currency symbols with prices in elements that contain only the price
+      /<(?:span|div)[^>]*>\s*NZ\$\s*([0-9,]+\.?\d{0,2})\s*<\/\w+>/i,
+      /<(?:span|div)[^>]*>\s*AU\$\s*([0-9,]+\.?\d{0,2})\s*<\/\w+>/i,
+      /<(?:span|div)[^>]*>\s*CA\$\s*([0-9,]+\.?\d{0,2})\s*<\/\w+>/i,
+      /<(?:span|div)[^>]*>\s*\$\s*([0-9,]+\.?\d{0,2})\s*<\/\w+>/i,
+      /<(?:span|div)[^>]*>\s*£\s*([0-9,]+\.?\d{0,2})\s*<\/\w+>/i,
+      /<(?:span|div)[^>]*>\s*€\s*([0-9,]+\.?\d{0,2})\s*<\/\w+>/i,
+      // Fallback: look for standalone currency + price patterns (but be more restrictive)
+      // Only match if the price is followed by whitespace or end of tag, not by text
+      /(?:^|\s|>)(?:NZ\$|AU\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})(?:\s*$|\s*<|\s*<\/)/i,
     ];
 
-    const foundPrices: number[] = [];
+    const foundPrices: { price: number; priority: number }[] = [];
     const maxPricesToFind = 30; // Prevent excessive price collection
-    for (const pattern of pricePatterns) {
-      if (foundPrices.length >= maxPricesToFind) break;
+
+    for (let i = 0; i < pricePatterns.length && foundPrices.length < maxPricesToFind; i++) {
+      const pattern = pricePatterns[i];
+      const priority = i; // Lower number = higher priority
 
       // For patterns that might have multiple matches, use a safer approach
       if (
@@ -470,7 +525,7 @@ export class UrlScrapingService {
           const priceStr = match[1].replace(/,/g, "");
           const price = Number.parseFloat(priceStr);
           if (!Number.isNaN(price) && price > 0 && price < 1000000) {
-            foundPrices.push(price);
+            foundPrices.push({ price, priority });
           }
         }
       } else {
@@ -480,18 +535,32 @@ export class UrlScrapingService {
           const priceStr = match[1].replace(/,/g, "");
           const price = Number.parseFloat(priceStr);
           if (!Number.isNaN(price) && price > 0 && price < 1000000) {
-            foundPrices.push(price);
+            foundPrices.push({ price, priority });
           }
         }
       }
     }
 
     if (foundPrices.length > 0) {
-      const reasonablePrices = foundPrices.filter((price) => price >= 1.0);
+      // Filter out unreasonable prices (too low or too high)
+      const reasonablePrices = foundPrices.filter(
+        (item) => item.price >= 1.0 && item.price <= 10000
+      );
+
       if (reasonablePrices.length > 0) {
-        data.price = Math.max(...reasonablePrices);
+        // Sort by priority first (lower number = higher priority), then by price
+        const sortedPrices = reasonablePrices.sort((a, b) => {
+          if (a.priority !== b.priority) {
+            return a.priority - b.priority; // Lower priority number first
+          }
+          return a.price - b.price; // Then by price
+        });
+
+        // Take the first price (highest priority)
+        data.price = sortedPrices[0].price;
       } else {
-        data.price = Math.max(...foundPrices);
+        // Fallback to the highest price if no reasonable prices found
+        data.price = Math.max(...foundPrices.map((item) => item.price));
       }
     }
 
@@ -522,8 +591,8 @@ export class UrlScrapingService {
     }
 
     // Clean up text
-    if (data.title) {
-      data.title = this.cleanText(data.title);
+    if (data.name) {
+      data.name = this.cleanText(data.name);
     }
     if (data.description) {
       data.description = this.cleanText(data.description);

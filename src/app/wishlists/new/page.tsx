@@ -1,12 +1,12 @@
 "use client";
 
-import { useAuth } from "@/components/AuthProvider";
-import { WishlistForm, type WishlistFormData } from "@/components/WishlistForm";
-import { Button } from "@/components/ui/Button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
+import { Button } from "@/components/ui/Button";
+import { WishlistForm, type WishlistFormData } from "@/components/WishlistForm";
 
 export default function NewWishlistPage() {
   const { user, isLoading: isAuthLoading } = useAuth();

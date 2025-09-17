@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MockedFunction } from "vitest";
-import { WishlistService } from "../WishlistService";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CreateWishlistData, UpdateWishlistData } from "../WishlistService";
+import { WishlistService } from "../WishlistService";
 
 // Mock Prisma for unit tests
 vi.mock("@/lib/db", () => ({

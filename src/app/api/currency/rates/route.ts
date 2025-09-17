@@ -1,5 +1,5 @@
-import { CurrencyService } from "@/lib/services/CurrencyService";
 import { NextResponse } from "next/server";
+import { CurrencyService } from "@/lib/services/CurrencyService";
 
 export async function GET() {
   try {

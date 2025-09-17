@@ -1,15 +1,5 @@
 "use client";
 
-import { useAuth } from "@/components/AuthProvider";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/DropdownMenu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar,
@@ -26,6 +16,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/components/AuthProvider";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/DropdownMenu";
 
 interface UserWishlist {
   id: string;
@@ -55,11 +55,7 @@ interface UserProfile {
   isOwnProfile: boolean;
 }
 
-export default function UserProfilePage({
-  params,
-}: {
-  params: Promise<{ userId: string }>;
-}) {
+export default function UserProfilePage({ params }: { params: Promise<{ userId: string }> }) {
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const { userId } = React.use(params);

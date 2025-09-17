@@ -1,4 +1,4 @@
-import { http, HttpResponse } from "msw";
+import { HttpResponse, http } from "msw";
 import type { CreateWishlistItemData, UpdateWishlistItemData } from "../../types";
 import { mockUser, mockWishlist, mockWishlistItem } from "../utils";
 

@@ -1,5 +1,5 @@
-import { useAuth } from "@/components/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/components/AuthProvider";
 
 export interface UserProfile {
   id: string;

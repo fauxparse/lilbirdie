@@ -1,6 +1,6 @@
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { WishlistService } from "@/lib/services/WishlistService";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,

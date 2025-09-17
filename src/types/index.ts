@@ -78,14 +78,3 @@ export interface UpdateWishlistItemData {
   priority?: number;
   tags?: string[];
 }
-
-// Component prop types
-export interface WishlistItemCardProps {
-  itemId: string;
-  wishlistPermalink: string;
-  isOwner: boolean;
-  onClaim?: (itemId: string, isClaimed: boolean) => void;
-  onEdit?: (item: WishlistItemResponse) => void;
-  onDelete?: (itemId: string) => void;
-  isClaimPending?: boolean;
-}

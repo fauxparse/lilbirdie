@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { OccasionService } from "../OccasionService";
 import type { CreateOccasionData, UpdateOccasionData } from "../OccasionService";
+import { OccasionService } from "../OccasionService";
 
 // Mock Prisma for unit tests
 vi.mock("@/lib/db", () => ({

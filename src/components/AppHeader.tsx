@@ -1,12 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { SidebarTrigger } from "@/components/ui/Sidebar";
 import { signOut } from "@/lib/auth-client";
-import Link from "next/link";
 
 export function AppHeader() {
   const { user, isLoading } = useAuth();

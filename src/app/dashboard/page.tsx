@@ -1,15 +1,15 @@
 "use client";
 
-import { useAuth } from "@/components/AuthProvider";
-import { ModalDemo } from "@/components/ModalDemo";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, CheckCircle, Gift, Heart, Package, TreePine, User, Zap } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/components/AuthProvider";
+import { ModalDemo } from "@/components/ModalDemo";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 
 interface DashboardWishlist {
   id: string;
@@ -67,7 +67,7 @@ interface DashboardData {
 export default function DashboardPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [showModalDemo, setShowModalDemo] = useState(true);
+  const [showModalDemo, setShowModalDemo] = useState(false);
 
   const {
     data: dashboardData,

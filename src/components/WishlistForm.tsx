@@ -1,4 +1,6 @@
 "use client";
+import { Lock, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -6,8 +8,6 @@ import { Label } from "@/components/ui/Label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { Switch } from "@/components/ui/Switch";
 import { Textarea } from "@/components/ui/Textarea";
-import { Lock, Users } from "lucide-react";
-import { useEffect, useState } from "react";
 
 type Privacy = "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE";
 

@@ -1,5 +1,5 @@
-import { ClaimWithUser, WishlistWithItems } from "@/types";
 import { WishlistPrivacy } from "@prisma/client";
+import { ClaimWithUser, WishlistWithItems } from "@/types";
 import { prisma } from "../db";
 import { PrivacyService } from "./PrivacyService";
 

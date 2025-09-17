@@ -45,5 +45,9 @@ export default defineConfig({
   },
   define: {
     "import.meta.vitest": undefined,
+    global: "globalThis",
+  },
+  esbuild: {
+    jsxInject: `import React from 'react'`,
   },
 });

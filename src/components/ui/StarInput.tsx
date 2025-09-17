@@ -1,7 +1,7 @@
 "use client";
-import { cn } from "@/lib/utils";
 import { Star } from "lucide-react";
 import { useId } from "react";
+import { cn } from "@/lib/utils";
 
 interface StarInputProps {
   className?: string;

@@ -1,7 +1,7 @@
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { ProfileService } from "@/lib/services/ProfileService";
 import { Profile } from "@/types";
-import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {

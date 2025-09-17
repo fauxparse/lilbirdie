@@ -1,4 +1,17 @@
 "use client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { sortBy, uniq, upperFirst } from "es-toolkit";
+import {
+  Edit,
+  ExternalLink,
+  Hand,
+  MoreVertical,
+  ShoppingCart,
+  Trash,
+  UserRound,
+} from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -13,22 +26,21 @@ import { StarInput } from "@/components/ui/StarInput";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { useUserPreferredCurrency } from "@/hooks/useUserPreferredCurrency";
 import { HandOff } from "@/icons/HandOff";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { sortBy, uniq, upperFirst } from "es-toolkit";
-import {
-  Edit,
-  ExternalLink,
-  Hand,
-  MoreVertical,
-  ShoppingCart,
-  Trash,
-  UserRound,
-} from "lucide-react";
-import { useMemo } from "react";
-import { toast } from "sonner";
-import type { WishlistItemCardProps, WishlistItemResponse, WishlistResponse } from "../types";
+import type { WishlistItemResponse, WishlistResponse } from "../types";
 import { useAuth } from "./AuthProvider";
 import { ItemFormData } from "./ItemForm";
+
+interface WishlistItemCardProps {
+  itemId: string;
+  wishlistPermalink: string;
+  isOwner: boolean;
+  onClaim?: (itemId: string, isClaimed: boolean) => void;
+  onEdit?: (item: WishlistItemResponse) => void;
+  onDelete?: (itemId: string) => void;
+  isClaimPending?: boolean;
+  isLoading: boolean;
+  refetchWishlist?: () => void;
+}
 
 export function WishlistItemCard({
   itemId,
@@ -38,6 +50,8 @@ export function WishlistItemCard({
   onEdit,
   onDelete,
   isClaimPending = false,
+  isLoading,
+  refetchWishlist,
 }: WishlistItemCardProps) {
   const { user } = useAuth();
 
@@ -45,6 +59,13 @@ export function WishlistItemCard({
 
   // Get item from cache only - data should be populated by parent wishlist query
   const item = queryClient.getQueryData<WishlistItemResponse>(["item", itemId]);
+
+  // If item is not in cache and parent is not loading, trigger wishlist refetch
+  useEffect(() => {
+    if (!item && !isLoading && refetchWishlist) {
+      refetchWishlist();
+    }
+  }, [item, isLoading, refetchWishlist]);
 
   const { preferredCurrency, isLoading: isCurrencyLoading } = useUserPreferredCurrency();
   const { convertedPrice, convertedCurrency } = useCurrencyConversion(

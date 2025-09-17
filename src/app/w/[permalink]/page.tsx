@@ -1,8 +1,14 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Gift, Plus, User, X } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import React, { useState } from "react";
+import { toast } from "sonner";
+import { AddItemModal } from "@/components/AddItemModal";
 import { useAuth } from "@/components/AuthProvider";
 import { ItemForm, type ItemFormData } from "@/components/ItemForm";
-import { WishlistItemCard } from "@/components/WishlistItemCard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,13 +22,8 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import type { WishlistItemResponse, WishlistItemWithRelations, WishlistWithItems } from "@/types";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Gift, Plus, User, X } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import React, { useState } from "react";
-import { toast } from "sonner";
+import { WishlistItemCard } from "@/components/WishlistItemCard";
+import type { WishlistItemResponse, WishlistItemWithRelations } from "@/types";
 
 interface WishlistItem {
   id: string;
@@ -66,11 +67,7 @@ interface PublicWishlist {
   };
 }
 
-export default function PublicWishlistPage({
-  params,
-}: {
-  params: Promise<{ permalink: string }>;
-}) {
+export default function PublicWishlistPage({ params }: { params: Promise<{ permalink: string }> }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { permalink } = React.use(params);
@@ -79,6 +76,7 @@ export default function PublicWishlistPage({
     data: wishlist,
     isLoading,
     error,
+    refetch,
   } = useQuery<PublicWishlist>({
     queryKey: ["public-wishlist", permalink],
     queryFn: async () => {
@@ -254,7 +252,7 @@ export default function PublicWishlistPage({
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   // Add item mutation
-  const addItemMutation = useMutation({
+  const _addItemMutation = useMutation({
     mutationFn: async (data: ItemFormData) => {
       const response = await fetch(`/api/wishlists/${wishlist?.id}/items`, {
         method: "POST",
@@ -334,9 +332,9 @@ export default function PublicWishlistPage({
     },
   });
 
-  const handleAddItem = (data: ItemFormData) => {
-    addItemMutation.mutate(data);
-  };
+  // const handleAddItem = (data: ItemFormData) => {
+  //   addItemMutation.mutate(data);
+  // };
 
   const handleEditItem = (data: ItemFormData) => {
     editItemMutation.mutate(data);
@@ -460,34 +458,6 @@ export default function PublicWishlistPage({
           )}
         </div>
 
-        {/* Add Item Form */}
-        {showAddItem && isOwner && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Add New Item</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowAddItem(false)}
-                  className="h-8 w-8 p-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ItemForm
-                mode="create"
-                onSubmit={handleAddItem}
-                onCancel={() => setShowAddItem(false)}
-                isSubmitting={addItemMutation.isPending}
-                error={addItemMutation.error?.message || null}
-              />
-            </CardContent>
-          </Card>
-        )}
-
         {/* Edit Item Form */}
         {editingItem && isOwner && (
           <Card>
@@ -553,11 +523,15 @@ export default function PublicWishlistPage({
                 onEdit={isOwner ? setEditingItem : undefined}
                 onDelete={isOwner ? handleDeleteItem : undefined}
                 isClaimPending={claimMutation.isPending}
+                isLoading={isLoading}
+                refetchWishlist={refetch}
               />
             ))}
           </div>
         )}
       </div>
+
+      <AddItemModal isOpen={showAddItem} onClose={() => setShowAddItem(false)} />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

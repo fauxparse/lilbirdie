@@ -1,5 +1,5 @@
-import { UrlScrapingService } from "@/lib/services/UrlScrapingService";
 import { NextRequest, NextResponse } from "next/server";
+import { UrlScrapingService } from "@/lib/services/UrlScrapingService";
 
 export async function POST(request: NextRequest) {
   try {

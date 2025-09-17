@@ -1,9 +1,9 @@
 "use client";
 
-import { useAuth } from "@/components/AuthProvider";
-import { useUserProfile } from "@/hooks/useUserProfile";
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { useAuth } from "@/components/AuthProvider";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 type Theme = "light" | "dark" | "system";
 

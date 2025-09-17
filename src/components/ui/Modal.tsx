@@ -2,9 +2,9 @@
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { AnimatePresence, type Variants, motion } from "motion/react";
+import { AnimatePresence, motion, type Variants } from "motion/react";
 import * as React from "react";
-import { type ReactNode, createContext, useContext, useEffect, useRef } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "./Button";
@@ -15,7 +15,7 @@ type ExceptLayoutProps<T> = Omit<
 >;
 
 // Context to track modal nesting level
-const ModalContext = createContext<{
+const ModalLevelContext = createContext<{
   level: number;
   incrementLevel: () => void;
   decrementLevel: () => void;
@@ -25,6 +25,19 @@ const ModalContext = createContext<{
   decrementLevel: () => {},
 });
 
+const ModalContext = createContext<{
+  isOpen: boolean;
+  onClose: () => void;
+} | null>(null);
+
+export const useModal = () => {
+  const context = useContext(ModalContext);
+  if (!context) {
+    throw new Error("useModal must be used within a ModalProvider");
+  }
+  return context;
+};
+
 export function ModalProvider({ children }: { children: ReactNode }) {
   const [level, setLevel] = React.useState(0);
 
@@ -32,9 +45,9 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const decrementLevel = () => setLevel((prev) => Math.max(0, prev - 1));
 
   return (
-    <ModalContext.Provider value={{ level, incrementLevel, decrementLevel }}>
+    <ModalLevelContext.Provider value={{ level, incrementLevel, decrementLevel }}>
       {children}
-    </ModalContext.Provider>
+    </ModalLevelContext.Provider>
   );
 }
 
@@ -180,7 +193,7 @@ export function Modal({
   preventAutoFocus = false,
 }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
-  const modalContext = useContext(ModalContext);
+  const modalContext = useContext(ModalLevelContext);
 
   // Capture this modal's level when it's created (never changes)
   const modalLevel = useRef<number | null>(null);
@@ -233,66 +246,68 @@ export function Modal({
   };
 
   return (
-    <DialogPrimitive.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <AnimatePresence mode="wait">
-        {isOpen && (
-          <DialogPrimitive.Portal forceMount>
-            <motion.div
-              className={cn(
-                "fixed inset-0 flex items-center justify-center p-4",
-                modalLevel.current === 0 ? "z-50 bg-black/50" : "z-[51] bg-transparent"
-              )}
-              style={{
-                // Dynamic z-index for deeply nested modals
-                zIndex: 50 + (modalLevel.current || 0),
-              }}
-              data-slot="modal-overlay"
-              data-modal-level={modalLevel.current}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={overlayVariants}
-              custom={modalLevel.current === 0}
-              onClick={handleOverlayClick}
-            >
-              {/* Content */}
-              <FocusTrap isActive={isOpen && !preventAutoFocus}>
-                <motion.div
-                  ref={contentRef}
-                  className={cn(
-                    "relative w-full bg-background rounded-xl shadow-2xl ring-1 ring-border/10",
-                    "max-h-[90vh] overflow-hidden",
-                    sizeClasses[size],
-                    className
-                  )}
-                  style={{
-                    // Ensure content is above its overlay
-                    zIndex: 50 + (modalLevel.current || 0) + 1,
-                  }}
-                  variants={contentVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  layout
-                  transition={{
-                    layout: {
-                      type: "spring",
-                      damping: 22,
-                      stiffness: 280,
-                    },
-                  }}
-                  role="dialog"
-                  aria-modal="true"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {children}
-                </motion.div>
-              </FocusTrap>
-            </motion.div>
-          </DialogPrimitive.Portal>
-        )}
-      </AnimatePresence>
-    </DialogPrimitive.Root>
+    <ModalContext.Provider value={{ isOpen, onClose }}>
+      <DialogPrimitive.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <AnimatePresence mode="wait">
+          {isOpen && (
+            <DialogPrimitive.Portal forceMount>
+              <motion.div
+                className={cn(
+                  "fixed inset-0 flex items-center justify-center p-4",
+                  modalLevel.current === 0 ? "z-50 bg-black/50" : "z-[51] bg-transparent"
+                )}
+                style={{
+                  // Dynamic z-index for deeply nested modals
+                  zIndex: 50 + (modalLevel.current || 0),
+                }}
+                data-slot="modal-overlay"
+                data-modal-level={modalLevel.current}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                variants={overlayVariants}
+                custom={modalLevel.current === 0}
+                onClick={handleOverlayClick}
+              >
+                {/* Content */}
+                <FocusTrap isActive={isOpen && !preventAutoFocus}>
+                  <motion.div
+                    ref={contentRef}
+                    className={cn(
+                      "relative w-full bg-background rounded-xl shadow-2xl ring-1 ring-border/10",
+                      "max-h-[90vh] overflow-hidden",
+                      sizeClasses[size],
+                      className
+                    )}
+                    style={{
+                      // Ensure content is above its overlay
+                      zIndex: 50 + (modalLevel.current || 0) + 1,
+                    }}
+                    variants={contentVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    layout
+                    transition={{
+                      layout: {
+                        type: "spring",
+                        damping: 22,
+                        stiffness: 280,
+                      },
+                    }}
+                    role="dialog"
+                    aria-modal="true"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {children}
+                  </motion.div>
+                </FocusTrap>
+              </motion.div>
+            </DialogPrimitive.Portal>
+          )}
+        </AnimatePresence>
+      </DialogPrimitive.Root>
+    </ModalContext.Provider>
   );
 }
 
@@ -301,12 +316,12 @@ export function ModalHeader({
   children,
   className,
   showCloseButton = true,
-  onClose,
   ...props
 }: ExceptLayoutProps<React.HTMLAttributes<HTMLDivElement>> & {
   showCloseButton?: boolean;
-  onClose?: () => void;
 }) {
+  const { onClose } = useModal();
+
   return (
     <motion.div
       className={cn("flex items-start justify-between p-5", className)}
@@ -422,7 +437,7 @@ export function ConfirmModal({
 }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="sm">
-      <ModalHeader onClose={onClose}>
+      <ModalHeader>
         <ModalTitle>{title}</ModalTitle>
         {description && <ModalDescription>{description}</ModalDescription>}
       </ModalHeader>

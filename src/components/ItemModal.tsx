@@ -1,10 +1,10 @@
 "use client";
 
+import { X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { ItemForm, type ItemFormData } from "@/components/ItemForm";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
-import { X } from "lucide-react";
-import { useEffect, useState } from "react";
 
 interface ItemModalProps {
   isOpen: boolean;
@@ -69,7 +69,8 @@ export function ItemModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: esc key works */}
+      {/** biome-ignore lint/a11y/noStaticElementInteractions: esc key works */}
+      {/** biome-ignore lint/a11y/useKeyWithClickEvents: esc key works */}
       <div
         className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
           isAnimating ? "opacity-100" : "opacity-0"

@@ -1,4 +1,7 @@
 "use client";
+import { useQuery } from "@tanstack/react-query";
+import { Gift, Heart, Home, LayoutDashboard, Plus, User, Users } from "lucide-react";
+import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import {
   Sidebar,
@@ -10,9 +13,6 @@ import {
   SidebarMenuItem,
   SidebarMenuSkeleton,
 } from "@/components/ui/Sidebar";
-import { useQuery } from "@tanstack/react-query";
-import { Gift, Heart, Home, LayoutDashboard, Plus, User, Users } from "lucide-react";
-import Link from "next/link";
 
 interface Wishlist {
   id: string;

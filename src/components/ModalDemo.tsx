@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "motion/react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,8 +35,6 @@ import {
   ModalTitle,
 } from "@/components/ui/Modal";
 import { Textarea } from "@/components/ui/Textarea";
-import { motion } from "motion/react";
-import { useState } from "react";
 
 export function ModalDemo() {
   const [basicModal, setBasicModal] = useState(false);
@@ -251,7 +251,7 @@ export function ModalDemo() {
 
       {/* Basic Modal */}
       <Modal isOpen={basicModal} onClose={() => setBasicModal(false)} size="md">
-        <ModalHeader onClose={() => setBasicModal(false)}>
+        <ModalHeader>
           <ModalTitle>Welcome to the Modal</ModalTitle>
           <ModalDescription>
             This is a fully featured modal component with accessibility built in.
@@ -282,7 +282,7 @@ export function ModalDemo() {
 
       {/* Resizing Content Modal */}
       <Modal isOpen={resizingModal} onClose={() => setResizingModal(false)} size="lg">
-        <ModalHeader onClose={() => setResizingModal(false)}>
+        <ModalHeader>
           <ModalTitle>Content Resizing Demo</ModalTitle>
           <ModalDescription>
             Watch how smoothly the modal resizes as content changes.
@@ -336,7 +336,7 @@ export function ModalDemo() {
 
       {/* Form Modal */}
       <Modal isOpen={formModal} onClose={() => setFormModal(false)} size="xl">
-        <ModalHeader onClose={() => setFormModal(false)}>
+        <ModalHeader>
           <ModalTitle>Contact Form</ModalTitle>
           <ModalDescription>Fill out this form to get in touch.</ModalDescription>
         </ModalHeader>
@@ -404,7 +404,7 @@ export function ModalDemo() {
 
       {/* Nested Modal */}
       <Modal isOpen={nestedModal} onClose={() => setNestedModal(false)} size="md">
-        <ModalHeader onClose={() => setNestedModal(false)}>
+        <ModalHeader>
           <ModalTitle>Parent Modal</ModalTitle>
           <ModalDescription>This modal can open other modals.</ModalDescription>
         </ModalHeader>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Gift, Plus, Settings2, X } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -34,228 +34,30 @@ import {
 import { Switch } from "@/components/ui/Switch";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { WishlistItemCard } from "@/components/WishlistItemCard";
-import type { WishlistItemResponse, WishlistItemWithRelations } from "@/types";
-
-interface WishlistItem {
-  id: string;
-  name: string;
-  description?: string;
-  url?: string;
-  imageUrl?: string;
-  price?: number | string;
-  currency: string;
-  priority: number;
-  createdAt?: string;
-  claims?: Array<{
-    id: string;
-    userId: string;
-    itemId: string;
-    wishlistId: string;
-    createdAt: string;
-    user: {
-      id: string;
-      name: string | null;
-      email: string;
-      image: string | null;
-    };
-  }>;
-}
-
-interface PublicWishlist {
-  id: string;
-  title: string;
-  description?: string;
-  permalink: string;
-  privacy: string;
-  owner: {
-    id: string;
-    name?: string;
-    email: string;
-    image?: string;
-  };
-  items: WishlistItem[];
-  _count: {
-    items: number;
-  };
-}
+import { useWishlist, WishlistProvider } from "@/contexts/WishlistContext";
+import type { WishlistItemWithRelations } from "@/types";
 
 export default function PublicWishlistPage({ params }: { params: Promise<{ permalink: string }> }) {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
   const { permalink } = React.use(params);
 
+  return (
+    <WishlistProvider permalink={permalink}>
+      <WishlistPageContent />
+    </WishlistProvider>
+  );
+}
+
+function WishlistPageContent() {
+  const { user } = useAuth();
   const {
-    data: wishlist,
+    wishlist,
     isLoading,
     error,
     refetch,
-  } = useQuery<PublicWishlist>({
-    queryKey: ["public-wishlist", permalink],
-    queryFn: async () => {
-      const response = await fetch(`/api/w/${permalink}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error("NOT_FOUND");
-        }
-        throw new Error("Failed to fetch wishlist");
-      }
-      return response.json();
-    },
-  });
-
-  // Populate individual item cache entries when wishlist data is available
-  React.useEffect(() => {
-    if (wishlist?.items) {
-      for (const item of wishlist.items) {
-        queryClient.setQueryData(["item", item.id], item);
-      }
-    }
-  }, [wishlist?.items, queryClient]);
-
-  const claimMutation = useMutation({
-    mutationFn: async ({ itemId, action }: { itemId: string; action: "claim" | "unclaim" }) => {
-      const method = action === "claim" ? "POST" : "DELETE";
-      const response = await fetch(`/api/w/${permalink}/items/${itemId}/claim`, {
-        method,
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update claim");
-      }
-
-      return response.json();
-    },
-    onMutate: async ({ itemId, action }) => {
-      // Cancel any outgoing refetches so they don't overwrite our optimistic update
-      await queryClient.cancelQueries({ queryKey: ["item", itemId] });
-      await queryClient.cancelQueries({ queryKey: ["public-wishlist", permalink] });
-
-      // Snapshot the previous values
-      const previousItemData = queryClient.getQueryData<WishlistItemResponse>(["item", itemId]);
-      const previousWishlistData = queryClient.getQueryData<PublicWishlist>([
-        "public-wishlist",
-        permalink,
-      ]);
-
-      // Create optimistic claim object
-      const optimisticClaim = {
-        id: `optimistic-${Date.now()}`,
-        userId: user?.id || "",
-        itemId,
-        wishlistId: "",
-        createdAt: new Date().toISOString(),
-        user: {
-          id: user?.id || "",
-          name: user?.name || "",
-          email: user?.email || "",
-          image: user?.image || null,
-        },
-      };
-
-      // Optimistically update individual item cache
-      if (previousItemData) {
-        const currentClaims = previousItemData.claims || [];
-        const updatedClaims =
-          action === "claim"
-            ? [...currentClaims, optimisticClaim]
-            : currentClaims.filter((claim) => claim.userId !== user?.id);
-
-        queryClient.setQueryData(["item", itemId], {
-          ...previousItemData,
-          claims: updatedClaims,
-        });
-      }
-
-      // Optimistically update wishlist cache
-      if (previousWishlistData) {
-        queryClient.setQueryData(["public-wishlist", permalink], {
-          ...previousWishlistData,
-          items: previousWishlistData.items.map((item) => {
-            if (item.id === itemId) {
-              const currentClaims = item.claims || [];
-              const updatedClaims =
-                action === "claim"
-                  ? [...currentClaims, optimisticClaim]
-                  : currentClaims.filter((claim) => claim.userId !== user?.id);
-
-              return {
-                ...item,
-                claims: updatedClaims,
-              };
-            }
-            return item;
-          }),
-        });
-      }
-
-      // Return a context object with the snapshotted values
-      return { previousItemData, previousWishlistData };
-    },
-    onSuccess: (response, { itemId, action }) => {
-      // Replace optimistic update with real data from server
-      queryClient.setQueryData(["item", itemId], (oldData: WishlistItemResponse | undefined) => {
-        if (!oldData) return oldData;
-
-        const currentClaims = oldData.claims || [];
-        const updatedClaims =
-          action === "claim"
-            ? [
-                ...currentClaims.filter((claim) => claim.id && !claim.id.startsWith("optimistic-")),
-                response.claim,
-              ]
-            : currentClaims.filter((claim) => claim.userId !== response.claim.userId);
-
-        return {
-          ...oldData,
-          claims: updatedClaims,
-        };
-      });
-
-      queryClient.setQueryData(
-        ["public-wishlist", permalink],
-        (oldData: PublicWishlist | undefined) => {
-          if (!oldData) return oldData;
-
-          return {
-            ...oldData,
-            items: oldData.items.map((item) => {
-              if (item.id === itemId) {
-                const currentClaims = item.claims || [];
-                const updatedClaims =
-                  action === "claim"
-                    ? [
-                        ...currentClaims.filter(
-                          (claim) => claim.id && !claim.id.startsWith("optimistic-")
-                        ),
-                        response.claim,
-                      ]
-                    : currentClaims.filter((claim) => claim.userId !== response.claim.userId);
-
-                return {
-                  ...item,
-                  claims: updatedClaims,
-                };
-              }
-              return item;
-            }),
-          };
-        }
-      );
-
-      toast.success(action === "claim" ? "Item claimed!" : "Item unclaimed!");
-    },
-    onError: (error, { itemId }, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousItemData) {
-        queryClient.setQueryData(["item", itemId], context.previousItemData);
-      }
-      if (context?.previousWishlistData) {
-        queryClient.setQueryData(["public-wishlist", permalink], context.previousWishlistData);
-      }
-      toast.error(error.message);
-    },
-  });
+    claimMutation,
+    updateItemCache,
+    removeItemFromCache,
+  } = useWishlist();
 
   // Item management state
   const [showAddItem, setShowAddItem] = useState(false);
@@ -267,33 +69,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
   const [sortBy, setSortBy] = useState<"priority" | "price" | "date">("priority");
   const [hideClaimedItems, setHideClaimedItems] = useState(false);
 
-  // Add item mutation
-  const _addItemMutation = useMutation({
-    mutationFn: async (data: ItemFormData) => {
-      const response = await fetch(`/api/wishlists/${wishlist?.id}/items`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to add item");
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["public-wishlist", permalink] });
-      setShowAddItem(false);
-      toast.success("Item added successfully!");
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  // Add item mutation - handled by AddItemModal
 
   // Edit item mutation
   const editItemMutation = useMutation({
@@ -315,8 +91,8 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
 
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["public-wishlist", permalink] });
+    onSuccess: (updatedItem) => {
+      updateItemCache(updatedItem);
       setEditingItem(null);
       toast.success("Item updated successfully!");
     },
@@ -339,18 +115,14 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
 
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["public-wishlist", permalink] });
+    onSuccess: (_, itemId) => {
+      removeItemFromCache(itemId);
       toast.success("Item deleted successfully!");
     },
     onError: (error) => {
       toast.error(error.message);
     },
   });
-
-  // const handleAddItem = (data: ItemFormData) => {
-  //   addItemMutation.mutate(data);
-  // };
 
   const handleEditItem = (data: ItemFormData) => {
     editItemMutation.mutate(data);
@@ -468,7 +240,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
     );
   }
 
-  const isOwner = user?.id === wishlist.owner.id;
+  const isOwner = user?.id === wishlist.owner?.id;
 
   return (
     <div className="container mx-auto max-w-4xl">
@@ -483,7 +255,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
               <div className="flex items-center gap-1">
                 <UserAvatar user={wishlist.owner} size="medium" />
                 <span className="text-sm text-foreground">
-                  {wishlist.owner.name || wishlist.owner.email}
+                  {wishlist.owner?.name || "Anonymous"}
                 </span>
               </div>
               <Badge variant="outline" className="ml-2">
@@ -642,7 +414,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
               <WishlistItemCard
                 key={item.id}
                 itemId={item.id}
-                wishlistPermalink={permalink}
+                wishlistPermalink={wishlist?.permalink || ""}
                 isOwner={isOwner}
                 onClaim={handleClaim}
                 onEdit={isOwner ? setEditingItem : undefined}
@@ -659,7 +431,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
       <AddItemModal
         isOpen={showAddItem}
         onClose={() => setShowAddItem(false)}
-        wishlistPermalink={permalink}
+        wishlistPermalink={wishlist?.permalink || ""}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

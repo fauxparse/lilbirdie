@@ -1,5 +1,4 @@
 "use client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sortBy, uniq, upperFirst } from "es-toolkit";
 import {
   Edit,
@@ -10,8 +9,7 @@ import {
   Trash,
   UserRound,
 } from "lucide-react";
-import { useEffect, useMemo } from "react";
-import { toast } from "sonner";
+import { useMemo } from "react";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -23,12 +21,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
 import { StarInput } from "@/components/ui/StarInput";
+import { useWishlistItem, WishlistItemProvider } from "@/contexts/WishlistItemContext";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { useUserPreferredCurrency } from "@/hooks/useUserPreferredCurrency";
 import { HandOff } from "@/icons/HandOff";
-import type { WishlistItemResponse, WishlistResponse } from "../types";
+import type { WishlistItemResponse } from "../types";
 import { useAuth } from "./AuthProvider";
-import { ItemFormData } from "./ItemForm";
 
 interface WishlistItemCardProps {
   itemId: string;
@@ -42,30 +40,17 @@ interface WishlistItemCardProps {
   refetchWishlist?: () => void;
 }
 
-export function WishlistItemCard({
-  itemId,
-  wishlistPermalink,
+function WishlistItemCardContent({
   isOwner,
   onClaim,
   onEdit,
   onDelete,
   isClaimPending = false,
-  isLoading,
-  refetchWishlist,
-}: WishlistItemCardProps) {
+}: Omit<WishlistItemCardProps, "itemId" | "wishlistPermalink" | "isLoading" | "refetchWishlist">) {
   const { user } = useAuth();
 
-  const queryClient = useQueryClient();
-
-  // Get item from cache only - data should be populated by parent wishlist query
-  const item = queryClient.getQueryData<WishlistItemResponse>(["item", itemId]);
-
-  // If item is not in cache and parent is not loading, trigger wishlist refetch
-  useEffect(() => {
-    if (!item && !isLoading && refetchWishlist) {
-      refetchWishlist();
-    }
-  }, [item, isLoading, refetchWishlist]);
+  // Get item from context
+  const { item, updateItem } = useWishlistItem();
 
   const { preferredCurrency, isLoading: isCurrencyLoading } = useUserPreferredCurrency();
   const { convertedPrice, convertedCurrency } = useCurrencyConversion(
@@ -100,60 +85,22 @@ export function WishlistItemCard({
 
   const claimedByMe = claims.some((claim) => claim.userId === user?.id);
 
-  const updateItemMutation = useMutation<WishlistItemResponse, Error, Partial<ItemFormData>>({
-    mutationFn: async (data: Partial<ItemFormData>): Promise<WishlistItemResponse> => {
-      const response = await fetch(`/api/items/${itemId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to add item");
-      }
-
-      return response.json();
-    },
-    onSuccess: (updatedItem: WishlistItemResponse) => {
-      // Update individual item cache
-      queryClient.setQueryData(["item", updatedItem.id], updatedItem);
-
-      // Update wishlist cache
-      queryClient.setQueryData<WishlistResponse>(
-        ["public-wishlist", wishlistPermalink],
-        (oldData) => {
-          if (!oldData) return oldData;
-
-          return {
-            ...oldData,
-            items: oldData.items.map((existingItem) =>
-              existingItem.id === updatedItem.id ? updatedItem : existingItem
-            ),
-          };
-        }
-      );
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
   // Early return if item data not available in cache
   if (!item) {
     return (
       <Card className="group">
         <CardContent className="p-6">
-          <p className="text-muted-foreground text-center">Item data not available</p>
+          <div className="animate-pulse space-y-3">
+            <div className="h-4 bg-muted rounded w-3/4 mx-auto"></div>
+            <div className="h-3 bg-muted rounded w-1/2 mx-auto"></div>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   const setPriority = (priority: number) => {
-    updateItemMutation.mutate({
+    updateItem({
       priority,
     });
   };
@@ -331,5 +278,19 @@ export function WishlistItemCard({
         </div>
       )}
     </Card>
+  );
+}
+
+export function WishlistItemCard(props: WishlistItemCardProps) {
+  return (
+    <WishlistItemProvider itemId={props.itemId}>
+      <WishlistItemCardContent
+        isOwner={props.isOwner}
+        onClaim={props.onClaim}
+        onEdit={props.onEdit}
+        onDelete={props.onDelete}
+        isClaimPending={props.isClaimPending}
+      />
+    </WishlistItemProvider>
   );
 }

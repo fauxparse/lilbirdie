@@ -1,33 +1,15 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Gift } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Modal, ModalHeader, ModalTitle } from "@/components/ui/Modal";
+import { useWishlist } from "@/contexts/WishlistContext";
 import type { WishlistItemWithClaims } from "@/types";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { ItemForm, ItemFormData } from "./ItemForm";
 import { useURLScraper } from "./useURLScraper";
-
-// Local type to match the page structure (more flexible)
-interface PublicWishlist {
-  id: string;
-  title: string;
-  description?: string;
-  permalink: string;
-  privacy: string;
-  owner: {
-    id: string;
-    name?: string;
-    email: string;
-    image?: string;
-  };
-  items?: WishlistItemWithClaims[];
-  _count?: {
-    items: number;
-  };
-}
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -43,24 +25,41 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   wishlistPermalink,
 }) => {
   const [modalState, setModalState] = useState<ModalState>("paste");
-  const { scrapeURL, isScraping, data: queryData } = useURLScraper();
+  const { scrapeURL, isScraping, data: queryData, isError, error } = useURLScraper();
   const [scrapedData, setScrapedData] = useState<ItemFormData | null>(null);
-  const queryClient = useQueryClient();
+  const [scrapingError, setScrapingError] = useState<string | null>(null);
+  const { addItemToCache } = useWishlist();
 
   useEffect(() => {
     if (isOpen) {
       setModalState("paste");
       setScrapedData(null);
+      setScrapingError(null);
     }
   }, [isOpen]);
 
   // Handle query data when it becomes available
   useEffect(() => {
-    if (queryData && "name" in queryData) {
-      setScrapedData(queryData);
-      setModalState("form");
+    if (queryData) {
+      if ("name" in queryData) {
+        // Success case - we have scraped data
+        setScrapedData(queryData);
+        setScrapingError(null);
+        setModalState("form");
+      } else if ("error" in queryData) {
+        // Error case - display the error message
+        setScrapingError(queryData.error);
+        setScrapedData(null);
+      }
     }
   }, [queryData]);
+
+  // Handle query errors (network errors, etc.)
+  useEffect(() => {
+    if (isError && error) {
+      setScrapingError(error.message);
+    }
+  }, [isError, error]);
 
   const handleUrlPaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
     if (!e.clipboardData) return;
@@ -69,6 +68,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
     try {
       new URL(pastedUrl);
       e.currentTarget.value = pastedUrl;
+      setScrapingError(null); // Clear any previous errors
       scrapeURL(pastedUrl.trim());
       // The data will be available in the query result, we'll handle it in a useEffect
     } catch {
@@ -94,35 +94,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
       return response.json();
     },
     onSuccess: (newItem) => {
-      // Update the wishlist cache with the new item
-      queryClient.setQueryData(
-        ["public-wishlist", wishlistPermalink],
-        (oldData: PublicWishlist | undefined) => {
-          if (!oldData) return oldData;
-
-          // Ensure items array exists
-          const currentItems = oldData.items || [];
-
-          const updatedData: PublicWishlist = {
-            ...oldData,
-            items: [...currentItems, newItem],
-          };
-
-          // Only update _count if it exists in the original data
-          if (oldData._count) {
-            updatedData._count = {
-              ...oldData._count,
-              items: (oldData._count.items || currentItems.length) + 1,
-            };
-          }
-
-          return updatedData;
-        }
-      );
-
-      // Also set the individual item cache entry
-      queryClient.setQueryData(["item", newItem.id], newItem);
-
+      addItemToCache(newItem);
       toast.success("Item added successfully!");
       onClose();
     },
@@ -169,10 +141,19 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                     onPaste={handleUrlPaste}
                     autoFocus
                   />
-                  <p className="text-muted-foreground text-center text-balance text-sm">
-                    We’ll do our best to fill in the details for you (some websites work better than
-                    others)
-                  </p>
+                  {scrapingError ? (
+                    <div className="text-center text-balance">
+                      <p className="text-destructive text-sm font-medium mb-1">{scrapingError}</p>
+                      <p className="text-muted-foreground text-xs">
+                        You can still enter the details manually below
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-center text-balance text-sm">
+                      We'll do our best to fill in the details for you (some websites work better
+                      than others)
+                    </p>
+                  )}
                   <Button variant="outline" onClick={() => setModalState("form")}>
                     Enter details manually
                   </Button>

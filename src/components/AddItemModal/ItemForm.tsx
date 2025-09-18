@@ -18,7 +18,7 @@ const itemSchema = z.object({
   url: z.string().optional(),
   imageUrl: z.string().optional(),
   price: z.number().nullable().optional(),
-  currency: z.enum(["NZD", "USD", "AUD", "EUR", "GBP", "CAD"] as const).optional(),
+  currency: z.enum(["NZD", "USD", "AUD", "EUR", "GBP", "CAD", "JPY"] as const).optional(),
   priority: z.number().optional(),
   tags: z.array(z.string()).optional(),
 });

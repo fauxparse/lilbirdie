@@ -6,6 +6,7 @@ import { useUserPreferredCurrency } from "@/hooks/useUserPreferredCurrency";
 import { CURRENCIES, CURRENCY_CODES, isCurrency } from "@/types/currency";
 import { formatPrice } from "../PriceDisplay";
 import { Button } from "../ui/Button";
+import { ImageUpload } from "../ui/ImageUpload";
 import { Input } from "../ui/Input";
 import { Label } from "../ui/Label";
 import { PriceInput } from "../ui/PriceInput";
@@ -60,12 +61,13 @@ export const ItemForm: React.FC<ItemFormProps> = ({
       <fieldset className="flex-1 max-h-[60vh] overflow-y-auto px-5 b-0" disabled={busy}>
         <div className="flex flex-col gap-4">
           <form.Field name="imageUrl">
-            {({ state }) => (
-              <div className="aspect-16/9 bg-muted rounded-lg border border-input overflow-hidden grid grid-cols-1 grid-rows-1">
-                {state.value && (
-                  <img src={state.value} alt="Item" className="w-full h-full object-cover" />
-                )}
-              </div>
+            {({ state, handleChange }) => (
+              <ImageUpload
+                value={state.value}
+                onChange={(url) => handleChange(url || undefined)}
+                aspectRatio="16/9"
+                disabled={busy}
+              />
             )}
           </form.Field>
           <div className="space-y-2 flex flex-col gap-1">

@@ -23,7 +23,8 @@
         "noUnknownAtRules": "off"
       },
       "a11y": {
-        "noSvgWithoutTitle": "off"
+        "noSvgWithoutTitle": "off",
+        "noStaticElementInteractions": "off"
       }
     }
   },

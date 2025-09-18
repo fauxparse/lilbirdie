@@ -1,12 +1,13 @@
 "use client";
 
-import { ExternalLink, Loader2, Star } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ExternalLink, Image as ImageIcon, Loader2, Star, Upload, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Textarea } from "@/components/ui/Textarea";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
+import { useImageUpload } from "@/hooks/useImageUpload";
 import { useUserPreferredCurrency } from "@/hooks/useUserPreferredCurrency";
 
 export interface ItemFormData {
@@ -47,6 +48,24 @@ export function ItemForm({
   const [currency, setCurrency] = useState(initialData.currency || "NZD");
   const [priority, setPriority] = useState(initialData.priority?.toString() || "0");
   const [tagsInput, setTagsInput] = useState(initialData.tags?.join(", ") || "");
+
+  // Image upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Image upload hook
+  const { uploadImage, isUploading, uploadProgress } = useImageUpload({
+    onSuccess: (data) => {
+      setImageUrl(data.url);
+      setSelectedFile(null);
+      setPreviewUrl(null);
+    },
+    onError: (error) => {
+      console.error("Upload error:", error);
+    },
+  });
 
   // Currency conversion
   const { preferredCurrency } = useUserPreferredCurrency();
@@ -96,6 +115,67 @@ export function ItemForm({
     if (initialData.tags !== undefined) setTagsInput(initialData.tags.join(", "));
   }, [initialData]);
 
+  // Handle file selection and preview
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle file upload
+  const handleFileUpload = async () => {
+    if (!selectedFile) return;
+    await uploadImage(selectedFile);
+  };
+
+  // Handle drag and drop
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    const imageFile = files.find((file) => file.type.startsWith("image/"));
+
+    if (imageFile) {
+      handleFileSelect(imageFile);
+    }
+  };
+
+  // Handle file input change
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  // Clear selected file
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Remove uploaded image
+  const removeUploadedImage = () => {
+    setImageUrl("");
+  };
+
   const handleUrlScraping = async () => {
     if (!scrapingUrl.trim()) return;
 
@@ -139,7 +219,7 @@ export function ItemForm({
       if (scrapedData.url && !url.trim()) {
         setUrl(scrapedData.url);
       }
-      if (scrapedData.imageUrl && !imageUrl.trim()) {
+      if (scrapedData.imageUrl && !imageUrl.trim() && !selectedFile) {
         setImageUrl(scrapedData.imageUrl);
       }
       if (scrapedData.price && !price.trim()) {
@@ -391,14 +471,97 @@ export function ItemForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input
-              id="imageUrl"
-              type="url"
-              placeholder="https://example.com/image.jpg"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-            />
+            <Label>Image</Label>
+
+            {/* Existing uploaded image */}
+            {imageUrl && !selectedFile && (
+              <div className="relative group">
+                <div className="relative w-full h-32 border border-border rounded-lg overflow-hidden bg-muted">
+                  <img src={imageUrl} alt="Item preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={removeUploadedImage}
+                    className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Current image - click X to remove
+                </p>
+              </div>
+            )}
+
+            {/* File selection preview */}
+            {selectedFile && previewUrl && (
+              <div className="space-y-2">
+                <div className="relative w-full h-32 border border-border rounded-lg overflow-hidden bg-muted">
+                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={clearSelectedFile}
+                    className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    onClick={handleFileUpload}
+                    disabled={isUploading}
+                    size="small"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading... {uploadProgress}%
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Image
+                      </>
+                    )}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={clearSelectedFile} size="small">
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Upload zone - only show if no image selected/uploaded */}
+            {!imageUrl && !selectedFile && (
+              <button
+                type="button"
+                className={`relative w-full h-32 border-2 border-dashed rounded-lg transition-colors text-left ${
+                  isDragOver
+                    ? "border-primary bg-primary/5"
+                    : "border-muted-foreground/25 hover:border-muted-foreground/50"
+                }`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                  <ImageIcon className="h-8 w-8" />
+                  <div className="text-center">
+                    <p className="text-sm font-medium">Drop an image here</p>
+                    <p className="text-xs">or click to browse</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground/75">PNG, JPEG, WebP, GIF up to 1MB</p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileInputChange}
+                  className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+                />
+              </button>
+            )}
           </div>
         </div>
 

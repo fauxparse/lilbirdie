@@ -239,7 +239,7 @@ export function ItemForm({
 
   return (
     <div className="p-6">
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 container-type-inline-size">
         {/* URL Scraping Section */}
         <div className="space-y-3 p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50/50">
           <div className="flex items-center gap-2">
@@ -378,7 +378,7 @@ export function ItemForm({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 cq-md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="url">Website Link</Label>
             <Input
@@ -402,7 +402,7 @@ export function ItemForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 cq-md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="price">Price</Label>
             <Input

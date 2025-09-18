@@ -127,14 +127,14 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto max-w-6xl">
+      <div className="container mx-auto max-w-6xl container-type-inline-size">
         <div className="space-y-6">
           <div className="flex items-center gap-2 mb-6">
             <Gift className="h-6 w-6" />
             <h1 className="text-3xl font-bold">Dashboard</h1>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6 cq-lg:grid-cols-2">
             {[...Array(4)].map((_, i) => (
               <Card key={i}>
                 <CardHeader>
@@ -173,7 +173,7 @@ export default function DashboardPage() {
   const unsentGifts = claimedGifts.filter((gift) => !gift.sent);
 
   return (
-    <div className="container mx-auto max-w-6xl">
+    <div className="container mx-auto max-w-6xl container-type-inline-size">
       <div className="space-y-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export default function DashboardPage() {
           </Button>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 cq-lg:grid-cols-2">
           {/* My Wishlists */}
           <Card>
             <CardHeader className="pb-3">
@@ -295,7 +295,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Claimed Gifts to Send */}
-          <Card className="lg:col-span-2">
+          <Card className="cq-lg:col-span-2">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
@@ -309,7 +309,7 @@ export default function DashboardPage() {
                   <p className="text-muted-foreground">All gifts have been sent!</p>
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 cq-md:grid-cols-2 cq-lg:grid-cols-3">
                   {unsentGifts.map((claimedGift) => (
                     <Card key={claimedGift.id} className="relative">
                       <CardHeader className="pb-3">

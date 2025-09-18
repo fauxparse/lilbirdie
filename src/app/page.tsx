@@ -18,13 +18,13 @@ export default function HomePage() {
 
   if (user) {
     return (
-      <div className="container mx-auto justify-self-center px-4 py-8">
+      <div className="container mx-auto justify-self-center px-4 py-8 container-type-inline-size">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Welcome back, {user.name}!</h1>
           <p className="text-muted-foreground">Ready to manage your wishlists?</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
+        <div className="grid cq-md:grid-cols-2 gap-6 max-w-4xl">
           <Card>
             <CardHeader>
               <CardTitle>My Wishlists</CardTitle>
@@ -56,7 +56,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 container-type-inline-size">
       <div className="text-center space-y-6 mb-12">
         <h1 className="text-4xl font-bold text-primary">🐦 Welcome to Lil Birdie</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -73,7 +73,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+      <div className="grid cq-md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         <Card>
           <CardHeader>
             <CardTitle>Create Wishlists</CardTitle>

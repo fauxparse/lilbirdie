@@ -212,7 +212,7 @@ function WishlistPageContent() {
             <div className="h-8 bg-muted rounded w-1/3 mb-2" />
             <div className="h-4 bg-muted rounded w-1/2" />
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 cq-sm:grid-cols-2">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="animate-pulse">
                 <div className="h-48 bg-muted rounded-lg" />
@@ -244,7 +244,7 @@ function WishlistPageContent() {
 
   return (
     <div className="container mx-auto max-w-4xl">
-      <div className="space-y-6">
+      <div className="space-y-6 container-type-inline-size">
         <header className="flex flex-col">
           <h1 className="text-3xl font-medium pt-4">{wishlist.title}</h1>
           {wishlist.description && (
@@ -409,7 +409,7 @@ function WishlistPageContent() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 cq-md:grid-cols-2 cq-lg:grid-cols-3">
             {processedItems.map((item) => (
               <WishlistItemCard
                 key={item.id}

@@ -116,7 +116,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
 
   if (isLoading) {
     return (
-      <div className="container mx-auto max-w-4xl">
+      <div className="container mx-auto max-w-4xl container-type-inline-size">
         <div className="space-y-6">
           <div className="flex items-center gap-4 animate-pulse">
             <div className="h-20 w-20 bg-muted rounded-full" />
@@ -125,7 +125,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
               <div className="h-4 bg-muted rounded w-48" />
             </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 cq-md:grid-cols-2 cq-lg:grid-cols-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="h-48 bg-muted rounded-lg animate-pulse" />
             ))}
@@ -223,7 +223,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
   };
 
   return (
-    <div className="container mx-auto max-w-4xl">
+    <div className="container mx-auto max-w-4xl container-type-inline-size">
       <div className="space-y-6">
         {/* User Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -282,7 +282,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 cq-md:grid-cols-2 cq-lg:grid-cols-3">
               {profile.wishlists.map((wishlist) => (
                 <Card key={wishlist.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">

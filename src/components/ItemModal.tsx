@@ -97,7 +97,7 @@ export function ItemModal({
               </div>
               <Button
                 variant="ghost"
-                size="sm"
+                size="small"
                 onClick={onClose}
                 className="h-8 w-8 p-0 hover:bg-accent transition-colors"
               >

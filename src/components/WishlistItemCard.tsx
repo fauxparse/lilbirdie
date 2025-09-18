@@ -174,7 +174,7 @@ export function WishlistItemCard({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="secondary"
-                size="sm"
+                size="small"
                 className="h-8 w-8 p-0 bg-background/80 rounded-full hover:bg-background/90 backdrop-blur-sm"
               >
                 <MoreVertical className="h-4 w-4 text-foreground" />
@@ -271,7 +271,7 @@ export function WishlistItemCard({
         />
       </CardFooter>
       {isClaimed && !isOwner && (
-        <div className="row-start-1 row-span-3 col-start-1 col-span-1 relative bg-background/85 backdrop-blur-sm rounded-[calc(var(--radius-lg)-1px)] grid place-items-center p-4 animate-in fade-in-0 duration-300">
+        <div className="row-start-1 row-span-3 col-start-1 col-span-1 relative z-30 bg-background/85 backdrop-blur-sm rounded-[calc(var(--radius-lg)-1px)] grid place-items-center p-4 animate-in fade-in-0 duration-300">
           <div className="flex flex-col items-center gap-3">
             <div className="flex flex-row-reverse justify-center">
               {[...claims].reverse().map((claim, index) => (
@@ -297,10 +297,10 @@ export function WishlistItemCard({
               className="text-sm text-center text-balance animate-in slide-in-from-bottom-2 fade-in-0 duration-300"
               style={{ animationDelay: "200ms" }}
             >
-              {`${claimNames} ${claims.length > 1 ? "have" : "has"} claimed this item`}
+              {`${claimNames} ${claims.length > 1 || claimNames === "You" ? "have" : "has"} claimed this item`}
             </div>
             <div
-              className="text-lg line-clamp-2 leading-1.2 font-medium animate-in slide-in-from-bottom-2 fade-in-0 duration-300"
+              className="text-lg text-center text-balance line-clamp-2 leading-1.2 font-medium animate-in slide-in-from-bottom-2 fade-in-0 duration-300"
               style={{ animationDelay: "300ms" }}
             >
               {item.name}
@@ -308,7 +308,7 @@ export function WishlistItemCard({
             {!claimedByMe && onClaim && (
               <Button
                 variant="outline"
-                size="sm"
+                size="small"
                 className="w-full animate-in slide-in-from-bottom-2 fade-in-0 duration-300"
                 style={{ animationDelay: "400ms" }}
                 onClick={() => onClaim(item.id, claimedByMe)}
@@ -319,7 +319,7 @@ export function WishlistItemCard({
             {claimedByMe && (
               <Button
                 variant="outline"
-                size="sm"
+                size="small"
                 className="w-full animate-in slide-in-from-bottom-2 fade-in-0 duration-300"
                 style={{ animationDelay: "400ms" }}
                 disabled

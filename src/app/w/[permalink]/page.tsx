@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Gift, Plus, User, X } from "lucide-react";
+import { Gift, Plus, Settings2, X } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import React, { useState } from "react";
@@ -22,6 +22,17 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Label } from "@/components/ui/Label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
+import { Switch } from "@/components/ui/Switch";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import { WishlistItemCard } from "@/components/WishlistItemCard";
 import type { WishlistItemResponse, WishlistItemWithRelations } from "@/types";
 
@@ -34,6 +45,7 @@ interface WishlistItem {
   price?: number | string;
   currency: string;
   priority: number;
+  createdAt?: string;
   claims?: Array<{
     id: string;
     userId: string;
@@ -251,6 +263,10 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
+  // Sorting and filtering state
+  const [sortBy, setSortBy] = useState<"priority" | "price" | "date">("priority");
+  const [hideClaimedItems, setHideClaimedItems] = useState(false);
+
   // Add item mutation
   const _addItemMutation = useMutation({
     mutationFn: async (data: ItemFormData) => {
@@ -365,6 +381,53 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
     });
   };
 
+  // Sorting and filtering logic
+  const processedItems = React.useMemo(() => {
+    if (!wishlist?.items) return [];
+
+    let filteredItems = [...wishlist.items];
+
+    // Apply filtering
+    if (hideClaimedItems) {
+      filteredItems = filteredItems.filter((item) => {
+        const hasClaims = item.claims && item.claims.length > 0;
+        return !hasClaims;
+      });
+    }
+
+    // Apply sorting
+    filteredItems.sort((a, b) => {
+      switch (sortBy) {
+        case "priority":
+          // Higher priority first
+          return (b.priority || 0) - (a.priority || 0);
+        case "price": {
+          // Lower price first, null/undefined prices go to end
+          const priceA =
+            typeof a.price === "number"
+              ? a.price
+              : typeof a.price === "string"
+                ? parseFloat(a.price)
+                : Number.MAX_VALUE;
+          const priceB =
+            typeof b.price === "number"
+              ? b.price
+              : typeof b.price === "string"
+                ? parseFloat(b.price)
+                : Number.MAX_VALUE;
+          return priceA - priceB;
+        }
+        case "date":
+          // Newer items first
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        default:
+          return 0;
+      }
+    });
+
+    return filteredItems;
+  }, [wishlist?.items, sortBy, hideClaimedItems]);
+
   if (error?.message === "NOT_FOUND") {
     notFound();
   }
@@ -410,26 +473,17 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
   return (
     <div className="container mx-auto max-w-4xl">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">{wishlist.title}</h1>
-            {wishlist.description && (
-              <p className="text-muted-foreground mt-2">{wishlist.description}</p>
-            )}
-            <div className="flex items-center gap-2 mt-3">
-              <div className="flex items-center gap-2">
-                {wishlist.owner.image ? (
-                  <img
-                    src={wishlist.owner.image}
-                    alt={wishlist.owner.name || "Owner"}
-                    className="h-6 w-6 rounded-full"
-                  />
-                ) : (
-                  <User className="h-6 w-6 text-muted-foreground" />
-                )}
-                <span className="text-sm text-muted-foreground">
-                  by {wishlist.owner.name || wishlist.owner.email}
+        <header className="flex flex-col">
+          <h1 className="text-3xl font-medium pt-4">{wishlist.title}</h1>
+          {wishlist.description && (
+            <p className="text-muted-foreground mt-2">{wishlist.description}</p>
+          )}
+          <div className="flex items-center gap-3 mt-3 justify-between w-full">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <UserAvatar user={wishlist.owner} size="medium" />
+                <span className="text-sm text-foreground">
+                  {wishlist.owner.name || wishlist.owner.email}
                 </span>
               </div>
               <Badge variant="outline" className="ml-2">
@@ -440,6 +494,69 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
                     : "Private"}
               </Badge>
             </div>
+            {wishlist.items.length > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-foreground">
+                  {processedItems.length} of {wishlist.items.length} items
+                  {hideClaimedItems && processedItems.length < wishlist.items.length && (
+                    <span className="ml-1 text-muted-foreground">
+                      ({wishlist.items.length - processedItems.length} hidden)
+                    </span>
+                  )}
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon-small"
+                      className="flex items-center gap-2 data-active:bg-secondary-hover"
+                      data-active={sortBy !== "priority" || hideClaimedItems || undefined}
+                      aria-label="Sort and filter items"
+                    >
+                      <Settings2 className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80" align="start">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex justify-between items-center gap-3">
+                        <Label
+                          htmlFor="sort-select"
+                          className="text-sm font-medium whitespace-nowrap m-0"
+                        >
+                          Sort by
+                        </Label>
+                        <Select
+                          value={sortBy}
+                          onValueChange={(value: "priority" | "price" | "date") => setSortBy(value)}
+                        >
+                          <SelectTrigger id="sort-select" size="small">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="priority">Priority (High to Low)</SelectItem>
+                            <SelectItem value="price">Price (Low to High)</SelectItem>
+                            <SelectItem value="date">Date Added (Newest First)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {!isOwner && (
+                        <div className="flex items-center justify-between gap-3">
+                          <Label htmlFor="hide-claimed" className="text-sm">
+                            Hide claimed items
+                          </Label>
+                          <Switch
+                            id="hide-claimed"
+                            checked={hideClaimedItems}
+                            onCheckedChange={setHideClaimedItems}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
           </div>
 
           {isOwner && (
@@ -456,7 +573,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
               </Button>
             </div>
           )}
-        </div>
+        </header>
 
         {/* Edit Item Form */}
         {editingItem && isOwner && (
@@ -466,7 +583,7 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
                 <CardTitle>Edit Item</CardTitle>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="small"
                   onClick={() => setEditingItem(null)}
                   className="h-8 w-8 p-0"
                 >
@@ -511,9 +628,17 @@ export default function PublicWishlistPage({ params }: { params: Promise<{ perma
               </p>
             </CardContent>
           </Card>
+        ) : processedItems.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Gift className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No items match your filters</h3>
+              <p className="text-muted-foreground">Try adjusting your filters to see more items.</p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {wishlist.items.map((item) => (
+            {processedItems.map((item) => (
               <WishlistItemCard
                 key={item.id}
                 itemId={item.id}

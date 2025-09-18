@@ -81,7 +81,8 @@
       "!**/build",
       "!**/coverage",
       "!**/.vercel",
-      "!**/prisma/migrations"
+      "!**/prisma/migrations",
+      "!**/.claude"
     ]
   }
 }

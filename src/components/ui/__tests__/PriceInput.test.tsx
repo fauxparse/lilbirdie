@@ -98,16 +98,16 @@ describe("PriceInput", () => {
     expect(onChange).toHaveBeenCalledWith(0.5);
   });
 
-  it("shows unformatted value when focused", () => {
+  it("does not show unformatted value when focused", () => {
     render(<PriceInput value={10} onChange={() => {}} />);
     const input = screen.getByRole("textbox");
 
     // Initially shows formatted value
     expect(input).toHaveValue("10.00");
 
-    // When focused, shows unformatted value
+    // When focused, shows formatted value
     fireEvent.focus(input);
-    expect(input).toHaveValue("10");
+    expect(input).toHaveValue("10.00");
 
     // When blurred, shows formatted value again
     fireEvent.blur(input);
@@ -121,7 +121,7 @@ describe("PriceInput", () => {
 
     // Focus the input
     fireEvent.focus(input);
-    expect(input).toHaveValue("10");
+    expect(input).toHaveValue("10.00");
 
     // Type a decimal point and numbers
     fireEvent.change(input, { target: { value: "10.5" } });

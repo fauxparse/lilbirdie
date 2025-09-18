@@ -51,7 +51,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   );
 }
 
-type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl" | "full";
+type ModalSize = "small" | "md" | "large" | "xl" | "2xl" | "full";
 
 interface ModalProps {
   children: ReactNode;
@@ -126,9 +126,9 @@ const contentVariants: Variants = {
 };
 
 const sizeClasses: Record<ModalSize, string> = {
-  sm: "max-w-sm",
+  small: "max-w-sm",
   md: "max-w-md",
-  lg: "max-w-lg",
+  large: "max-w-lg",
   xl: "max-w-xl",
   "2xl": "max-w-2xl",
   full: "max-w-[95vw] max-h-[95vh]",
@@ -436,7 +436,7 @@ export function ConfirmModal({
   variant?: "default" | "destructive";
 }) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} size="small">
       <ModalHeader>
         <ModalTitle>{title}</ModalTitle>
         {description && <ModalDescription>{description}</ModalDescription>}

@@ -65,9 +65,9 @@ export default function HomePage() {
         </p>
         <div className="space-x-4">
           <Link href="/login">
-            <Button size="lg">Get Started</Button>
+            <Button size="large">Get Started</Button>
           </Link>
-          <Button variant="outline" size="lg">
+          <Button variant="outline" size="large">
             Learn More
           </Button>
         </div>

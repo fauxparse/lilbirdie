@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, CheckCircle, Gift, Heart, Package, TreePine, User, Zap } from "lucide-react";
+import { Calendar, CheckCircle, Gift, Heart, Package, TreePine, Zap } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { ModalDemo } from "@/components/ModalDemo";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 interface DashboardWishlist {
   id: string;
@@ -203,7 +204,7 @@ export default function DashboardPage() {
                 <div className="text-center py-8">
                   <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
                   <p className="text-muted-foreground mb-4">No wishlists yet</p>
-                  <Button asChild size="sm">
+                  <Button asChild size="small">
                     <Link href="/wishlists/new">Create Your First Wishlist</Link>
                   </Button>
                 </div>
@@ -262,17 +263,7 @@ export default function DashboardPage() {
                       className="flex items-center justify-between p-3 rounded-lg border"
                     >
                       <div className="flex items-center gap-3 flex-1">
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                          {gift.friend.image ? (
-                            <img
-                              src={gift.friend.image}
-                              alt={gift.friend.name}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <User className="h-4 w-4" />
-                          )}
-                        </div>
+                        <UserAvatar user={gift.friend} size="default" />
                         <div className="flex-1 min-w-0">
                           <Link
                             href={`/u/${gift.friend.id}`}
@@ -293,7 +284,7 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" asChild>
+                      <Button variant="outline" size="small" asChild>
                         <Link href={`/u/${gift.friend.id}`}>View Profile</Link>
                       </Button>
                     </div>
@@ -365,7 +356,7 @@ export default function DashboardPage() {
                         <Button
                           onClick={() => handleMarkAsSent(claimedGift.id)}
                           disabled={markAsSentMutation.isPending}
-                          size="sm"
+                          size="small"
                           className="w-full"
                         >
                           <CheckCircle className="h-4 w-4 mr-2" />
@@ -385,7 +376,7 @@ export default function DashboardPage() {
           <div className="fixed inset-0 z-50 bg-background">
             <div className="relative h-full">
               <div className="absolute top-4 right-4">
-                <Button onClick={() => setShowModalDemo(false)} variant="outline" size="sm">
+                <Button onClick={() => setShowModalDemo(false)} variant="outline" size="small">
                   ← Back to Dashboard
                 </Button>
               </div>

@@ -123,6 +123,12 @@ describe("WishlistService", () => {
 
   describe("getWishlistByPermalink", () => {
     it("should return wishlist for public privacy", async () => {
+      const basicWishlist = {
+        id: "wishlist-1",
+        ownerId: "user-1",
+        privacy: "PUBLIC",
+      };
+
       const mockWishlist = {
         id: "wishlist-1",
         title: "Public Wishlist",
@@ -142,61 +148,25 @@ describe("WishlistService", () => {
         items: [],
       };
 
-      (
-        prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-      ).mockResolvedValue(mockWishlist as unknown as any);
+      (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+        .mockResolvedValueOnce(basicWishlist as unknown as any)
+        .mockResolvedValueOnce(mockWishlist as unknown as any);
 
       const result = await WishlistService.getInstance().getWishlistByPermalink(
         "public-wishlist",
         "user-2"
       );
 
-      expect(prisma.wishlist.findUnique).toHaveBeenCalledWith({
-        where: { permalink: "public-wishlist" },
-        include: {
-          owner: {
-            select: { id: true, name: true, image: true },
-          },
-          items: {
-            where: { isDeleted: false },
-            include: {
-              claims: {
-                where: { userId: { not: "user-2" } },
-                include: {
-                  user: {
-                    select: { id: true, name: true, image: true },
-                  },
-                },
-              },
-            },
-            orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-          },
-        },
-      });
-
       expect(result).toEqual(mockWishlist);
     });
 
     it("should return null for private wishlist when not owner", async () => {
-      const mockWishlist = {
+      const basicWishlist = {
         id: "wishlist-1",
         privacy: "PRIVATE",
         ownerId: "user-1",
       };
 
-      (
-        prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-      ).mockResolvedValue(mockWishlist as unknown as any);
-
-      const result = await WishlistService.getInstance().getWishlistByPermalink(
-        "private-wishlist",
-        "user-2"
-      );
-
-      expect(result).toBeNull();
-    });
-
-    it("should return private wishlist when user is owner", async () => {
       const mockWishlist = {
         id: "wishlist-1",
         privacy: "PRIVATE",
@@ -205,9 +175,37 @@ describe("WishlistService", () => {
         items: [],
       };
 
-      (
-        prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-      ).mockResolvedValue(mockWishlist as unknown as any);
+      (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+        .mockResolvedValueOnce(basicWishlist as unknown as any)
+        .mockResolvedValueOnce(mockWishlist as unknown as any);
+
+      const result = await WishlistService.getInstance().getWishlistByPermalink(
+        "private-wishlist",
+        "user-2"
+      );
+
+      expect(result).toBeNull();
+      expect(prisma.wishlist.findUnique).toHaveBeenCalledTimes(2); // Both queries are made, then privacy check fails
+    });
+
+    it("should return private wishlist when user is owner", async () => {
+      const basicWishlist = {
+        id: "wishlist-1",
+        privacy: "PRIVATE",
+        ownerId: "user-1",
+      };
+
+      const mockWishlist = {
+        id: "wishlist-1",
+        privacy: "PRIVATE",
+        ownerId: "user-1",
+        owner: { id: "user-1", name: "John Doe", image: null },
+        items: [],
+      };
+
+      (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+        .mockResolvedValueOnce(basicWishlist as unknown as any)
+        .mockResolvedValueOnce(mockWishlist as unknown as any);
 
       const result = await WishlistService.getInstance().getWishlistByPermalink(
         "private-wishlist",
@@ -218,6 +216,12 @@ describe("WishlistService", () => {
     });
 
     it("should return friends-only wishlist when users are friends", async () => {
+      const basicWishlist = {
+        id: "wishlist-1",
+        ownerId: "user-1",
+        privacy: "FRIENDS_ONLY",
+      };
+
       const mockWishlist = {
         id: "wishlist-1",
         privacy: "FRIENDS_ONLY",
@@ -233,9 +237,9 @@ describe("WishlistService", () => {
         createdAt: new Date(),
       };
 
-      (
-        prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-      ).mockResolvedValue(mockWishlist as unknown as any);
+      (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+        .mockResolvedValueOnce(basicWishlist as unknown as any)
+        .mockResolvedValueOnce(mockWishlist as unknown as any);
       (
         prisma.friendship.findFirst as unknown as MockedFunction<typeof prisma.friendship.findFirst>
       ).mockResolvedValue(mockFriendship);
@@ -258,15 +262,23 @@ describe("WishlistService", () => {
     });
 
     it("should return null for friends-only wishlist when users are not friends", async () => {
+      const basicWishlist = {
+        id: "wishlist-1",
+        ownerId: "user-1",
+        privacy: "FRIENDS_ONLY",
+      };
+
       const mockWishlist = {
         id: "wishlist-1",
         privacy: "FRIENDS_ONLY",
         ownerId: "user-1",
+        owner: { id: "user-1", name: "John Doe", image: null },
+        items: [],
       };
 
-      (
-        prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-      ).mockResolvedValue(mockWishlist as unknown as any);
+      (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+        .mockResolvedValueOnce(basicWishlist as unknown as any)
+        .mockResolvedValueOnce(mockWishlist as unknown as any);
       (
         prisma.friendship.findFirst as unknown as MockedFunction<typeof prisma.friendship.findFirst>
       ).mockResolvedValue(null);
@@ -282,7 +294,7 @@ describe("WishlistService", () => {
     it("should return null when wishlist does not exist", async () => {
       (
         prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-      ).mockResolvedValue(null as unknown as any);
+      ).mockResolvedValueOnce(null as unknown as any);
 
       const result = await WishlistService.getInstance().getWishlistByPermalink(
         "nonexistent",
@@ -290,9 +302,16 @@ describe("WishlistService", () => {
       );
 
       expect(result).toBeNull();
+      expect(prisma.wishlist.findUnique).toHaveBeenCalledTimes(1); // Only basic query, since wishlist doesn't exist
     });
 
     it("should not include claims in items when no viewerId provided", async () => {
+      const basicWishlist = {
+        id: "wishlist-1",
+        ownerId: "user-1",
+        privacy: "PUBLIC",
+      };
+
       const mockWishlist = {
         id: "wishlist-1",
         privacy: "PUBLIC",
@@ -301,13 +320,14 @@ describe("WishlistService", () => {
         items: [],
       };
 
-      (
-        prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-      ).mockResolvedValue(mockWishlist as unknown as any);
+      (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+        .mockResolvedValueOnce(basicWishlist as unknown as any) // First call for basic info
+        .mockResolvedValueOnce(mockWishlist as unknown as any); // Second call for full data
 
       await WishlistService.getInstance().getWishlistByPermalink("public-wishlist");
 
-      expect(prisma.wishlist.findUnique).toHaveBeenCalledWith({
+      expect(prisma.wishlist.findUnique).toHaveBeenCalledTimes(2);
+      expect(prisma.wishlist.findUnique).toHaveBeenNthCalledWith(2, {
         where: { permalink: "public-wishlist" },
         include: {
           owner: {
@@ -317,6 +337,90 @@ describe("WishlistService", () => {
             where: { isDeleted: false },
             include: {
               claims: false,
+            },
+            orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+          },
+        },
+      });
+    });
+
+    it("should not include claims when owner views own wishlist", async () => {
+      const basicWishlist = {
+        id: "wishlist-1",
+        ownerId: "user-1",
+        privacy: "PUBLIC",
+      };
+
+      const mockWishlist = {
+        id: "wishlist-1",
+        privacy: "PUBLIC",
+        ownerId: "user-1",
+        owner: { id: "user-1", name: "John Doe", image: null },
+        items: [],
+      };
+
+      (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+        .mockResolvedValueOnce(basicWishlist as unknown as any) // First call for basic info
+        .mockResolvedValueOnce(mockWishlist as unknown as any); // Second call for full data
+
+      await WishlistService.getInstance().getWishlistByPermalink("public-wishlist", "user-1");
+
+      expect(prisma.wishlist.findUnique).toHaveBeenCalledTimes(2);
+      expect(prisma.wishlist.findUnique).toHaveBeenNthCalledWith(2, {
+        where: { permalink: "public-wishlist" },
+        include: {
+          owner: {
+            select: { id: true, name: true, image: true },
+          },
+          items: {
+            where: { isDeleted: false },
+            include: {
+              claims: false, // Should be false when owner views own wishlist
+            },
+            orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+          },
+        },
+      });
+    });
+
+    it("should include claims when non-owner views wishlist", async () => {
+      const basicWishlist = {
+        id: "wishlist-1",
+        ownerId: "user-1",
+        privacy: "PUBLIC",
+      };
+
+      const mockWishlist = {
+        id: "wishlist-1",
+        privacy: "PUBLIC",
+        ownerId: "user-1",
+        owner: { id: "user-1", name: "John Doe", image: null },
+        items: [],
+      };
+
+      (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+        .mockResolvedValueOnce(basicWishlist as unknown as any) // First call for basic info
+        .mockResolvedValueOnce(mockWishlist as unknown as any); // Second call for full data
+
+      await WishlistService.getInstance().getWishlistByPermalink("public-wishlist", "user-2");
+
+      expect(prisma.wishlist.findUnique).toHaveBeenCalledTimes(2);
+      expect(prisma.wishlist.findUnique).toHaveBeenNthCalledWith(2, {
+        where: { permalink: "public-wishlist" },
+        include: {
+          owner: {
+            select: { id: true, name: true, image: true },
+          },
+          items: {
+            where: { isDeleted: false },
+            include: {
+              claims: {
+                include: {
+                  user: {
+                    select: { id: true, name: true, image: true },
+                  },
+                },
+              },
             },
             orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
           },
@@ -705,6 +809,12 @@ describe("WishlistService", () => {
   describe("Privacy Integration", () => {
     describe("getWishlistByPermalink with privacy redaction", () => {
       it("should redact owner data for non-friends on friends-only wishlist", async () => {
+        const basicWishlist = {
+          id: "wishlist-1",
+          ownerId: "user-1",
+          privacy: "FRIENDS_ONLY",
+        };
+
         const owner = {
           id: "user-1",
           name: "John Doe",
@@ -719,9 +829,9 @@ describe("WishlistService", () => {
           items: [],
         };
 
-        (
-          prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-        ).mockResolvedValue(mockWishlist as unknown as any);
+        (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+          .mockResolvedValueOnce(basicWishlist as unknown as any)
+          .mockResolvedValueOnce(mockWishlist as unknown as any);
         (
           prisma.friendship.findFirst as unknown as MockedFunction<
             typeof prisma.friendship.findFirst
@@ -744,6 +854,12 @@ describe("WishlistService", () => {
       });
 
       it("should not redact owner data for friends on friends-only wishlist", async () => {
+        const basicWishlist = {
+          id: "wishlist-1",
+          ownerId: "user-1",
+          privacy: "FRIENDS_ONLY",
+        };
+
         const mockWishlist = {
           id: "wishlist-1",
           privacy: "FRIENDS_ONLY",
@@ -756,9 +872,9 @@ describe("WishlistService", () => {
           items: [],
         };
 
-        (
-          prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-        ).mockResolvedValue(mockWishlist as unknown as any);
+        (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+          .mockResolvedValueOnce(basicWishlist as unknown as any)
+          .mockResolvedValueOnce(mockWishlist as unknown as any);
         (
           prisma.friendship.findFirst as unknown as MockedFunction<
             typeof prisma.friendship.findFirst
@@ -778,6 +894,12 @@ describe("WishlistService", () => {
       });
 
       it("should not redact owner data on public wishlists", async () => {
+        const basicWishlist = {
+          id: "wishlist-1",
+          ownerId: "user-1",
+          privacy: "PUBLIC",
+        };
+
         const mockWishlist = {
           id: "wishlist-1",
           privacy: "PUBLIC",
@@ -790,9 +912,9 @@ describe("WishlistService", () => {
           items: [],
         };
 
-        (
-          prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-        ).mockResolvedValue(mockWishlist as unknown as any);
+        (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+          .mockResolvedValueOnce(basicWishlist as unknown as any)
+          .mockResolvedValueOnce(mockWishlist as unknown as any);
 
         const result = await WishlistService.getInstance().getWishlistByPermalink(
           "public-wishlist",
@@ -806,6 +928,12 @@ describe("WishlistService", () => {
       });
 
       it("should not redact owner data when viewing own wishlist", async () => {
+        const basicWishlist = {
+          id: "wishlist-1",
+          ownerId: "user-1",
+          privacy: "PRIVATE",
+        };
+
         const mockWishlist = {
           id: "wishlist-1",
           privacy: "PRIVATE",
@@ -818,9 +946,9 @@ describe("WishlistService", () => {
           items: [],
         };
 
-        (
-          prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-        ).mockResolvedValue(mockWishlist as unknown as any);
+        (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+          .mockResolvedValueOnce(basicWishlist as unknown as any)
+          .mockResolvedValueOnce(mockWishlist as unknown as any);
 
         const result = await WishlistService.getInstance().getWishlistByPermalink(
           "private-wishlist",
@@ -836,6 +964,12 @@ describe("WishlistService", () => {
 
     describe("getWishlistByPermalink with claims privacy redaction", () => {
       it("should properly handle claims data privacy when viewerId is provided", async () => {
+        const basicWishlist = {
+          id: "wishlist-1",
+          ownerId: "user-1",
+          privacy: "PUBLIC",
+        };
+
         const mockWishlist = {
           id: "wishlist-1",
           privacy: "PUBLIC",
@@ -903,9 +1037,9 @@ describe("WishlistService", () => {
           },
         ];
 
-        (
-          prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-        ).mockResolvedValue(mockWishlist as unknown as any);
+        (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+          .mockResolvedValueOnce(basicWishlist as unknown as any)
+          .mockResolvedValueOnce(mockWishlist as unknown as any);
         mockPrivacyService.areFriends.mockResolvedValue(false); // Not friends with owner
         mockPrivacyService.redactUserData.mockReturnValue(null); // Redact owner
         mockPrivacyService.redactClaimsUserData.mockResolvedValue(mockRedactedClaims);
@@ -935,6 +1069,12 @@ describe("WishlistService", () => {
       });
 
       it("should not include claims data when no viewerId provided", async () => {
+        const basicWishlist = {
+          id: "wishlist-1",
+          ownerId: "user-1",
+          privacy: "PUBLIC",
+        };
+
         const mockWishlist = {
           id: "wishlist-1",
           privacy: "PUBLIC",
@@ -953,9 +1093,9 @@ describe("WishlistService", () => {
           ],
         };
 
-        (
-          prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>
-        ).mockResolvedValue(mockWishlist as unknown as any);
+        (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
+          .mockResolvedValueOnce(basicWishlist as unknown as any)
+          .mockResolvedValueOnce(mockWishlist as unknown as any);
         mockPrivacyService.redactUserData.mockReturnValue(mockWishlist.owner);
 
         const result = await WishlistService.getInstance().getWishlistByPermalink(
@@ -963,8 +1103,9 @@ describe("WishlistService", () => {
           // No viewerId provided
         );
 
-        // Verify claims query was set to false
-        expect(prisma.wishlist.findUnique).toHaveBeenCalledWith({
+        // Verify claims query was set to false on second call
+        expect(prisma.wishlist.findUnique).toHaveBeenCalledTimes(2);
+        expect(prisma.wishlist.findUnique).toHaveBeenNthCalledWith(2, {
           where: { permalink: "public-wishlist" },
           include: {
             owner: {

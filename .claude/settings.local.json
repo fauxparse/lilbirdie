@@ -32,7 +32,9 @@
       "WebFetch(domain:tailwindcss-radix.vercel.app)",
       "WebFetch(domain:ui.shadcn.com)",
       "WebFetch(domain:www.radix-ui.com)",
-      "Bash(tsc:*)"
+      "Bash(tsc:*)",
+      "Bash(xargs sed:*)",
+      "Read(//Users/matt/**)"
     ],
     "deny": [],
     "ask": []

@@ -149,10 +149,10 @@ export default function WishlistsPage() {
                   </span>
                 </div>
                 <div className="mt-4 flex gap-2">
-                  <Button variant="outline" size="sm" asChild className="flex-1">
+                  <Button variant="outline" size="small" asChild className="flex-1">
                     <Link href={`/w/${wishlist.permalink}`}>View</Link>
                   </Button>
-                  <Button variant="outline" size="sm" asChild className="flex-1">
+                  <Button variant="outline" size="small" asChild className="flex-1">
                     <Link href={`/wishlists/${wishlist.permalink}/edit`}>Edit</Link>
                   </Button>
                 </div>

@@ -167,7 +167,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+            <Button type="submit" className="w-full" size="large" disabled={isLoading}>
               {isLoading ? "Loading..." : isSignUp ? "Create Account" : "Sign In"}
             </Button>
           </form>
@@ -183,7 +183,7 @@ export default function LoginPage() {
             onClick={handleGoogleSignIn}
             variant="outline"
             className="w-full"
-            size="lg"
+            size="large"
             disabled={isLoading}
           >
             Continue with Google

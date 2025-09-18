@@ -122,14 +122,14 @@ export function ModalDemo() {
           <div className="space-y-3">
             <h3 className="font-medium text-green-600 dark:text-green-400">✨ New Modal</h3>
             <div className="space-y-2">
-              <Button onClick={() => setBasicModal(true)} className="w-full" size="sm">
+              <Button onClick={() => setBasicModal(true)} className="w-full" size="small">
                 Basic Modal
               </Button>
               <Button
                 onClick={() => setConfirmModal(true)}
                 variant="destructive"
                 className="w-full"
-                size="sm"
+                size="small"
               >
                 Confirm Modal
               </Button>
@@ -150,7 +150,7 @@ export function ModalDemo() {
             <div className="space-y-2">
               <Dialog open={oldDialog} onOpenChange={setOldDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="w-full" size="sm">
+                  <Button variant="outline" className="w-full" size="small">
                     Basic Dialog
                   </Button>
                 </DialogTrigger>
@@ -175,7 +175,7 @@ export function ModalDemo() {
 
               <AlertDialog open={oldAlert} onOpenChange={setOldAlert}>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="w-full" size="sm">
+                  <Button variant="destructive" className="w-full" size="small">
                     Alert Dialog
                   </Button>
                 </AlertDialogTrigger>
@@ -208,7 +208,7 @@ export function ModalDemo() {
           <div className="space-y-3">
             <h3 className="font-medium text-blue-600 dark:text-blue-400">🔧 Current ItemModal</h3>
             <div className="space-y-2">
-              <Button variant="secondary" className="w-full" size="sm" disabled>
+              <Button variant="secondary" className="w-full" size="small" disabled>
                 Custom Modal
               </Button>
               <p className="text-xs text-muted-foreground">(Used in app currently)</p>
@@ -281,7 +281,7 @@ export function ModalDemo() {
       </Modal>
 
       {/* Resizing Content Modal */}
-      <Modal isOpen={resizingModal} onClose={() => setResizingModal(false)} size="lg">
+      <Modal isOpen={resizingModal} onClose={() => setResizingModal(false)} size="large">
         <ModalHeader>
           <ModalTitle>Content Resizing Demo</ModalTitle>
           <ModalDescription>
@@ -293,21 +293,21 @@ export function ModalDemo() {
           <div className="space-y-4">
             <div className="flex gap-2">
               <Button
-                size="sm"
+                size="small"
                 variant={contentSize === "small" ? "default" : "outline"}
                 onClick={() => setContentSize("small")}
               >
                 Small
               </Button>
               <Button
-                size="sm"
+                size="small"
                 variant={contentSize === "medium" ? "default" : "outline"}
                 onClick={() => setContentSize("medium")}
               >
                 Medium
               </Button>
               <Button
-                size="sm"
+                size="small"
                 variant={contentSize === "large" ? "default" : "outline"}
                 onClick={() => setContentSize("large")}
               >

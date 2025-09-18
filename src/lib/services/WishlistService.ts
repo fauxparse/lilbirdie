@@ -52,6 +52,19 @@ export class WishlistService {
   }
 
   async getWishlistByPermalink(permalink: string, viewerId?: string) {
+    // First, get basic wishlist info to check ownership
+    const basicWishlist = await prisma.wishlist.findUnique({
+      where: { permalink },
+      select: { id: true, ownerId: true, privacy: true },
+    });
+
+    if (!basicWishlist) {
+      return null;
+    }
+
+    const isOwner = viewerId === basicWishlist.ownerId;
+    const shouldIncludeClaims = viewerId && !isOwner;
+
     const wishlist = (await prisma.wishlist.findUnique({
       where: { permalink },
       include: {
@@ -61,9 +74,8 @@ export class WishlistService {
         items: {
           where: { isDeleted: false },
           include: {
-            claims: viewerId
+            claims: shouldIncludeClaims
               ? {
-                  where: { userId: { not: viewerId } }, // Hide viewer's own claims
                   include: {
                     user: {
                       select: { id: true, name: true, image: true },
@@ -81,18 +93,18 @@ export class WishlistService {
       return null;
     }
 
-    // Check privacy permissions
-    if (wishlist.privacy === "PRIVATE" && wishlist.ownerId !== viewerId) {
+    // Check privacy permissions using basic wishlist info
+    if (basicWishlist.privacy === "PRIVATE" && basicWishlist.ownerId !== viewerId) {
       return null;
     }
 
-    if (wishlist.privacy === "FRIENDS_ONLY" && wishlist.ownerId !== viewerId) {
+    if (basicWishlist.privacy === "FRIENDS_ONLY" && basicWishlist.ownerId !== viewerId) {
       // Check if viewer is friends with owner
       const friendship = await prisma.friendship.findFirst({
         where: {
           OR: [
-            { userId: wishlist.ownerId, friendId: viewerId },
-            { userId: viewerId, friendId: wishlist.ownerId },
+            { userId: basicWishlist.ownerId, friendId: viewerId },
+            { userId: viewerId, friendId: basicWishlist.ownerId },
           ],
         },
       });
@@ -102,33 +114,35 @@ export class WishlistService {
       }
     }
 
-    // Apply privacy redaction to claims user data
-    for (const item of wishlist.items) {
-      if (item.claims && Array.isArray(item.claims) && item.claims.length > 0) {
-        // Type guard to ensure we have claims with user data
-        const claimsWithUser = item.claims.filter(
-          (claim): claim is ClaimWithUser => claim && typeof claim === "object" && "user" in claim
-        );
+    // Apply privacy redaction to claims user data (only if claims were included)
+    if (shouldIncludeClaims) {
+      for (const item of wishlist.items) {
+        if (item.claims && Array.isArray(item.claims) && item.claims.length > 0) {
+          // Type guard to ensure we have claims with user data
+          const claimsWithUser = item.claims.filter(
+            (claim): claim is ClaimWithUser => claim && typeof claim === "object" && "user" in claim
+          );
 
-        if (claimsWithUser.length > 0) {
-          const claimsWithUserData = claimsWithUser.map(
-            (claim) =>
-              ({
-                id: claim.id,
-                userId: claim.userId,
-                itemId: claim.itemId,
-                wishlistId: claim.wishlistId,
-                createdAt: claim.createdAt,
-                user: claim.user,
-                sent: false,
-                sentAt: null,
-              }) satisfies ClaimWithUser
-          );
-          const redactedClaims = await this.privacyService.redactClaimsUserData(
-            claimsWithUserData,
-            viewerId || ""
-          );
-          item.claims = redactedClaims;
+          if (claimsWithUser.length > 0) {
+            const claimsWithUserData = claimsWithUser.map(
+              (claim) =>
+                ({
+                  id: claim.id,
+                  userId: claim.userId,
+                  itemId: claim.itemId,
+                  wishlistId: claim.wishlistId,
+                  createdAt: claim.createdAt,
+                  user: claim.user,
+                  sent: false,
+                  sentAt: null,
+                }) satisfies ClaimWithUser
+            );
+            const redactedClaims = await this.privacyService.redactClaimsUserData(
+              claimsWithUserData,
+              viewerId || ""
+            );
+            item.claims = redactedClaims;
+          }
         }
       }
     }

@@ -212,13 +212,14 @@ export class UrlScrapingService {
         /data-automation-id="price"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})/i,
         /"price":\s*"?([0-9,]+\.?\d{0,2})"?/i, // JSON-LD structured data
         // Amazon-specific price containers
-        /<span[^>]*id="[^"]*price[^"]*"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})/i,
-        /<div[^>]*class="[^"]*price[^"]*"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€)\s*([0-9,]+\.?\d{0,2})/i,
+        /<span[^>]*id="[^"]*price[^"]*"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€|¥)\s*([0-9,]+\.?\d{0,2})/i,
+        /<div[^>]*class="[^"]*price[^"]*"[^>]*>(?:A\$|AU\$|NZ\$|CA\$|\$|£|€|¥)\s*([0-9,]+\.?\d{0,2})/i,
         // Generic currency patterns (broader search) - removed global flags to prevent memory issues
-        /(?:A\$|AU\$|NZ\$|CA\$)\s*([0-9,]+\.?\d{0,2})/i,
+        /(?:A\$|AU\$|NZ\$|CA\$|\$|£|€|¥)\s*([0-9,]+\.?\d{0,2})/i,
         /\$\s*([0-9,]+\.?\d{0,2})/i,
         /£\s*([0-9,]+\.?\d{0,2})/i,
         /€\s*([0-9,]+\.?\d{0,2})/i,
+        /¥\s*([0-9,]+\.?\d{0,2})/i,
       ],
       image: [
         /"hiRes":"([^"]+)"/i,
@@ -371,7 +372,7 @@ export class UrlScrapingService {
     } else if (hostname.includes("amazon.ca")) {
       data.currency = "CAD";
     } else if (hostname.includes("amazon.co.jp")) {
-      data.currency = "USD"; // Map JPY to USD since JPY is not supported
+      data.currency = "JPY";
     } else if (
       hostname.includes("amazon.de") ||
       hostname.includes("amazon.fr") ||
@@ -577,7 +578,7 @@ export class UrlScrapingService {
     } else if (hostname.endsWith(".ca")) {
       data.currency = "CAD";
     } else if (hostname.endsWith(".jp")) {
-      data.currency = "USD"; // Map JPY to USD since JPY is not supported
+      data.currency = "JPY";
     } else if (
       hostname.includes(".eu") ||
       hostname.endsWith(".de") ||

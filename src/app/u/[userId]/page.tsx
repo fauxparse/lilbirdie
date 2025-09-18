@@ -328,7 +328,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
                       </span>
                     </div>
 
-                    <Button variant="outline" size="sm" asChild className="w-full">
+                    <Button variant="outline" size="small" asChild className="w-full">
                       <Link href={`/w/${wishlist.permalink}`}>
                         <Gift className="h-4 w-4 mr-2" />
                         View Wishlist

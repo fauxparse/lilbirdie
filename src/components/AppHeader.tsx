@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { SidebarTrigger } from "@/components/ui/Sidebar";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import { signOut } from "@/lib/auth-client";
 
 export function AppHeader() {
@@ -32,21 +32,14 @@ export function AppHeader() {
           <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
         ) : user ? (
           <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              {user.image ? (
-                <img
-                  src={user.image}
-                  alt={user.name || "User"}
-                  className="h-full w-full rounded-full"
-                />
-              ) : (
-                <div className="h-full w-full rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                  {user.name?.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </Avatar>
+            <UserAvatar
+              user={user}
+              size="default"
+              fallbackClassName="font-medium"
+              showIcon={false}
+            />
             <span className="hidden sm:inline-block text-sm font-medium">{user.name}</span>
-            <Button onClick={handleSignOut} variant="outline" size="sm">
+            <Button onClick={handleSignOut} variant="outline" size="small">
               Sign Out
             </Button>
           </div>

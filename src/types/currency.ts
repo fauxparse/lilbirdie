@@ -1,4 +1,4 @@
-export const CURRENCY_CODES = ["NZD", "USD", "AUD", "EUR", "GBP", "CAD"] as const;
+export const CURRENCY_CODES = ["NZD", "USD", "AUD", "EUR", "GBP", "CAD", "JPY"] as const;
 
 export const CURRENCIES: Record<string, { code: string; name: string; symbol: string }> = {
   NZD: {
@@ -30,6 +30,11 @@ export const CURRENCIES: Record<string, { code: string; name: string; symbol: st
     code: "CAD",
     name: "Canadian Dollar",
     symbol: "CA$",
+  },
+  JPY: {
+    code: "JPY",
+    name: "Japanese Yen",
+    symbol: "¥",
   },
 } as const;
 

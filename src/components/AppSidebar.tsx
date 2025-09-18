@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { Gift, Heart, Home, LayoutDashboard, Plus, User, Users } from "lucide-react";
+import { Gift, Heart, Home, LayoutDashboard, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
   SidebarMenuSkeleton,
 } from "@/components/ui/Sidebar";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 
 interface Wishlist {
   id: string;
@@ -161,17 +162,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={friend.id}>
                   <SidebarMenuButton asChild>
                     <Link href={`/u/${friend.id}`}>
-                      <div className="h-4 w-4 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                        {friend.image ? (
-                          <img
-                            src={friend.image}
-                            alt={friend.name}
-                            className="h-full w-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <User className="h-3 w-3" />
-                        )}
-                      </div>
+                      <UserAvatar user={friend} size="small" />
                       <span className="truncate">{friend.name}</span>
                       <Gift className="h-3 w-3 text-muted-foreground" />
                     </Link>

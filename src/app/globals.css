@@ -1,29 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@import url("https://fonts.googleapis.com/css2?family=Onest:wght@100..900&display=swap");
-
-/* Satoshi Variable Font */
-@font-face {
-  font-family: "Satoshi";
-  src:
-    url("/fonts/Satoshi-Variable.woff2") format("woff2"),
-    url("/fonts/Satoshi-Variable.woff") format("woff");
-  font-weight: 300 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Satoshi";
-  src:
-    url("/fonts/Satoshi-VariableItalic.woff2") format("woff2"),
-    url("/fonts/Satoshi-VariableItalic.woff") format("woff");
-  font-weight: 300 900;
-  font-style: italic;
-  font-display: swap;
-}
-
 @theme {
   /* =============================================================================
    * DESIGN TOKEN SYSTEM
@@ -145,7 +122,7 @@
   --radius: 0.5rem;
 
   /* Typography */
-  --font-sans: "Onest", "Satoshi", system-ui, sans-serif;
+  --font-sans: "Geist", system-ui, sans-serif;
 }
 
 /* =============================================================================
@@ -214,7 +191,6 @@
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
-  font-family: "Onest", "Satoshi", system-ui, sans-serif;
 }
 
 /* Debug styles to test color tokens */

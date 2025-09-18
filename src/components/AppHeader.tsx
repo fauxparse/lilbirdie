@@ -21,8 +21,7 @@ export function AppHeader() {
 
       <div className="flex items-center gap-2 flex-1">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-xl">🐦</span>
-          <h1 className="text-lg font-semibold">Lil Birdie</h1>
+          <h1 className="text-xl font-medium">Lil Birdie</h1>
         </Link>
       </div>
 

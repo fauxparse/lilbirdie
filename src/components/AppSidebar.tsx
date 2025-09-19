@@ -14,6 +14,7 @@ import {
   SidebarMenuSkeleton,
 } from "@/components/ui/Sidebar";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { useFriends } from "@/hooks/useFriends";
 
 interface Wishlist {
   id: string;
@@ -22,13 +23,6 @@ interface Wishlist {
   _count: {
     items: number;
   };
-}
-
-interface Friend {
-  id: string;
-  name: string;
-  email: string;
-  image?: string;
 }
 
 export function AppSidebar() {
@@ -50,21 +44,7 @@ export function AppSidebar() {
     enabled: !!user,
   });
 
-  const {
-    data: friends,
-    isLoading: friendsLoading,
-    error: friendsError,
-  } = useQuery<Friend[]>({
-    queryKey: ["friends"],
-    queryFn: async () => {
-      const response = await fetch("/api/friends");
-      if (!response.ok) {
-        throw new Error("Failed to fetch friends");
-      }
-      return response.json();
-    },
-    enabled: !!user,
-  });
+  const { data: friends, isLoading: friendsLoading, error: friendsError } = useFriends();
 
   return (
     <Sidebar>
@@ -140,7 +120,7 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link href="/">
+                <Link href="/friends">
                   <Users className="h-4 w-4" />
                   <span>Manage Friends</span>
                 </Link>

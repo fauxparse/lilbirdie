@@ -134,7 +134,7 @@ const sizeClasses: Record<ModalSize, string> = {
   full: "max-w-[95vw] max-h-[95vh]",
 };
 
-function FocusTrap({ children, isActive }: { children: ReactNode; isActive: boolean }) {
+const FocusTrap = ({ children, isActive }: { children: ReactNode; isActive: boolean }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -179,10 +179,10 @@ function FocusTrap({ children, isActive }: { children: ReactNode; isActive: bool
       {children}
     </div>
   );
-}
+};
 
 // Root Modal component
-export function Modal({
+export const Modal = ({
   children,
   isOpen,
   onClose,
@@ -191,7 +191,7 @@ export function Modal({
   closeOnEscape = true,
   closeOnOverlayClick = true,
   preventAutoFocus = false,
-}: ModalProps) {
+}: ModalProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const modalContext = useContext(ModalLevelContext);
 
@@ -254,7 +254,7 @@ export function Modal({
               <motion.div
                 className={cn(
                   "fixed inset-0 flex items-center justify-center p-4",
-                  modalLevel.current === 0 ? "z-50 bg-background/80" : "z-[51] bg-transparent"
+                  modalLevel.current === 0 ? "z-50 bg-modal-overlay/80" : "z-[51] bg-transparent"
                 )}
                 style={{
                   // Dynamic z-index for deeply nested modals
@@ -275,6 +275,7 @@ export function Modal({
                     ref={contentRef}
                     className={cn(
                       "relative w-full bg-background rounded-xl shadow-2xl ring-1 ring-border/10",
+                      "border border-border",
                       "max-h-[90vh] overflow-hidden",
                       sizeClasses[size],
                       className
@@ -309,7 +310,7 @@ export function Modal({
       </DialogPrimitive.Root>
     </ModalContext.Provider>
   );
-}
+};
 
 // Modal Header component
 export function ModalHeader({
@@ -324,7 +325,7 @@ export function ModalHeader({
 
   return (
     <motion.div
-      className={cn("flex items-start justify-between p-5", className)}
+      className={cn("flex items-start justify-between p-5 pb-3", className)}
       layout
       data-slot="modal-header"
       {...props}
@@ -390,7 +391,7 @@ export function ModalContent({
       data-slot="modal-content"
       {...props}
     >
-      <motion.div className={cn("px-5 pb-5", className)} layout="position">
+      <motion.div className={cn("px-5 pt-2 pb-3 last:pb-5", className)} layout="position">
         {children}
       </motion.div>
     </motion.div>
@@ -405,7 +406,7 @@ export function ModalFooter({
 }: ExceptLayoutProps<React.HTMLAttributes<HTMLDivElement>>) {
   return (
     <motion.div
-      className={cn("flex gap-3 justify-end p-5 [[data-slot='modal-header']+&]:pt-0", className)}
+      className={cn("flex gap-3 justify-end p-5 pt-2", className)}
       data-slot="modal-footer"
       layout="position"
       {...props}

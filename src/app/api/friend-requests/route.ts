@@ -12,33 +12,36 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUserId = session.user.id;
+    const _currentUserId = session.user.id;
+    const currentUserEmail = session.user.email;
 
-    // Get all friends for the current user
-    const friends = await prisma.friendship.findMany({
+    // Get all pending friend requests for the current user
+    const friendRequests = await prisma.friendRequest.findMany({
       where: {
-        userId: currentUserId,
+        email: currentUserEmail,
+        status: "PENDING",
       },
       select: {
-        friend: {
+        id: true,
+        email: true,
+        createdAt: true,
+        requester: {
           select: {
             id: true,
             name: true,
+            email: true,
             image: true,
           },
         },
       },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
-    const friendsData = friends.map(({ friend }) => ({
-      id: friend.id,
-      name: friend.name || "Anonymous User",
-      image: friend.image,
-    }));
-
-    return NextResponse.json(friendsData);
+    return NextResponse.json(friendRequests);
   } catch (error) {
-    console.error("Error fetching friends:", error);
+    console.error("Error fetching friend requests:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

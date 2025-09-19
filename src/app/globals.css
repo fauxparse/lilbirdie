@@ -275,3 +275,7 @@ body {
     }
   }
 }
+
+.squircle {
+  clip-path: url(#squircle);
+}

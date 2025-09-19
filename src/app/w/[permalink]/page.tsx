@@ -281,14 +281,14 @@ function WishlistPageContent() {
                     <Button
                       variant="outline"
                       size="icon-small"
-                      className="flex items-center gap-2 data-active:bg-secondary-hover"
+                      className="flex items-center gap-2 data-active:bg-secondary-hover aria-expanded:bg-secondary-hover"
                       data-active={sortBy !== "priority" || hideClaimedItems || undefined}
                       aria-label="Sort and filter items"
                     >
                       <Settings2 className="h-4 w-4" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-80" align="start">
+                  <PopoverContent className="w-80" align="end">
                     <div className="flex flex-col gap-3">
                       <div className="flex justify-between items-center gap-3">
                         <Label

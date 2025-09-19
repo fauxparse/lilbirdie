@@ -28,6 +28,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={geist.className}>
       <body>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 1 1"
+          className="h-0 w-0 absolute top-0 left-0 -m-1"
+        >
+          <defs>
+            <clipPath id="squircle" clipPathUnits="objectBoundingBox">
+              <path
+                d="M 0,0.5
+                   C 0,0.0575  0.0575,0  0.5,0
+                     0.9425,0  1,0.0575  1,0.5
+                     1,0.9425  0.9425,1  0.5,1
+                     0.0575,1  0,0.9425  0,0.5"
+              />
+            </clipPath>
+          </defs>
+        </svg>
         <QueryProvider>
           <AuthProvider>
             <ThemeProvider>

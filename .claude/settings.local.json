@@ -34,7 +34,10 @@
       "WebFetch(domain:www.radix-ui.com)",
       "Bash(tsc:*)",
       "Bash(xargs sed:*)",
-      "Read(//Users/matt/**)"
+      "Read(//Users/matt/**)",
+      "Bash(pnpm exec prisma db execute:*)",
+      "Bash(source:*)",
+      "Bash(pnpm exec prisma migrate:*)"
     ],
     "deny": [],
     "ask": []

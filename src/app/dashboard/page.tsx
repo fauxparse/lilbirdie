@@ -84,6 +84,8 @@ export default function DashboardPage() {
       return response.json();
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000, // 2 minutes for dashboard data
+    refetchOnWindowFocus: true, // Refresh when user returns to tab
   });
 
   const markAsSentMutation = useMutation({
@@ -318,7 +320,7 @@ export default function DashboardPage() {
                             <img
                               src={claimedGift.item.imageUrl}
                               alt={claimedGift.item.name}
-                              className="h-12 w-12 rounded object-cover"
+                              className="h-12 w-12 squircle object-cover"
                             />
                           ) : (
                             <div className="h-12 w-12 rounded bg-muted flex items-center justify-center">

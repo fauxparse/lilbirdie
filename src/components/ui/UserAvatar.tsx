@@ -68,7 +68,13 @@ export function UserAvatar({
   showIcon = true,
 }: UserAvatarProps) {
   return (
-    <Avatar className={cn(userAvatarVariants({ size }), className)}>
+    <Avatar
+      className={cn(
+        "user-avatar rounded-none bg-avatar-background squircle",
+        userAvatarVariants({ size }),
+        className
+      )}
+    >
       {user?.image && <AvatarImage src={user.image} alt={user.name || user.email || "User"} />}
       <AvatarFallback className={cn(fallbackVariants({ size }), fallbackClassName)}>
         {user ? (

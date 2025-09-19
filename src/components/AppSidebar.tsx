@@ -162,7 +162,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={friend.id}>
                   <SidebarMenuButton asChild>
                     <Link href={`/u/${friend.id}`}>
-                      <UserAvatar user={friend} size="small" />
+                      <UserAvatar user={friend} size="medium" className="-m-1" />
                       <span className="truncate">{friend.name}</span>
                       <Gift className="h-3 w-3 text-muted-foreground" />
                     </Link>

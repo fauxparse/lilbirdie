@@ -6,9 +6,11 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider } from "@/components/AuthProvider";
 import { MotionProvider } from "@/components/MotionProvider";
 import { QueryProvider } from "@/components/QueryProvider";
+import { RealTimeManager } from "@/components/RealTimeManager";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ModalProvider } from "@/components/ui/Modal";
 import { SidebarInset, SidebarProvider } from "@/components/ui/Sidebar";
+import { SocketProvider } from "@/contexts/SocketContext";
 
 import "./globals.css";
 
@@ -47,21 +49,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </svg>
         <QueryProvider>
           <AuthProvider>
-            <ThemeProvider>
-              <MotionProvider>
-                <ModalProvider>
-                  <SidebarProvider defaultOpen={false}>
-                    <AppSidebar />
-                    <SidebarInset>
-                      <AppHeader />
-                      <main className="flex flex-col flex-1 items-center w-full p-4 bg-background text-foreground">
-                        {children}
-                      </main>
-                    </SidebarInset>
-                  </SidebarProvider>
-                </ModalProvider>
-              </MotionProvider>
-            </ThemeProvider>
+            <SocketProvider>
+              <ThemeProvider>
+                <MotionProvider>
+                  <ModalProvider>
+                    <SidebarProvider defaultOpen={false}>
+                      <AppSidebar />
+                      <SidebarInset>
+                        <AppHeader />
+                        <main className="flex flex-col flex-1 items-center w-full p-4 bg-background text-foreground">
+                          {children}
+                        </main>
+                      </SidebarInset>
+                    </SidebarProvider>
+                    <RealTimeManager />
+                  </ModalProvider>
+                </MotionProvider>
+              </ThemeProvider>
+            </SocketProvider>
           </AuthProvider>
         </QueryProvider>
         <Toaster expand />

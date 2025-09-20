@@ -115,8 +115,7 @@ function WishlistItemCardContent({
             className="w-full h-40 block object-cover rounded-t-[calc(var(--radius-lg)-1px)]"
           />
         )}
-        {/* Kebab menu in top right */}
-        <div className="absolute top-2 right-2 z-10">
+        <div className="absolute top-2 right-2 z-30">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -218,13 +217,13 @@ function WishlistItemCardContent({
         />
       </CardFooter>
       {isClaimed && !isOwner && (
-        <div className="row-start-1 row-span-3 col-start-1 col-span-1 relative z-30 bg-background/85 backdrop-blur-sm rounded-[calc(var(--radius-lg)-1px)] grid place-items-center p-4 animate-in fade-in-0 duration-300">
+        <div className="row-start-1 row-span-3 col-start-1 col-span-1 relative z-20 bg-background/85 backdrop-blur-sm rounded-[calc(var(--radius-lg)-1px)] grid place-items-center p-4 animate-in fade-in-0 duration-300">
           <div className="flex flex-col items-center gap-3">
             <div className="flex flex-row-reverse justify-center">
               {[...claims].reverse().map((claim, index) => (
                 <Avatar
                   key={claim.id}
-                  className="h-10 w-10 bg-avatar-background shadow-[0_0_0_2px_var(--color-background)] not-last:-ml-2 animate-in slide-in-from-bottom-2 fade-in-0 duration-300"
+                  className="h-10 w-10 bg-avatar-background shadow-[0_0_0_2px_var(--color-background)] not-last:-ml-2"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   {claim.user?.image && (
@@ -240,14 +239,11 @@ function WishlistItemCardContent({
                 </Avatar>
               ))}
             </div>
-            <div
-              className="text-sm text-center text-balance animate-in slide-in-from-bottom-2 fade-in-0 duration-300"
-              style={{ animationDelay: "200ms" }}
-            >
+            <div className="text-sm text-center text-balance" style={{ animationDelay: "200ms" }}>
               {`${claimNames} ${claims.length > 1 || claimNames === "You" ? "have" : "has"} claimed this item`}
             </div>
             <div
-              className="text-lg text-center text-balance line-clamp-2 leading-1.2 font-medium animate-in slide-in-from-bottom-2 fade-in-0 duration-300"
+              className="text-lg text-center text-balance line-clamp-2 leading-1.2 font-medium"
               style={{ animationDelay: "300ms" }}
             >
               {item.name}
@@ -256,7 +252,7 @@ function WishlistItemCardContent({
               <Button
                 variant="outline"
                 size="small"
-                className="w-full animate-in slide-in-from-bottom-2 fade-in-0 duration-300"
+                className="w-full"
                 style={{ animationDelay: "400ms" }}
                 onClick={() => onClaim(item.id, claimedByMe)}
               >
@@ -267,7 +263,7 @@ function WishlistItemCardContent({
               <Button
                 variant="outline"
                 size="small"
-                className="w-full animate-in slide-in-from-bottom-2 fade-in-0 duration-300"
+                className="w-full"
                 style={{ animationDelay: "400ms" }}
                 disabled
               >

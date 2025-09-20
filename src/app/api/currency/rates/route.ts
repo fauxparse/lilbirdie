@@ -6,24 +6,9 @@ export async function GET() {
   try {
     const currencyService = CurrencyService.getInstance();
 
-    // Get all supported currencies
     const currencies = CURRENCY_CODES;
-    const rates: Record<string, Record<string, number>> = {};
 
-    // Build nested rate structure for efficient lookup
-    for (const fromCurrency of currencies) {
-      rates[fromCurrency] = {};
-      for (const toCurrency of currencies) {
-        if (fromCurrency === toCurrency) {
-          rates[fromCurrency][toCurrency] = 1;
-        } else {
-          rates[fromCurrency][toCurrency] = await currencyService.getExchangeRate(
-            fromCurrency,
-            toCurrency
-          );
-        }
-      }
-    }
+    const rates = await currencyService.getAllExchangeRates(currencies);
 
     return NextResponse.json({
       rates,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { SocketEventEmitter } from "@/lib/socket";
 
 export async function POST(
   request: NextRequest,
@@ -84,6 +85,13 @@ export async function POST(
       },
     });
 
+    // Emit real-time event for claim created
+    SocketEventEmitter.emitToWishlist(item.wishlist.id, "claim:created", {
+      itemId,
+      wishlistId: item.wishlist.id,
+      userId: session.user.id,
+    });
+
     return NextResponse.json({ success: true, claim });
   } catch (error) {
     console.error("Error claiming item:", error);
@@ -162,6 +170,13 @@ export async function DELETE(
       where: {
         id: existingClaim.id,
       },
+    });
+
+    // Emit real-time event for claim removed
+    SocketEventEmitter.emitToWishlist(item.wishlist.id, "claim:removed", {
+      itemId,
+      wishlistId: item.wishlist.id,
+      userId: session.user.id,
     });
 
     return NextResponse.json({ success: true, claim: existingClaim });

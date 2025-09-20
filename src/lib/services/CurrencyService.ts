@@ -134,6 +134,111 @@ export class CurrencyService {
     };
   }
 
+  async getAllExchangeRates(
+    currencies: readonly string[]
+  ): Promise<Record<string, Record<string, number>>> {
+    const rates: Record<string, Record<string, number>> = {};
+    const currenciesArray = [...currencies]; // Convert to mutable array
+
+    // Initialize all currency pairs with 1:1 for same currency
+    for (const fromCurrency of currencies) {
+      rates[fromCurrency] = {};
+      for (const toCurrency of currencies) {
+        if (fromCurrency === toCurrency) {
+          rates[fromCurrency][toCurrency] = 1;
+        } else {
+          rates[fromCurrency][toCurrency] = 1; // Default fallback
+        }
+      }
+    }
+
+    try {
+      // Fetch all cached rates in a single query
+      const cachedRates = await prisma.currencyRate.findMany({
+        where: {
+          fromCurrency: { in: currenciesArray },
+          toCurrency: { in: currenciesArray },
+          updatedAt: {
+            gte: new Date(Date.now() - this.CACHE_DURATION),
+          },
+        },
+      });
+
+      // Update rates with cached values
+      for (const cachedRate of cachedRates) {
+        rates[cachedRate.fromCurrency][cachedRate.toCurrency] = Number(cachedRate.rate);
+      }
+
+      // Check for missing rates and fetch them from API
+      const missingRates: Array<{ fromCurrency: string; toCurrency: string }> = [];
+
+      for (const fromCurrency of currencies) {
+        for (const toCurrency of currencies) {
+          if (fromCurrency !== toCurrency && rates[fromCurrency][toCurrency] === 1) {
+            missingRates.push({ fromCurrency, toCurrency });
+          }
+        }
+      }
+
+      // Fetch missing rates from API and cache them
+      if (missingRates.length > 0) {
+        console.log(`Fetching ${missingRates.length} missing exchange rates from API`);
+
+        for (const { fromCurrency, toCurrency } of missingRates) {
+          try {
+            const rate = await this.fetchRateFromAPI(fromCurrency, toCurrency);
+            rates[fromCurrency][toCurrency] = rate;
+
+            // Cache the rate
+            await prisma.currencyRate.upsert({
+              where: {
+                fromCurrency_toCurrency: {
+                  fromCurrency,
+                  toCurrency,
+                },
+              },
+              update: {
+                rate,
+                updatedAt: new Date(),
+              },
+              create: {
+                fromCurrency,
+                toCurrency,
+                rate,
+                updatedAt: new Date(),
+              },
+            });
+          } catch (error) {
+            console.error(`Failed to fetch rate ${fromCurrency} to ${toCurrency}:`, error);
+            // Keep the default rate of 1
+          }
+        }
+      }
+
+      return rates;
+    } catch (error) {
+      console.error("Failed to fetch exchange rates:", error);
+
+      // Try to get any available rates (even if expired)
+      const anyRates = await prisma.currencyRate.findMany({
+        where: {
+          fromCurrency: { in: currenciesArray },
+          toCurrency: { in: currenciesArray },
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+      });
+
+      // Update with any available rates
+      for (const rate of anyRates) {
+        rates[rate.fromCurrency][rate.toCurrency] = Number(rate.rate);
+      }
+
+      return rates;
+    }
+  }
+
   async refreshAllRates(): Promise<void> {
     const currencies = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY", "NZD"];
 

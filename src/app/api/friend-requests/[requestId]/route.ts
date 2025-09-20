@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { SocketEventEmitter } from "@/lib/socket";
 
 export async function POST(
   request: NextRequest,
@@ -43,7 +44,7 @@ export async function POST(
 
     if (action === "accept") {
       // Create mutual friendships in a transaction
-      await prisma.$transaction(async (tx) => {
+      const friendship = await prisma.$transaction(async (tx) => {
         // Update the friend request status
         await tx.friendRequest.update({
           where: { id: requestId },
@@ -54,7 +55,7 @@ export async function POST(
         });
 
         // Create friendship from requester to receiver
-        await tx.friendship.create({
+        const friendship1 = await tx.friendship.create({
           data: {
             userId: friendRequest.requesterId,
             friendId: currentUserId,
@@ -68,6 +69,18 @@ export async function POST(
             friendId: friendRequest.requesterId,
           },
         });
+
+        return friendship1;
+      });
+
+      // Emit real-time events to notify both users about the new friendship
+      SocketEventEmitter.emitToUser(friendRequest.requesterId, "friend:accepted", {
+        friendshipId: friendship.id,
+        userId: currentUserId,
+      });
+      SocketEventEmitter.emitToUser(currentUserId, "friend:accepted", {
+        friendshipId: friendship.id,
+        userId: friendRequest.requesterId,
       });
 
       return NextResponse.json({

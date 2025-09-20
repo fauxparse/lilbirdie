@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { SocketEventEmitter } from "@/lib/socket";
 
 export async function POST(
   request: NextRequest,
@@ -64,8 +65,15 @@ export async function POST(
       data: {
         email: targetUser.email,
         requesterId: currentUserId,
+        receiverId: userId,
         status: "PENDING",
       },
+    });
+
+    // Emit real-time event to notify the target user of the friend request
+    SocketEventEmitter.emitToUser(userId, "friend:request", {
+      requestId: friendRequest.id,
+      requesterId: currentUserId,
     });
 
     return NextResponse.json({

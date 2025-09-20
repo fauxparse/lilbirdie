@@ -1,8 +1,11 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createContext, type ReactNode, useContext, useEffect } from "react";
+import { uniqueId } from "es-toolkit/compat";
+import { createContext, type ReactNode, useCallback, useContext, useEffect } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/components/AuthProvider";
+import { useWishlistRealtime } from "@/hooks/useWishlistRealtime";
 import type { WishlistItemResponse, WishlistResponse } from "@/types";
 
 interface WishlistContextValue {
@@ -38,13 +41,15 @@ interface WishlistProviderProps {
 export function WishlistProvider({ children, permalink }: WishlistProviderProps) {
   const queryClient = useQueryClient();
 
+  const { user } = useAuth();
+
   const {
     data: wishlist,
     isLoading,
     error,
     refetch,
   } = useQuery<WishlistResponse>({
-    queryKey: ["public-wishlist", permalink],
+    queryKey: ["wishlist", permalink],
     queryFn: async () => {
       const response = await fetch(`/api/w/${permalink}`);
       if (!response.ok) {
@@ -57,6 +62,9 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
     },
   });
 
+  // Enable real-time updates for this wishlist
+  useWishlistRealtime(wishlist?.id || null);
+
   // Populate individual item cache entries when wishlist data is available
   useEffect(() => {
     if (wishlist?.items) {
@@ -65,6 +73,26 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
       }
     }
   }, [wishlist?.items, queryClient]);
+
+  const updateCachedItem = useCallback(
+    (itemId: string, updater: (item: WishlistItemResponse) => WishlistItemResponse) => {
+      const existing = queryClient.getQueryData<WishlistItemResponse>(["item", itemId]);
+
+      if (!existing) return;
+      const updated = updater(existing);
+
+      queryClient.setQueryData(["item", itemId], updated);
+
+      queryClient.setQueryData(["wishlist", permalink], (oldData: WishlistResponse | undefined) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          items: oldData.items.map((item) => (item.id === itemId ? updated : item)),
+        };
+      });
+    },
+    [queryClient, permalink]
+  );
 
   // Centralized claim mutation
   const claimMutation = useMutation({
@@ -83,81 +111,71 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
     },
     onMutate: async ({ itemId, action }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["public-wishlist", permalink] });
+      await queryClient.cancelQueries({ queryKey: ["wishlist", permalink] });
       await queryClient.cancelQueries({ queryKey: ["item", itemId] });
 
       // Snapshot the previous values
-      const previousWishlistData = queryClient.getQueryData(["public-wishlist", permalink]);
+      const previousWishlistData = queryClient.getQueryData(["wishlist", permalink]);
       const previousItemData = queryClient.getQueryData(["item", itemId]);
 
-      // Optimistically update the item cache
-      queryClient.setQueryData(["item", itemId], (oldData: WishlistItemResponse | undefined) => {
-        if (!oldData) return oldData;
-
-        if (action === "claim") {
-          // Add the claim (we'll get the real data from the server)
-          return {
-            ...oldData,
+      if (action === "claim") {
+        if (user) {
+          updateCachedItem(itemId, (existing) => ({
+            ...existing,
             claims: [
-              ...(oldData.claims || []),
+              ...(existing.claims || []).filter((claim) => claim.userId !== user?.id),
               {
-                id: "temp",
-                userId: "current-user", // This will be replaced by server response
+                id: uniqueId("temp-"),
+                user: {
+                  id: user.id,
+                  name: user.name,
+                  image: user.image ?? null,
+                },
+                createdAt: new Date(),
                 itemId,
-                wishlistId: oldData.wishlistId || "",
-                createdAt: new Date().toISOString(),
-                user: null, // Will be populated by server
+                wishlistId: existing.wishlistId || "",
+                userId: user.id,
                 sent: false,
                 sentAt: null,
               },
             ],
-          };
-        } else {
-          // Remove claims for current user
-          return {
-            ...oldData,
-            claims: (oldData.claims || []).filter((claim) => claim.userId !== "current-user"),
-          };
+          }));
         }
-      });
-
-      // Optimistically update the wishlist cache
-      queryClient.setQueryData(
-        ["public-wishlist", permalink],
-        (oldData: WishlistResponse | undefined) => {
-          if (!oldData) return oldData;
-
-          return {
-            ...oldData,
-            items: oldData.items.map((item) => {
-              if (item.id === itemId) {
-                const updatedItem = queryClient.getQueryData<WishlistItemResponse>([
-                  "item",
-                  itemId,
-                ]);
-                return updatedItem || item;
-              }
-              return item;
-            }),
-          };
-        }
-      );
+      } else {
+        updateCachedItem(itemId, (existing) => ({
+          ...existing,
+          claims: (existing.claims || []).filter((claim) => claim.userId !== user?.id),
+        }));
+      }
 
       return { previousWishlistData, previousItemData };
     },
     onError: (error, { itemId }, context) => {
       // Rollback on error
       if (context?.previousWishlistData) {
-        queryClient.setQueryData(["public-wishlist", permalink], context.previousWishlistData);
+        queryClient.setQueryData(["wishlist", permalink], context.previousWishlistData);
       }
       if (context?.previousItemData) {
         queryClient.setQueryData(["item", itemId], context.previousItemData);
       }
       toast.error(error.message);
     },
-    onSuccess: () => {
-      // Invalidate to get fresh data from server
-      queryClient.invalidateQueries({ queryKey: ["public-wishlist", permalink] });
+    onSuccess: (data, { action }) => {
+      const { itemId } = data.claim;
+      if (action === "claim") {
+        updateCachedItem(itemId, (existing) => ({
+          ...existing,
+          claims: [
+            ...(existing.claims || []).filter((claim) => claim.userId !== user?.id),
+            data.claim,
+          ],
+        }));
+      } else {
+        updateCachedItem(itemId, (existing) => ({
+          ...existing,
+          claims: (existing.claims || []).filter((claim) => claim.userId !== user?.id),
+        }));
+      }
     },
   });
 
@@ -170,7 +188,7 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
     queryClient.setQueryData(["item", item.id], item);
 
     // Update wishlist cache
-    queryClient.setQueryData<WishlistResponse>(["public-wishlist", permalink], (oldData) => {
+    queryClient.setQueryData<WishlistResponse>(["wishlist", permalink], (oldData) => {
       if (!oldData) return oldData;
 
       return {
@@ -186,7 +204,7 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
     queryClient.removeQueries({ queryKey: ["item", itemId] });
 
     // Update wishlist cache
-    queryClient.setQueryData<WishlistResponse>(["public-wishlist", permalink], (oldData) => {
+    queryClient.setQueryData<WishlistResponse>(["wishlist", permalink], (oldData) => {
       if (!oldData) return oldData;
 
       return {
@@ -200,7 +218,7 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
     queryClient.setQueryData(["item", item.id], item);
 
     // Update wishlist cache
-    queryClient.setQueryData<WishlistResponse>(["public-wishlist", permalink], (oldData) => {
+    queryClient.setQueryData<WishlistResponse>(["wishlist", permalink], (oldData) => {
       if (!oldData) return oldData;
 
       return {

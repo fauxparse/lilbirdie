@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
+import { SocketEventEmitter } from "@/lib/socket";
 import { UpdateWishlistItemData } from "@/types";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -61,6 +62,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updateData
     );
 
+    // Emit real-time event for wishlist item updated
+    SocketEventEmitter.emitToWishlist(item.wishlistId, "wishlist:item:updated", {
+      itemId: item.id,
+      wishlistId: item.wishlistId,
+    });
+
     return NextResponse.json(item);
   } catch (error) {
     console.error("Error updating item:", error);
@@ -92,7 +99,16 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get the item to get wishlist ID before deleting
+    const item = await WishlistItemService.getInstance().getItemById(id, session.user.id);
+
     await WishlistItemService.getInstance().deleteItem(id, session.user.id);
+
+    // Emit real-time event for wishlist item deleted
+    SocketEventEmitter.emitToWishlist(item.wishlistId, "wishlist:item:deleted", {
+      itemId: id,
+      wishlistId: item.wishlistId,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

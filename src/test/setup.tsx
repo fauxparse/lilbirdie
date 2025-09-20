@@ -49,16 +49,23 @@ vi.mock("next/image", () => ({
   },
 }));
 
-// Suppress console warnings in tests
+// Suppress console warnings and expected errors in tests
 const originalError = console.error;
 beforeAll(() => {
   console.error = (...args: unknown[]) => {
-    if (
-      typeof args[0] === "string" &&
-      args[0].includes("Warning: ReactDOM.render is no longer supported")
-    ) {
+    const message = typeof args[0] === "string" ? args[0] : String(args[0]);
+
+    // Suppress known test-related warnings and expected errors
+    const suppressedMessages = [
+      "Warning: ReactDOM.render is no longer supported",
+      "Socket connection error:", // Expected WebSocket test errors
+      "Error creating wishlist item:", // Expected API test errors
+    ];
+
+    if (suppressedMessages.some((msg) => message.includes(msg))) {
       return;
     }
+
     originalError.call(console, ...args);
   };
 });
@@ -66,3 +73,16 @@ beforeAll(() => {
 afterAll(() => {
   console.error = originalError;
 });
+
+// Mock SocketContext globally for all tests
+vi.mock("@/contexts/SocketContext", () => ({
+  SocketProvider: ({ children }: { children: React.ReactNode }) => children,
+  useSocketContext: () => ({
+    isConnected: true,
+    error: null,
+    joinWishlist: vi.fn(),
+    leaveWishlist: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+  }),
+}));

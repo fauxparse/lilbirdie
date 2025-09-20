@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
 import { WishlistService } from "@/lib/services/WishlistService";
+import { SocketEventEmitter } from "@/lib/socket";
 
 export async function GET(
   request: NextRequest,
@@ -80,6 +81,12 @@ export async function POST(
       currency: currency || "USD",
       priority: priority ? Number(priority) : 0,
       tags: tags || [],
+    });
+
+    // Emit real-time event for wishlist item added
+    SocketEventEmitter.emitToWishlist(wishlist.id, "wishlist:item:added", {
+      itemId: item.id,
+      wishlistId: wishlist.id,
     });
 
     return NextResponse.json(item, { status: 201 });

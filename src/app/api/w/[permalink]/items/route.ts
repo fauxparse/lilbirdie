@@ -85,7 +85,7 @@ export async function POST(
 
     // Emit real-time event for wishlist item added
     SocketEventEmitter.emitToWishlist(wishlist.id, "wishlist:item:added", {
-      itemId: item.id,
+      item,
       wishlistId: wishlist.id,
     });
 

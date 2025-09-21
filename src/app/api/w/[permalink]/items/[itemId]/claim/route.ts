@@ -87,9 +87,7 @@ export async function POST(
 
     // Emit real-time event for claim created
     SocketEventEmitter.emitToWishlist(item.wishlist.id, "claim:created", {
-      itemId,
-      wishlistId: item.wishlist.id,
-      userId: session.user.id,
+      claim,
     });
 
     return NextResponse.json({ success: true, claim });

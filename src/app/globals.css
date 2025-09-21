@@ -196,13 +196,6 @@ body {
   color: var(--color-foreground);
 }
 
-/* Debug styles to test color tokens */
-.debug-bg-test {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  border: 2px solid var(--color-border);
-}
-
 :root {
   --sidebar-width: 36rem;
   --sidebar-width-mobile: 18rem;

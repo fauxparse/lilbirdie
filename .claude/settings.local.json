@@ -37,7 +37,8 @@
       "Read(//Users/matt/**)",
       "Bash(pnpm exec prisma db execute:*)",
       "Bash(source:*)",
-      "Bash(pnpm exec prisma migrate:*)"
+      "Bash(pnpm exec prisma migrate:*)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "ask": []

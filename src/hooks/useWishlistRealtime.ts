@@ -1,10 +1,13 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useSocketContext } from "@/contexts/SocketContext";
+import { useWishlist } from "@/contexts/WishlistContext";
+import { ClaimWithUser, WishlistItemResponse } from "@/types";
 
 export function useWishlistRealtime(wishlistId: string | null) {
   const queryClient = useQueryClient();
   const { joinWishlist, leaveWishlist, on, off, isConnected } = useSocketContext();
+  const { getItem, updateItemCache, addItemToCache, removeItemFromCache } = useWishlist();
 
   useEffect(() => {
     if (!wishlistId || !isConnected) {
@@ -15,11 +18,8 @@ export function useWishlistRealtime(wishlistId: string | null) {
     joinWishlist(wishlistId);
 
     // Define event handlers
-    const handleItemAdded = (_data: { itemId: string; wishlistId: string }) => {
-      // Invalidate wishlist queries to refetch and show new item
-      queryClient.invalidateQueries({
-        queryKey: ["wishlist"],
-      });
+    const handleItemAdded = (data: { item: WishlistItemResponse; wishlistId: string }) => {
+      addItemToCache(data.item);
     };
 
     const handleItemUpdated = (data: { itemId: string; wishlistId: string }) => {
@@ -34,13 +34,7 @@ export function useWishlistRealtime(wishlistId: string | null) {
     };
 
     const handleItemDeleted = (data: { itemId: string; wishlistId: string }) => {
-      // Remove item from cache and invalidate wishlist
-      queryClient.removeQueries({
-        queryKey: ["item", data.itemId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["wishlist"],
-      });
+      removeItemFromCache(data.itemId);
     };
 
     const handleWishlistUpdated = (_data: { wishlistId: string }) => {
@@ -50,24 +44,24 @@ export function useWishlistRealtime(wishlistId: string | null) {
       });
     };
 
-    const handleClaimCreated = (data: { itemId: string; wishlistId: string; userId: string }) => {
-      // Invalidate queries to show updated claim status
-      queryClient.invalidateQueries({
-        queryKey: ["wishlist"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["item", data.itemId],
-      });
+    const handleClaimCreated = (data: { claim: ClaimWithUser }) => {
+      const item = getItem(data.claim.itemId);
+      if (item) {
+        updateItemCache({
+          ...item,
+          claims: [...(item.claims || []), data.claim],
+        });
+      }
     };
 
     const handleClaimRemoved = (data: { itemId: string; wishlistId: string; userId: string }) => {
-      // Invalidate queries to show removed claim status
-      queryClient.invalidateQueries({
-        queryKey: ["wishlist"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["item", data.itemId],
-      });
+      const item = getItem(data.itemId);
+      if (item) {
+        updateItemCache({
+          ...item,
+          claims: (item.claims || []).filter((claim) => claim.userId !== data.userId),
+        });
+      }
     };
 
     // Register event listeners
@@ -91,5 +85,15 @@ export function useWishlistRealtime(wishlistId: string | null) {
       // Leave the wishlist room
       leaveWishlist(wishlistId);
     };
-  }, [wishlistId, isConnected, joinWishlist, leaveWishlist, on, off, queryClient]);
+  }, [
+    wishlistId,
+    isConnected,
+    joinWishlist,
+    leaveWishlist,
+    on,
+    off,
+    queryClient,
+    getItem,
+    updateItemCache,
+  ]);
 }

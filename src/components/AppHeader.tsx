@@ -6,19 +6,12 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import { SidebarTrigger } from "@/components/ui/Sidebar";
 import { UserAvatar } from "@/components/ui/UserAvatar";
-import { signOut } from "@/lib/auth-client";
 
 export function AppHeader() {
   const { user, isLoading } = useAuth();
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
   return (
     <header className="self-stretch flex h-16 shrink-0 items-center gap-2 px-4 border-b">
-      <SidebarTrigger className="-ml-1" />
-
       <div className="flex items-center gap-2 flex-1">
         <Link href="/" className="flex items-center gap-2">
           <h1 className="text-xl font-medium">Lil Birdie</h1>
@@ -38,15 +31,13 @@ export function AppHeader() {
               showIcon={false}
             />
             <span className="hidden sm:inline-block text-sm font-medium">{user.name}</span>
-            <Button onClick={handleSignOut} variant="outline" size="small">
-              Sign Out
-            </Button>
           </div>
         ) : (
           <Link href="/login">
             <Button>Sign In</Button>
           </Link>
         )}
+        <SidebarTrigger />
       </div>
     </header>
   );

@@ -21,9 +21,22 @@ import {
 } from "@/components/ui/AlertDialog";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Label } from "@/components/ui/Label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover";
+import {
+  PageActions,
+  PageHeader,
+  PageHeaderDescription,
+  PageHeaderHeading,
+} from "@/components/ui/page-header";
 import {
   Select,
   SelectContent,
@@ -245,27 +258,54 @@ function WishlistPageContent() {
   return (
     <div className="container mx-auto max-w-4xl">
       <div className="space-y-6 container-type-inline-size">
-        <header className="flex flex-col">
-          <h1 className="text-3xl font-medium pt-4">{wishlist.title}</h1>
-          {wishlist.description && (
-            <p className="text-muted-foreground mt-2">{wishlist.description}</p>
-          )}
-          <div className="flex items-center gap-3 mt-3 justify-between w-full">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <UserAvatar user={wishlist.owner} size="medium" />
-                <span className="text-sm text-foreground">
-                  {wishlist.owner?.name || "Anonymous"}
-                </span>
-              </div>
-              <Badge variant="outline" className="ml-2">
-                {wishlist.privacy === "PUBLIC"
-                  ? "Public"
-                  : wishlist.privacy === "FRIENDS_ONLY"
-                    ? "Friends Only"
-                    : "Private"}
-              </Badge>
-            </div>
+        <PageHeader>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/">Home</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              {isOwner ? (
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href="/wishlists">My Wishlists</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+              ) : (
+                <>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link href="/friends">Friends</Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link href={`/u/${wishlist.owner?.id}`} className="flex items-center gap-2">
+                        <UserAvatar user={wishlist.owner} size="medium" />
+                        {wishlist.owner?.name}
+                      </Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                </>
+              )}
+            </BreadcrumbList>
+          </Breadcrumb>
+          <PageHeaderHeading>{wishlist.title}</PageHeaderHeading>
+          <PageHeaderDescription>
+            {wishlist.description}
+
+            <Badge variant="outline" className="ml-2">
+              {wishlist.privacy === "PUBLIC"
+                ? "Public"
+                : wishlist.privacy === "FRIENDS_ONLY"
+                  ? "Friends Only"
+                  : "Private"}
+            </Badge>
+          </PageHeaderDescription>
+          <PageActions>
             {wishlist.items.length > 0 && (
               <div className="flex items-center gap-3">
                 <div className="text-sm text-foreground">
@@ -329,6 +369,11 @@ function WishlistPageContent() {
                 </Popover>
               </div>
             )}
+          </PageActions>
+        </PageHeader>
+        <header className="flex flex-col">
+          <div className="flex items-center gap-3 mt-3 justify-between w-full">
+            <div className="flex items-center gap-2"></div>
           </div>
 
           {isOwner && (

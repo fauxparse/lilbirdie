@@ -1,13 +1,14 @@
 import { Server as HTTPServer } from "node:http";
 import { Server as SocketIOServer } from "socket.io";
 import { prisma } from "@/lib/db";
+import { ClaimWithUser, WishlistItemResponse } from "@/types";
 
 export interface ServerToClientEvents {
-  "wishlist:item:added": (data: { itemId: string; wishlistId: string }) => void;
+  "wishlist:item:added": (data: { item: WishlistItemResponse; wishlistId: string }) => void;
   "wishlist:item:updated": (data: { itemId: string; wishlistId: string }) => void;
   "wishlist:item:deleted": (data: { itemId: string; wishlistId: string }) => void;
   "wishlist:updated": (data: { wishlistId: string }) => void;
-  "claim:created": (data: { itemId: string; wishlistId: string; userId: string }) => void;
+  "claim:created": (data: { claim: ClaimWithUser }) => void;
   "claim:removed": (data: { itemId: string; wishlistId: string; userId: string }) => void;
   "friend:request": (data: { requestId: string; requesterId: string }) => void;
   "friend:accepted": (data: { friendshipId: string; userId: string }) => void;

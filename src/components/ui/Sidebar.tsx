@@ -2,7 +2,7 @@
 
 import { Slot } from "@radix-ui/react-slot";
 import { cva, VariantProps } from "class-variance-authority";
-import { PanelLeft } from "lucide-react";
+import { PanelRight } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -228,7 +228,7 @@ export const Sidebar = React.forwardRef<
     return (
       <div
         ref={ref}
-        className="group peer hidden text-sidebar-foreground md:block"
+        className="group peer hidden text-sidebar-foreground md:contents"
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
@@ -237,9 +237,12 @@ export const Sidebar = React.forwardRef<
         {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
-            "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
+            "relative bg-transparent transition-[width] duration-200 ease-linear",
+            // For left sidebars, position at start
+            side === "left" && "w-(--sidebar-width)",
+            // For right sidebars, position at end with order
+            side === "right" && "w-(--sidebar-width) order-2",
             "group-data-[collapsible=offcanvas]:w-0",
-            "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
               ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
               : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
@@ -291,7 +294,7 @@ export const SidebarTrigger = React.forwardRef<
       }}
       {...props}
     >
-      <PanelLeft />
+      <PanelRight />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );
@@ -333,7 +336,14 @@ export const SidebarInset = React.forwardRef<HTMLDivElement, React.ComponentProp
         ref={ref}
         className={cn(
           "relative flex w-full flex-1 flex-col bg-background",
-          "md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
+          // For right sidebars, ensure proper ordering
+          "peer-data-[side=right]:order-1",
+          // Left sidebar inset styles
+          "md:peer-data-[variant=inset]:peer-data-[side=left]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:peer-data-[side=left]:ml-2 md:peer-data-[variant=inset]:peer-data-[side=left]:ml-0",
+          // Right sidebar inset styles
+          "md:peer-data-[variant=inset]:peer-data-[side=right]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:peer-data-[side=right]:mr-2 md:peer-data-[variant=inset]:peer-data-[side=right]:mr-0",
+          // Common inset styles
+          "md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow",
           className
         )}
         {...props}

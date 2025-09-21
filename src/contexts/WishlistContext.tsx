@@ -62,9 +62,6 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
     },
   });
 
-  // Enable real-time updates for this wishlist
-  useWishlistRealtime(wishlist?.id || null);
-
   // Populate individual item cache entries when wishlist data is available
   useEffect(() => {
     if (wishlist?.items) {
@@ -223,7 +220,7 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
 
       return {
         ...oldData,
-        items: [item, ...oldData.items],
+        items: [item, ...oldData.items.filter((i) => i.id !== item.id)],
       };
     });
   };
@@ -243,5 +240,15 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
     },
   };
 
-  return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>;
+  return (
+    <WishlistContext.Provider value={value}>
+      <WishlistRealtimeProvider>{children}</WishlistRealtimeProvider>
+    </WishlistContext.Provider>
+  );
 }
+
+const WishlistRealtimeProvider = ({ children }: { children: ReactNode }) => {
+  const { wishlist } = useWishlist();
+  useWishlistRealtime(wishlist?.id || null);
+  return children;
+};

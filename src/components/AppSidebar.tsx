@@ -1,11 +1,13 @@
 "use client";
+
 import { useQuery } from "@tanstack/react-query";
-import { Gift, Heart, Home, LayoutDashboard, Plus, Users } from "lucide-react";
+import { Gift, Heart, Home, LayoutDashboard, LogOut, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
@@ -15,6 +17,7 @@ import {
 } from "@/components/ui/Sidebar";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useFriends } from "@/hooks/useFriends";
+import { signOut } from "@/lib/auth-client";
 
 interface Wishlist {
   id: string;
@@ -46,8 +49,12 @@ export function AppSidebar() {
 
   const { data: friends, isLoading: friendsLoading, error: friendsError } = useFriends();
 
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
-    <Sidebar>
+    <Sidebar side="right">
       <SidebarContent>
         {/* Navigation Section */}
         <SidebarGroup>
@@ -156,6 +163,17 @@ export function AppSidebar() {
             ) : null}
           </SidebarMenu>
         </SidebarGroup>
+
+        <SidebarFooter>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <button type="button" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarFooter>
       </SidebarContent>
     </Sidebar>
   );

@@ -92,9 +92,11 @@ model Wishlist {
   permalink   String           @unique
   privacy     WishlistPrivacy  @default(FRIENDS_ONLY)
   isDefault   Boolean          @default(false)
+  isDeleted   Boolean          @default(false)
   ownerId     String
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
   claims      Claim[]
   editors     WishlistEditor[]
   items       WishlistItem[]
@@ -188,12 +190,14 @@ model Occasion {
   type        OccasionType
   isRecurring Boolean      @default(true)
   startYear   Int?
+  isDeleted   Boolean      @default(false)
   ownerId     String
   entityType  EntityType?
   entityId    String?
   description String?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
   owner       User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@map("occasions")

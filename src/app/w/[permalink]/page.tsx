@@ -9,16 +9,6 @@ import { toast } from "sonner";
 import { AddItemModal } from "@/components/AddItemModal";
 import { useAuth } from "@/components/AuthProvider";
 import { ItemForm, type ItemFormData } from "@/components/ItemForm";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/AlertDialog";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import {
@@ -48,6 +38,7 @@ import { Switch } from "@/components/ui/Switch";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { WishlistItemCard } from "@/components/WishlistItemCard";
 import { useWishlist, WishlistProvider } from "@/contexts/WishlistContext";
+import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import type { WishlistItemWithRelations } from "@/types";
 
 export default function PublicWishlistPage({ params }: { params: Promise<{ permalink: string }> }) {
@@ -72,11 +63,12 @@ function WishlistPageContent() {
     removeItemFromCache,
   } = useWishlist();
 
+  // Undoable delete hook
+  const { performUndoableDelete } = useUndoableDelete();
+
   // Item management state
   const [showAddItem, setShowAddItem] = useState(false);
   const [editingItem, setEditingItem] = useState<WishlistItemWithRelations | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   // Sorting and filtering state
   const [sortBy, setSortBy] = useState<"priority" | "price" | "date">("priority");
@@ -128,9 +120,20 @@ function WishlistPageContent() {
 
       return response.json();
     },
-    onSuccess: (_, itemId) => {
+    onSuccess: (deletedItem, itemId) => {
+      // Remove item from cache immediately
       removeItemFromCache(itemId);
-      toast.success("Item deleted successfully!");
+
+      // Show undoable delete toast
+      performUndoableDelete({
+        type: "item",
+        id: itemId,
+        name: deletedItem.name || "Item",
+        onUndo: () => {
+          // Refresh the wishlist to show the restored item
+          refetch();
+        },
+      });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -142,16 +145,8 @@ function WishlistPageContent() {
   };
 
   const handleDeleteItem = (itemId: string) => {
-    setItemToDelete(itemId);
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (itemToDelete) {
-      deleteItemMutation.mutate(itemToDelete);
-      setItemToDelete(null);
-      setDeleteDialogOpen(false);
-    }
+    // Direct delete with undo functionality
+    deleteItemMutation.mutate(itemId);
   };
 
   const handleClaim = (itemId: string, isClaimed: boolean) => {
@@ -478,21 +473,6 @@ function WishlistPageContent() {
         onClose={() => setShowAddItem(false)}
         wishlistPermalink={wishlist?.permalink || ""}
       />
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Item</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this item? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

@@ -37,7 +37,10 @@ export class WishlistService {
 
   async getUserWishlists(userId: string) {
     return await prisma.wishlist.findMany({
-      where: { ownerId: userId },
+      where: {
+        ownerId: userId,
+        isDeleted: false,
+      },
       include: {
         items: {
           where: { isDeleted: false },
@@ -235,17 +238,25 @@ export class WishlistService {
   async deleteWishlist(wishlistId: string, userId: string) {
     // Verify ownership
     const wishlist = await prisma.wishlist.findFirst({
-      where: { id: wishlistId, ownerId: userId },
+      where: {
+        id: wishlistId,
+        ownerId: userId,
+        isDeleted: false,
+      },
     });
 
     if (!wishlist) {
       return null;
     }
 
-    // Can't delete default wishlist if it's the only one
+    // Can't delete default wishlist if it's the only non-deleted one
     if (wishlist.isDefault) {
       const otherWishlists = await prisma.wishlist.findMany({
-        where: { ownerId: userId, id: { not: wishlistId } },
+        where: {
+          ownerId: userId,
+          id: { not: wishlistId },
+          isDeleted: false,
+        },
       });
 
       if (otherWishlists.length === 0) {
@@ -259,6 +270,80 @@ export class WishlistService {
       });
     }
 
+    // Soft delete the wishlist
+    return await prisma.wishlist.update({
+      where: { id: wishlistId },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    });
+  }
+
+  async restoreWishlist(wishlistId: string, userId: string) {
+    // Verify ownership
+    const wishlist = await prisma.wishlist.findFirst({
+      where: {
+        id: wishlistId,
+        ownerId: userId,
+        isDeleted: true,
+      },
+    });
+
+    if (!wishlist) {
+      throw new Error("Deleted wishlist not found");
+    }
+
+    // Restore the wishlist
+    return await prisma.wishlist.update({
+      where: { id: wishlistId },
+      data: {
+        isDeleted: false,
+        deletedAt: null,
+      },
+    });
+  }
+
+  async getRecentlyDeletedWishlists(userId: string, limit: number = 10) {
+    // Get recently deleted wishlists for the user (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    return await prisma.wishlist.findMany({
+      where: {
+        ownerId: userId,
+        isDeleted: true,
+        deletedAt: {
+          gte: sevenDaysAgo,
+        },
+      },
+      include: {
+        _count: {
+          select: { items: true },
+        },
+      },
+      orderBy: {
+        deletedAt: "desc",
+      },
+      take: limit,
+    });
+  }
+
+  async permanentlyDeleteWishlist(wishlistId: string, userId: string) {
+    // Verify ownership and that it's already soft deleted
+    const wishlist = await prisma.wishlist.findFirst({
+      where: {
+        id: wishlistId,
+        ownerId: userId,
+        isDeleted: true,
+      },
+    });
+
+    if (!wishlist) {
+      throw new Error("Deleted wishlist not found");
+    }
+
+    // Permanently delete the wishlist and all its items
     return await prisma.wishlist.delete({
       where: { id: wishlistId },
     });

@@ -78,14 +78,16 @@ A modern wishlist web application built with Next.js, TypeScript, and PostgreSQL
 - [x] URL scraping API endpoint with OpenGraph metadata extraction
 - [x] Auto-fetch on URL paste with loading states and error handling
 
+### ✅ Completed (continued)
+- [x] Friend system frontend (requests, management)
+- [x] Gift claiming frontend UI
+- [x] Real-time updates (WebSockets)
+- [x] Multi-currency support
+- [x] Image upload functionality
+- [x] Soft deletion with undo
+
 ### 📋 TODO - Core Features
-- [ ] Friend system frontend (requests, management)
-- [ ] Gift claiming frontend UI
-- [ ] Real-time updates (WebSockets)
-- [ ] Multi-currency support
-- [ ] Image upload functionality
 - [ ] Collaborative editing
-- [ ] Soft deletion with undo
 
 ### 📋 TODO - Advanced Features
 - [ ] Email notifications

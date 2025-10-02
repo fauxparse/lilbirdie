@@ -296,6 +296,93 @@ export class WishlistItemService {
     });
   }
 
+  async restoreItem(itemId: string, userId: string) {
+    // First verify the user owns the wishlist that contains this item
+    const item = await prisma.wishlistItem.findFirst({
+      where: {
+        id: itemId,
+        isDeleted: true,
+      },
+      include: {
+        wishlist: true,
+      },
+    });
+
+    if (!item) {
+      throw new Error("Deleted item not found");
+    }
+
+    if (item.wishlist.ownerId !== userId) {
+      throw new Error("Access denied");
+    }
+
+    // Restore the item
+    return await prisma.wishlistItem.update({
+      where: { id: itemId },
+      data: {
+        isDeleted: false,
+        deletedAt: null,
+      },
+    });
+  }
+
+  async getRecentlyDeletedItems(userId: string, limit: number = 10) {
+    // Get recently deleted items for the user (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    return await prisma.wishlistItem.findMany({
+      where: {
+        isDeleted: true,
+        deletedAt: {
+          gte: sevenDaysAgo,
+        },
+        wishlist: {
+          ownerId: userId,
+        },
+      },
+      include: {
+        wishlist: {
+          select: {
+            id: true,
+            title: true,
+            permalink: true,
+          },
+        },
+      },
+      orderBy: {
+        deletedAt: "desc",
+      },
+      take: limit,
+    });
+  }
+
+  async permanentlyDeleteItem(itemId: string, userId: string) {
+    // First verify the user owns the wishlist that contains this item
+    const item = await prisma.wishlistItem.findFirst({
+      where: {
+        id: itemId,
+        isDeleted: true,
+      },
+      include: {
+        wishlist: true,
+      },
+    });
+
+    if (!item) {
+      throw new Error("Deleted item not found");
+    }
+
+    if (item.wishlist.ownerId !== userId) {
+      throw new Error("Access denied");
+    }
+
+    // Permanently delete the item
+    return await prisma.wishlistItem.delete({
+      where: { id: itemId },
+    });
+  }
+
   async claimItem(itemId: string, userId: string) {
     // Get item and verify it's accessible and not owned by the user
     const item = await this.getItemById(itemId, userId);

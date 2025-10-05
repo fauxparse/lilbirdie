@@ -39,7 +39,7 @@ export class WishlistService {
     return await prisma.wishlist.findMany({
       where: {
         ownerId: userId,
-        isDeleted: false,
+        // isDeleted: false, // TODO: Enable after migration
       },
       include: {
         items: {

@@ -12,7 +12,6 @@ interface UndoableDeleteOptions {
   undoTimeout?: number; // in milliseconds
 }
 
-
 export function useUndoableDelete() {
   const queryClient = useQueryClient();
 

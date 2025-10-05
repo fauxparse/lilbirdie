@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { AddItemModal } from "@/components/AddItemModal";
 import { useAuth } from "@/components/AuthProvider";
 import { ItemForm, type ItemFormData } from "@/components/ItemForm";
+import { MoveItemsModal } from "@/components/MoveItemsModal";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import {
@@ -69,6 +70,11 @@ function WishlistPageContent() {
   // Item management state
   const [showAddItem, setShowAddItem] = useState(false);
   const [editingItem, setEditingItem] = useState<WishlistItemWithRelations | null>(null);
+  const [moveModalOpen, setMoveModalOpen] = useState(false);
+  const [itemsToMove, setItemsToMove] = useState<{ ids: string[]; names: string[] }>({
+    ids: [],
+    names: [],
+  });
 
   // Sorting and filtering state
   const [sortBy, setSortBy] = useState<"priority" | "price" | "date">("priority");
@@ -147,6 +153,14 @@ function WishlistPageContent() {
   const handleDeleteItem = (itemId: string) => {
     // Direct delete with undo functionality
     deleteItemMutation.mutate(itemId);
+  };
+
+  const handleMoveItem = (itemId: string, itemName: string) => {
+    setItemsToMove({
+      ids: [itemId],
+      names: [itemName],
+    });
+    setMoveModalOpen(true);
   };
 
   const handleClaim = (itemId: string, isClaimed: boolean) => {
@@ -459,6 +473,7 @@ function WishlistPageContent() {
                 onClaim={handleClaim}
                 onEdit={isOwner ? setEditingItem : undefined}
                 onDelete={isOwner ? handleDeleteItem : undefined}
+                onMove={isOwner ? handleMoveItem : undefined}
                 isClaimPending={claimMutation.isPending}
                 isLoading={isLoading}
                 refetchWishlist={refetch}
@@ -472,6 +487,17 @@ function WishlistPageContent() {
         isOpen={showAddItem}
         onClose={() => setShowAddItem(false)}
         wishlistPermalink={wishlist?.permalink || ""}
+      />
+
+      <MoveItemsModal
+        isOpen={moveModalOpen}
+        onClose={() => {
+          setMoveModalOpen(false);
+          setItemsToMove({ ids: [], names: [] });
+        }}
+        itemIds={itemsToMove.ids}
+        itemNames={itemsToMove.names}
+        currentWishlistId={wishlist?.id || ""}
       />
     </div>
   );

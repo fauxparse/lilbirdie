@@ -125,7 +125,7 @@ describe("POST /api/w/[permalink]/items", () => {
       "wishlist-1",
       "wishlist:item:added",
       {
-        itemId: "item-1",
+        item: mockItem,
         wishlistId: "wishlist-1",
       }
     );

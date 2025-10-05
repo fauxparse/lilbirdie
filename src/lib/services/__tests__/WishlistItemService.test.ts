@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi, type MockedFunction } from "vitest";
 import type { CreateWishlistItemData, UpdateWishlistItemData } from "../../../types";
 import { WishlistItemService } from "../WishlistItemService";
 
@@ -13,6 +13,7 @@ vi.mock("@/lib/db", () => ({
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     claim: {
       findFirst: vi.fn(),
@@ -682,6 +683,157 @@ describe("WishlistItemService", () => {
       ).rejects.toThrow("Claim not found");
 
       expect(prisma.claim.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("moveItems", () => {
+    it("should move items to target wishlist when user owns both wishlists", async () => {
+      const mockItems = [
+        {
+          id: "item-1",
+          name: "Item 1",
+          wishlistId: "source-wishlist",
+          wishlist: { ownerId: "user-1" },
+        },
+        {
+          id: "item-2",
+          name: "Item 2",
+          wishlistId: "source-wishlist",
+          wishlist: { ownerId: "user-1" },
+        },
+      ];
+
+      const mockTargetWishlist = {
+        id: "target-wishlist",
+        ownerId: "user-1",
+        isDeleted: false,
+      };
+
+      const mockMovedItems = [
+        {
+          id: "item-1",
+          name: "Item 1",
+          wishlistId: "target-wishlist",
+          claims: [],
+          wishlist: { id: "target-wishlist", title: "Target", permalink: "target" },
+        },
+        {
+          id: "item-2",
+          name: "Item 2",
+          wishlistId: "target-wishlist",
+          claims: [],
+          wishlist: { id: "target-wishlist", title: "Target", permalink: "target" },
+        },
+      ];
+
+      (
+        prisma.wishlistItem.findMany as unknown as MockedFunction<typeof prisma.wishlistItem.findMany>
+      )
+        .mockResolvedValueOnce(mockItems as any)
+        .mockResolvedValueOnce(mockMovedItems as any);
+
+      (
+        prisma.wishlist.findFirst as unknown as MockedFunction<typeof prisma.wishlist.findFirst>
+      ).mockResolvedValue(mockTargetWishlist as any);
+
+      (
+        prisma.wishlistItem.updateMany as unknown as MockedFunction<typeof prisma.wishlistItem.updateMany>
+      ).mockResolvedValue({ count: 2 } as any);
+
+      const result = await WishlistItemService.getInstance().moveItems(
+        ["item-1", "item-2"],
+        "target-wishlist",
+        "user-1"
+      );
+
+      expect(prisma.wishlistItem.findMany).toHaveBeenCalledWith({
+        where: {
+          id: { in: ["item-1", "item-2"] },
+          isDeleted: false,
+        },
+        include: {
+          wishlist: true,
+        },
+      });
+
+      expect(prisma.wishlist.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: "target-wishlist",
+          ownerId: "user-1",
+          isDeleted: false,
+        },
+      });
+
+      expect(prisma.wishlistItem.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: { in: ["item-1", "item-2"] },
+        },
+        data: {
+          wishlistId: "target-wishlist",
+        },
+      });
+
+      expect(result).toEqual(mockMovedItems);
+    });
+
+    it("should throw error when one or more items not found", async () => {
+      (
+        prisma.wishlistItem.findMany as unknown as MockedFunction<typeof prisma.wishlistItem.findMany>
+      ).mockResolvedValue([{ id: "item-1" }] as any);
+
+      await expect(
+        WishlistItemService.getInstance().moveItems(
+          ["item-1", "item-2"],
+          "target-wishlist",
+          "user-1"
+        )
+      ).rejects.toThrow("One or more items not found");
+    });
+
+    it("should throw error when user doesn't own source items", async () => {
+      const mockItems = [
+        {
+          id: "item-1",
+          wishlist: { ownerId: "other-user" },
+        },
+      ];
+
+      (
+        prisma.wishlistItem.findMany as unknown as MockedFunction<typeof prisma.wishlistItem.findMany>
+      ).mockResolvedValueOnce(mockItems as any);
+
+      await expect(
+        WishlistItemService.getInstance().moveItems(
+          ["item-1"],
+          "target-wishlist",
+          "user-1"
+        )
+      ).rejects.toThrow("Access denied to one or more items");
+    });
+
+    it("should throw error when target wishlist not found or not owned", async () => {
+      const mockItems = [
+        {
+          id: "item-1",
+          wishlist: { ownerId: "user-1" },
+        },
+      ];
+
+      (
+        prisma.wishlistItem.findMany as unknown as MockedFunction<typeof prisma.wishlistItem.findMany>
+      ).mockResolvedValue(mockItems as any);
+
+      (
+        prisma.wishlist.findFirst as unknown as MockedFunction<typeof prisma.wishlist.findFirst>
+      ).mockResolvedValue(null);
+
+      await expect(
+        WishlistItemService.getInstance().moveItems(
+          ["item-1"],
+          "target-wishlist",
+          "user-1"
+        )
+      ).rejects.toThrow("Target wishlist not found or access denied");
     });
   });
 });

@@ -33,7 +33,7 @@ describe("useSocket", () => {
     mockIo.mockClear();
   });
 
-  it("should not connect when user is not authenticated", async () => {
+  it("should connect when user is not authenticated (anonymous)", async () => {
     mockUseAuth.mockReturnValue({
       user: null,
       session: null,
@@ -41,11 +41,16 @@ describe("useSocket", () => {
     });
 
     const { useSocket } = await import("../useSocket");
-    const { result } = renderHook(() => useSocket());
+    renderHook(() => useSocket());
 
-    expect(mockIo).not.toHaveBeenCalled();
-    expect(result.current.isConnected).toBe(false);
-    expect(result.current.socket).toBe(null);
+    // The hook should call io to create a socket connection
+    expect(mockIo).toHaveBeenCalledWith({
+      withCredentials: true,
+      autoConnect: true,
+      transports: ["websocket", "polling"],
+      timeout: 20000,
+      forceNew: true,
+    });
   });
 
   it("should not connect while auth is loading", async () => {
@@ -76,6 +81,9 @@ describe("useSocket", () => {
     expect(mockIo).toHaveBeenCalledWith({
       withCredentials: true,
       autoConnect: true,
+      transports: ["websocket", "polling"],
+      timeout: 20000,
+      forceNew: true,
     });
 
     // Simulate connection

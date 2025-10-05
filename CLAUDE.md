@@ -113,3 +113,4 @@ Standard Next.js commands apply once the project is set up:
 - README contains comprehensive TODO list and implementation status
 - Update README TODO list when completing tasks
 - README is single source of truth for project progress
+- Always hide expected stderr output from test output. I should only see console errors when something unexpected happens.

@@ -383,6 +383,80 @@ export class WishlistItemService {
     });
   }
 
+  async moveItems(itemIds: string[], targetWishlistId: string, userId: string) {
+    // Verify all items exist and are owned by the user
+    const items = await prisma.wishlistItem.findMany({
+      where: {
+        id: { in: itemIds },
+        isDeleted: false,
+      },
+      include: {
+        wishlist: true,
+      },
+    });
+
+    if (items.length !== itemIds.length) {
+      throw new Error("One or more items not found");
+    }
+
+    // Verify user owns all source wishlists
+    for (const item of items) {
+      if (item.wishlist.ownerId !== userId) {
+        throw new Error("Access denied to one or more items");
+      }
+    }
+
+    // Verify target wishlist exists and is owned by the user
+    const targetWishlist = await prisma.wishlist.findFirst({
+      where: {
+        id: targetWishlistId,
+        ownerId: userId,
+        isDeleted: false,
+      },
+    });
+
+    if (!targetWishlist) {
+      throw new Error("Target wishlist not found or access denied");
+    }
+
+    // Move items to target wishlist
+    await prisma.wishlistItem.updateMany({
+      where: {
+        id: { in: itemIds },
+      },
+      data: {
+        wishlistId: targetWishlistId,
+      },
+    });
+
+    // Return the updated items with full details
+    return await prisma.wishlistItem.findMany({
+      where: {
+        id: { in: itemIds },
+      },
+      include: {
+        claims: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+              },
+            },
+          },
+        },
+        wishlist: {
+          select: {
+            id: true,
+            title: true,
+            permalink: true,
+          },
+        },
+      },
+    });
+  }
+
   async claimItem(itemId: string, userId: string) {
     // Get item and verify it's accessible and not owned by the user
     const item = await this.getItemById(itemId, userId);

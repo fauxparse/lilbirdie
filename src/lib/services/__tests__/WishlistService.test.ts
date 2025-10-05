@@ -712,23 +712,26 @@ describe("WishlistService", () => {
       const mockDeletedWishlist = {
         id: "wishlist-1",
         title: "Deleted Wishlist",
+        isDeleted: true,
+        deletedAt: new Date(),
       };
 
       (
         prisma.wishlist.findFirst as unknown as MockedFunction<typeof prisma.wishlist.findFirst>
       ).mockResolvedValue(mockWishlist as unknown as any);
       (
-        prisma.wishlist.delete as unknown as MockedFunction<typeof prisma.wishlist.delete>
+        prisma.wishlist.update as unknown as MockedFunction<typeof prisma.wishlist.update>
       ).mockResolvedValue(mockDeletedWishlist as unknown as any);
 
       const result = await WishlistService.getInstance().deleteWishlist("wishlist-1", "user-1");
 
       expect(prisma.wishlist.findFirst).toHaveBeenCalledWith({
-        where: { id: "wishlist-1", ownerId: "user-1" },
+        where: { id: "wishlist-1", ownerId: "user-1", isDeleted: false },
       });
 
-      expect(prisma.wishlist.delete).toHaveBeenCalledWith({
+      expect(prisma.wishlist.update).toHaveBeenCalledWith({
         where: { id: "wishlist-1" },
+        data: { isDeleted: true, deletedAt: expect.any(Date) },
       });
 
       expect(result).toEqual(mockDeletedWishlist);
@@ -776,6 +779,12 @@ describe("WishlistService", () => {
         { id: "wishlist-3", ownerId: "user-1", isDefault: false },
       ];
 
+      const mockDeletedWishlist = {
+        id: "wishlist-1",
+        isDeleted: true,
+        deletedAt: new Date(),
+      };
+
       (
         prisma.wishlist.findFirst as unknown as MockedFunction<typeof prisma.wishlist.findFirst>
       ).mockResolvedValue(mockWishlist as unknown as any);
@@ -784,15 +793,14 @@ describe("WishlistService", () => {
       ).mockResolvedValue(otherWishlists as unknown as any);
       (
         prisma.wishlist.update as unknown as MockedFunction<typeof prisma.wishlist.update>
-      ).mockResolvedValue(otherWishlists[0] as unknown as any);
-      (
-        prisma.wishlist.delete as unknown as MockedFunction<typeof prisma.wishlist.delete>
-      ).mockResolvedValue(mockWishlist as unknown as any);
+      )
+        .mockResolvedValueOnce(otherWishlists[0] as unknown as any)
+        .mockResolvedValueOnce(mockDeletedWishlist as unknown as any);
 
       await WishlistService.getInstance().deleteWishlist("wishlist-1", "user-1");
 
       expect(prisma.wishlist.findMany).toHaveBeenCalledWith({
-        where: { ownerId: "user-1", id: { not: "wishlist-1" } },
+        where: { ownerId: "user-1", id: { not: "wishlist-1" }, isDeleted: false },
       });
 
       expect(prisma.wishlist.update).toHaveBeenCalledWith({
@@ -800,8 +808,9 @@ describe("WishlistService", () => {
         data: { isDefault: true },
       });
 
-      expect(prisma.wishlist.delete).toHaveBeenCalledWith({
+      expect(prisma.wishlist.update).toHaveBeenCalledWith({
         where: { id: "wishlist-1" },
+        data: { isDeleted: true, deletedAt: expect.any(Date) },
       });
     });
   });

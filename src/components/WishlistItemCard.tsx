@@ -3,6 +3,7 @@ import { sortBy, uniq, upperFirst } from "es-toolkit";
 import {
   Edit,
   ExternalLink,
+  FolderOpen,
   Hand,
   MoreVertical,
   ShoppingCart,
@@ -35,6 +36,7 @@ interface WishlistItemCardProps {
   onClaim?: (itemId: string, isClaimed: boolean) => void;
   onEdit?: (item: WishlistItemResponse) => void;
   onDelete?: (itemId: string) => void;
+  onMove?: (itemId: string, itemName: string) => void;
   isClaimPending?: boolean;
   isLoading: boolean;
   refetchWishlist?: () => void;
@@ -45,6 +47,7 @@ function WishlistItemCardContent({
   onClaim,
   onEdit,
   onDelete,
+  onMove,
   isClaimPending = false,
 }: Omit<WishlistItemCardProps, "itemId" | "wishlistPermalink" | "isLoading" | "refetchWishlist">) {
   const { user } = useAuth();
@@ -142,6 +145,12 @@ function WishlistItemCardContent({
                     <DropdownMenuItem onClick={() => onEdit(item)}>
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
+                    </DropdownMenuItem>
+                  )}
+                  {onMove && (
+                    <DropdownMenuItem onClick={() => onMove(item.id, item.name)}>
+                      <FolderOpen className="h-4 w-4 mr-2" />
+                      Move to...
                     </DropdownMenuItem>
                   )}
                   {onDelete && (
@@ -285,6 +294,7 @@ export function WishlistItemCard(props: WishlistItemCardProps) {
         onClaim={props.onClaim}
         onEdit={props.onEdit}
         onDelete={props.onDelete}
+        onMove={props.onMove}
         isClaimPending={props.isClaimPending}
       />
     </WishlistItemProvider>

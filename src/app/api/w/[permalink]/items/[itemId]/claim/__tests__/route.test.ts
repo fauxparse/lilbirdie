@@ -120,9 +120,7 @@ describe("POST /api/w/[permalink]/items/[itemId]/claim", () => {
 
     // Should emit socket event
     expect(SocketEventEmitter.emitToWishlist).toHaveBeenCalledWith("wishlist-1", "claim:created", {
-      itemId: "item-1",
-      wishlistId: "wishlist-1",
-      userId: "user-1",
+      claim: mockClaim,
     });
 
     // Response should indicate success

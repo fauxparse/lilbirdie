@@ -9,6 +9,20 @@ export default defineConfig({
     setupFiles: ["./src/test/setup.tsx"],
     globals: true,
     css: true,
+    // Suppress expected console output
+    silent: false,
+    // Hide MSW and expected error logs
+    onConsoleLog(log, type) {
+      // Hide MSW intercepted request errors (these are expected in tests)
+      if (log.includes('[MSW] Error: intercepted a request without a matching request handler')) {
+        return false;
+      }
+      // Hide expected error logs from API route tests
+      if (log.includes('Error moving items:') || log.includes('Error claiming item:')) {
+        return false;
+      }
+      return true;
+    },
     // Include source maps for better error messages
     includeSource: ["src/**/*"],
     // Coverage configuration

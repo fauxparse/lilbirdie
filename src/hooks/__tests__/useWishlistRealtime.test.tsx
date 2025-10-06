@@ -50,9 +50,7 @@ function createWrapper(permalink = "test-wishlist") {
 
   return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <WishlistProvider permalink={permalink}>
-        {children}
-      </WishlistProvider>
+      <WishlistProvider permalink={permalink}>{children}</WishlistProvider>
     </QueryClientProvider>
   );
 }
@@ -177,7 +175,7 @@ describe("useWishlistRealtime", () => {
     const { useWishlistRealtime } = await import("../useWishlistRealtime");
 
     // First need to set up a mock item that getItem can find
-    const mockItem = {
+    const _mockItem = {
       id: "item-1",
       name: "Test Item",
       claims: [],
@@ -213,7 +211,9 @@ describe("useWishlistRealtime", () => {
 
   it("should clean up on unmount", async () => {
     const { useWishlistRealtime } = await import("../useWishlistRealtime");
-    const { unmount } = renderHook(() => useWishlistRealtime("wishlist-1"), { wrapper: createWrapper() });
+    const { unmount } = renderHook(() => useWishlistRealtime("wishlist-1"), {
+      wrapper: createWrapper(),
+    });
 
     unmount();
 

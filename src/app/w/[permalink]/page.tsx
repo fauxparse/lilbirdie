@@ -10,7 +10,6 @@ import { AddItemModal } from "@/components/AddItemModal";
 import { useAuth } from "@/components/AuthProvider";
 import { ItemForm, type ItemFormData } from "@/components/ItemForm";
 import { MoveItemsModal } from "@/components/MoveItemsModal";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import {
   Breadcrumb,
@@ -20,14 +19,16 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { InlineEditable } from "@/components/ui/InlineEditable";
 import { Label } from "@/components/ui/Label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover";
 import {
   PageActions,
   PageHeader,
   PageHeaderDescription,
-  PageHeaderHeading,
-} from "@/components/ui/page-header";
+  PageTitle,
+} from "@/components/ui/PageHeader";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover";
+import { PrivacyBadge } from "@/components/ui/PrivacyBadge";
 import {
   Select,
   SelectContent,
@@ -57,11 +58,13 @@ function WishlistPageContent() {
   const {
     wishlist,
     isLoading,
+    isOwner,
     error,
     refetch,
     claimMutation,
     updateItemCache,
     removeItemFromCache,
+    updateWishlist,
   } = useWishlist();
 
   // Undoable delete hook
@@ -262,8 +265,6 @@ function WishlistPageContent() {
     );
   }
 
-  const isOwner = user?.id === wishlist.owner?.id;
-
   return (
     <div className="container mx-auto max-w-4xl">
       <div className="space-y-6 container-type-inline-size">
@@ -272,7 +273,7 @@ function WishlistPageContent() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link href="/">Home</Link>
+                  <Link href="/dashboard">Home</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
@@ -302,17 +303,31 @@ function WishlistPageContent() {
               )}
             </BreadcrumbList>
           </Breadcrumb>
-          <PageHeaderHeading>{wishlist.title}</PageHeaderHeading>
+          <div className="flex flex-col gap-2 items-start pt-8 md:pt-10 lg:pt-12">
+            <PrivacyBadge
+              privacy={wishlist.privacy}
+              onChange={isOwner ? (privacy) => updateWishlist({ privacy }) : undefined}
+            />
+            <PageTitle>
+              {isOwner ? (
+                <InlineEditable
+                  value={wishlist.title}
+                  onChange={(title) => updateWishlist({ title })}
+                />
+              ) : (
+                wishlist.title
+              )}
+            </PageTitle>
+          </div>
           <PageHeaderDescription>
-            {wishlist.description}
-
-            <Badge variant="outline" className="ml-2">
-              {wishlist.privacy === "PUBLIC"
-                ? "Public"
-                : wishlist.privacy === "FRIENDS_ONLY"
-                  ? "Friends Only"
-                  : "Private"}
-            </Badge>
+            {isOwner ? (
+              <InlineEditable
+                value={wishlist.description || ""}
+                onChange={(description) => updateWishlist({ description })}
+              />
+            ) : (
+              wishlist.description
+            )}
           </PageHeaderDescription>
           <PageActions>
             {wishlist.items.length > 0 && (

@@ -6,17 +6,20 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect } fro
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { useWishlistRealtime } from "@/hooks/useWishlistRealtime";
+import { UpdateWishlistData } from "@/lib/services/WishlistService";
 import type { WishlistItemResponse, WishlistResponse } from "@/types";
 
 interface WishlistContextValue {
   wishlist: WishlistResponse | undefined;
   isLoading: boolean;
+  isOwner: boolean;
   error: Error | null;
   refetch: () => void;
   getItem: (itemId: string) => WishlistItemResponse | undefined;
   updateItemCache: (item: WishlistItemResponse) => void;
   removeItemFromCache: (itemId: string) => void;
   addItemToCache: (item: WishlistItemResponse) => void;
+  updateWishlist: (data: Partial<UpdateWishlistData>) => void;
   claimMutation: {
     mutate: (params: { itemId: string; action: "claim" | "unclaim" }) => void;
     isPending: boolean;
@@ -225,9 +228,54 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
     });
   };
 
+  const updateWishlist = useMutation({
+    mutationFn: async (data: Partial<UpdateWishlistData>) => {
+      if (!wishlist) {
+        throw new Error("Wishlist not found");
+      }
+
+      queryClient.setQueryData(
+        ["wishlist", permalink],
+        (existing: WishlistResponse | undefined) => ({
+          ...(existing || {}),
+          ...data,
+        })
+      );
+
+      const response = await fetch(`/api/wishlists/${wishlist.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update wishlist");
+      }
+
+      return response.json();
+    },
+    meta: { previous: queryClient.getQueryData(["wishlist", permalink]) },
+    onSuccess: (updatedWishlist: WishlistResponse) => {
+      queryClient.setQueryData<WishlistResponse>(["wishlist", permalink], (existing) => ({
+        ...existing,
+        ...updatedWishlist,
+      }));
+    },
+    onError: (error, _, context: { previous: WishlistResponse | undefined } | undefined) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["wishlist", permalink], context.previous);
+      }
+      toast.error(error.message);
+    },
+  });
+
   const value: WishlistContextValue = {
     wishlist,
     isLoading,
+    isOwner: !!user && wishlist?.ownerId === user?.id,
     error,
     refetch,
     getItem,
@@ -238,6 +286,7 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
       mutate: claimMutation.mutate,
       isPending: claimMutation.isPending,
     },
+    updateWishlist: updateWishlist.mutate,
   };
 
   return (

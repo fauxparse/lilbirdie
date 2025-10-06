@@ -202,7 +202,7 @@ export class WishlistService {
     });
   }
 
-  async updateWishlist(wishlistId: string, userId: string, data: UpdateWishlistData) {
+  async updateWishlist(wishlistId: string, userId: string, data: Partial<UpdateWishlistData>) {
     // Verify ownership
     const wishlist = await prisma.wishlist.findFirst({
       where: { id: wishlistId, ownerId: userId },

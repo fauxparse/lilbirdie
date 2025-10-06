@@ -12,13 +12,17 @@ export default defineConfig({
     // Suppress expected console output
     silent: false,
     // Hide MSW and expected error logs
-    onConsoleLog(log, type) {
+    onConsoleLog(log, _type) {
       // Hide MSW intercepted request errors (these are expected in tests)
-      if (log.includes('[MSW] Error: intercepted a request without a matching request handler')) {
+      if (log.includes("[MSW] Error: intercepted a request without a matching request handler")) {
         return false;
       }
       // Hide expected error logs from API route tests
-      if (log.includes('Error moving items:') || log.includes('Error claiming item:')) {
+      if (log.includes("Error moving items:") || log.includes("Error claiming item:")) {
+        return false;
+      }
+      // Hide expected permission and database error logs from RBAC tests
+      if (log.includes("Permission check failed:") || log.includes("Error fetching permissions:")) {
         return false;
       }
       return true;

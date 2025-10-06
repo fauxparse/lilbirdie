@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-const PageHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+export const PageHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => (
     <div ref={ref} className={cn("flex flex-col items-start gap-2 pb-8", className)} {...props}>
       {children}
@@ -10,22 +10,22 @@ const PageHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 );
 PageHeader.displayName = "PageHeader";
 
-const PageHeaderHeading = React.forwardRef<
+export const PageTitle = React.forwardRef<
   HTMLHeadingElement,
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
   <h1
     ref={ref}
     className={cn(
-      "text-2xl font-medium leading-tight tracking-tighter md:text-3xl lg:text-4xl pt-8 md:pt-10 lg:pt-12",
+      "text-2xl font-medium leading-tight tracking-tighter md:text-3xl lg:text-4xl",
       className
     )}
     {...props}
   />
 ));
-PageHeaderHeading.displayName = "PageHeaderHeading";
+PageTitle.displayName = "PageHeaderHeading";
 
-const PageHeaderDescription = React.forwardRef<
+export const PageHeaderDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
@@ -33,7 +33,7 @@ const PageHeaderDescription = React.forwardRef<
 ));
 PageHeaderDescription.displayName = "PageHeaderDescription";
 
-const PageActions = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+export const PageActions = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
@@ -43,5 +43,3 @@ const PageActions = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
   )
 );
 PageActions.displayName = "PageActions";
-
-export { PageHeader, PageHeaderHeading, PageHeaderDescription, PageActions };

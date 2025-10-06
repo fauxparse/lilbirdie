@@ -38,7 +38,12 @@
       "Bash(pnpm exec prisma db execute:*)",
       "Bash(source:*)",
       "Bash(pnpm exec prisma migrate:*)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npx dotenv -e .env.development.local -- npx prisma migrate dev:*)",
+      "Bash(DATABASE_URL=\"postgresql://matt@localhost:5432/lil_birdie_dev\" npx prisma migrate dev --name add-organization-rbac)",
+      "Bash(DATABASE_URL=\"postgresql://matt@localhost:5432/lil_birdie_dev\" npx prisma migrate reset --force)",
+      "Bash(DATABASE_URL=\"postgresql://matt@localhost:5432/lil_birdie_dev\" npx prisma db push)",
+      "Bash(DATABASE_URL=\"postgresql://matt@localhost:5432/lil_birdie_dev\" npx prisma generate)"
     ],
     "deny": [],
     "ask": []

@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "../route";
 
 // Mock the auth module
@@ -30,6 +30,17 @@ vi.mock("@/lib/socket", () => ({
   },
 }));
 
+// Mock the PermissionService
+const mockPermissionService = {
+  hasPermission: vi.fn(),
+};
+
+vi.mock("@/lib/services/PermissionService", () => ({
+  PermissionService: {
+    getInstance: vi.fn(() => mockPermissionService),
+  },
+}));
+
 describe("POST /api/items/move", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -50,8 +61,10 @@ describe("POST /api/items/move", () => {
 
     vi.mocked(auth.api.getSession).mockResolvedValue(mockSession);
 
-    // Mock service methods
+    // Mock permission service to allow all operations
+    mockPermissionService.hasPermission.mockResolvedValue(true);
 
+    // Mock service methods
     mockWishlistItemService.getItemById
       .mockResolvedValueOnce({
         id: "item-1",
@@ -277,6 +290,9 @@ describe("POST /api/items/move", () => {
 
     vi.mocked(auth.api.getSession).mockResolvedValue(mockSession);
 
+    // Mock permission service to allow all operations
+    mockPermissionService.hasPermission.mockResolvedValue(true);
+
     mockWishlistItemService.getItemById
       .mockResolvedValueOnce({
         id: "item-1",
@@ -288,9 +304,7 @@ describe("POST /api/items/move", () => {
         name: "Item 2",
         wishlistId: "source-wishlist",
       } as any);
-    mockWishlistItemService.moveItems.mockRejectedValue(
-      new Error("One or more items not found")
-    );
+    mockWishlistItemService.moveItems.mockRejectedValue(new Error("One or more items not found"));
 
     const request = new NextRequest("http://localhost:3000/api/items/move", {
       method: "POST",
@@ -319,14 +333,8 @@ describe("POST /api/items/move", () => {
 
     vi.mocked(auth.api.getSession).mockResolvedValue(mockSession);
 
-    mockWishlistItemService.getItemById.mockResolvedValue({
-      id: "item-1",
-      name: "Item 1",
-      wishlistId: "source-wishlist",
-    } as any);
-    mockWishlistItemService.moveItems.mockRejectedValue(
-      new Error("Access denied to one or more items")
-    );
+    // Mock permission service to deny write access to target wishlist
+    mockPermissionService.hasPermission.mockResolvedValue(false);
 
     const request = new NextRequest("http://localhost:3000/api/items/move", {
       method: "POST",
@@ -343,7 +351,7 @@ describe("POST /api/items/move", () => {
 
     expect(response.status).toBe(403);
     const responseData = await response.json();
-    expect(responseData).toEqual({ error: "Access denied to one or more items" });
+    expect(responseData).toEqual({ error: "Insufficient permissions for target wishlist" });
   });
 
   it("should return 500 for unexpected errors", async () => {
@@ -355,14 +363,15 @@ describe("POST /api/items/move", () => {
 
     vi.mocked(auth.api.getSession).mockResolvedValue(mockSession);
 
+    // Mock permission service to allow all operations
+    mockPermissionService.hasPermission.mockResolvedValue(true);
+
     mockWishlistItemService.getItemById.mockResolvedValue({
       id: "item-1",
       name: "Item 1",
       wishlistId: "source-wishlist",
     } as any);
-    mockWishlistItemService.moveItems.mockRejectedValue(
-      new Error("Database connection failed")
-    );
+    mockWishlistItemService.moveItems.mockRejectedValue(new Error("Database connection failed"));
 
     const request = new NextRequest("http://localhost:3000/api/items/move", {
       method: "POST",

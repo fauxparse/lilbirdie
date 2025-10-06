@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { PermissionService } from "@/lib/services/PermissionService";
 import { WishlistService } from "@/lib/services/WishlistService";
 
 export async function GET(
@@ -16,7 +18,35 @@ export async function GET(
 
     const viewerId = session?.user?.id;
 
-    // Get the wishlist by permalink
+    // Get the wishlist by permalink to get the ID
+    const wishlistBasic = await prisma.wishlist.findUnique({
+      where: { permalink },
+      select: { id: true, privacy: true, ownerId: true },
+    });
+
+    if (!wishlistBasic) {
+      return NextResponse.json({ error: "Wishlist not found" }, { status: 404 });
+    }
+
+    // Check permissions if user is authenticated
+    if (viewerId) {
+      const permissionService = PermissionService.getInstance();
+      const hasReadPermission = await permissionService.hasPermission(
+        { userId: viewerId, wishlistId: wishlistBasic.id },
+        "wishlists:read"
+      );
+
+      if (!hasReadPermission) {
+        return NextResponse.json({ error: "Wishlist not found" }, { status: 404 });
+      }
+    } else {
+      // For unauthenticated users, only allow public wishlists
+      if (wishlistBasic.privacy !== "PUBLIC") {
+        return NextResponse.json({ error: "Wishlist not found" }, { status: 404 });
+      }
+    }
+
+    // Get the full wishlist data
     const wishlist = await WishlistService.getInstance().getWishlistByPermalink(
       permalink,
       viewerId
@@ -24,16 +54,6 @@ export async function GET(
 
     if (!wishlist) {
       return NextResponse.json({ error: "Wishlist not found" }, { status: 404 });
-    }
-
-    // Check if the wishlist is accessible
-    if (wishlist.privacy === "PRIVATE" && wishlist.ownerId !== viewerId) {
-      return NextResponse.json({ error: "Wishlist not found" }, { status: 404 });
-    }
-
-    if (wishlist.privacy === "FRIENDS_ONLY" && wishlist.ownerId !== viewerId) {
-      // TODO: Check if viewer is friends with owner
-      // For now, allow access (friends system not implemented yet)
     }
 
     return NextResponse.json(wishlist);

@@ -95,5 +95,7 @@ export function useWishlistRealtime(wishlistId: string | null) {
     queryClient,
     getItem,
     updateItemCache,
+    addItemToCache,
+    removeItemFromCache,
   ]);
 }

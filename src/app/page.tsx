@@ -1,12 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 
 export default function HomePage() {
   const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, isLoading, router]);
 
   if (isLoading) {
     return (
@@ -17,42 +26,7 @@ export default function HomePage() {
   }
 
   if (user) {
-    return (
-      <div className="container mx-auto justify-self-center px-4 py-8 container-type-inline-size">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome back, {user.name}!</h1>
-          <p className="text-muted-foreground">Ready to manage your wishlists?</p>
-        </div>
-
-        <div className="grid cq-md:grid-cols-2 gap-6 max-w-4xl">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Wishlists</CardTitle>
-              <CardDescription>Create and manage your wishlists</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                You don't have any wishlists yet. Create your first one to get started!
-              </p>
-              <Button>Create My First Wishlist</Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Friends' Wishlists</CardTitle>
-              <CardDescription>Browse and claim gifts from friends</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Connect with friends to see their wishlists and coordinate gifts.
-              </p>
-              <Button variant="outline">Find Friends</Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    return null; // Will redirect to dashboard
   }
 
   return (

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi, type MockedFunction } from "vitest";
+import { beforeEach, describe, expect, it, type MockedFunction, vi } from "vitest";
 import type { CreateWishlistItemData, UpdateWishlistItemData } from "../../../types";
 import { WishlistItemService } from "../WishlistItemService";
 
@@ -727,7 +727,9 @@ describe("WishlistItemService", () => {
       ];
 
       (
-        prisma.wishlistItem.findMany as unknown as MockedFunction<typeof prisma.wishlistItem.findMany>
+        prisma.wishlistItem.findMany as unknown as MockedFunction<
+          typeof prisma.wishlistItem.findMany
+        >
       )
         .mockResolvedValueOnce(mockItems as any)
         .mockResolvedValueOnce(mockMovedItems as any);
@@ -737,7 +739,9 @@ describe("WishlistItemService", () => {
       ).mockResolvedValue(mockTargetWishlist as any);
 
       (
-        prisma.wishlistItem.updateMany as unknown as MockedFunction<typeof prisma.wishlistItem.updateMany>
+        prisma.wishlistItem.updateMany as unknown as MockedFunction<
+          typeof prisma.wishlistItem.updateMany
+        >
       ).mockResolvedValue({ count: 2 } as any);
 
       const result = await WishlistItemService.getInstance().moveItems(
@@ -778,7 +782,9 @@ describe("WishlistItemService", () => {
 
     it("should throw error when one or more items not found", async () => {
       (
-        prisma.wishlistItem.findMany as unknown as MockedFunction<typeof prisma.wishlistItem.findMany>
+        prisma.wishlistItem.findMany as unknown as MockedFunction<
+          typeof prisma.wishlistItem.findMany
+        >
       ).mockResolvedValue([{ id: "item-1" }] as any);
 
       await expect(
@@ -799,15 +805,13 @@ describe("WishlistItemService", () => {
       ];
 
       (
-        prisma.wishlistItem.findMany as unknown as MockedFunction<typeof prisma.wishlistItem.findMany>
+        prisma.wishlistItem.findMany as unknown as MockedFunction<
+          typeof prisma.wishlistItem.findMany
+        >
       ).mockResolvedValueOnce(mockItems as any);
 
       await expect(
-        WishlistItemService.getInstance().moveItems(
-          ["item-1"],
-          "target-wishlist",
-          "user-1"
-        )
+        WishlistItemService.getInstance().moveItems(["item-1"], "target-wishlist", "user-1")
       ).rejects.toThrow("Access denied to one or more items");
     });
 
@@ -820,7 +824,9 @@ describe("WishlistItemService", () => {
       ];
 
       (
-        prisma.wishlistItem.findMany as unknown as MockedFunction<typeof prisma.wishlistItem.findMany>
+        prisma.wishlistItem.findMany as unknown as MockedFunction<
+          typeof prisma.wishlistItem.findMany
+        >
       ).mockResolvedValue(mockItems as any);
 
       (
@@ -828,11 +834,7 @@ describe("WishlistItemService", () => {
       ).mockResolvedValue(null);
 
       await expect(
-        WishlistItemService.getInstance().moveItems(
-          ["item-1"],
-          "target-wishlist",
-          "user-1"
-        )
+        WishlistItemService.getInstance().moveItems(["item-1"], "target-wishlist", "user-1")
       ).rejects.toThrow("Target wishlist not found or access denied");
     });
   });

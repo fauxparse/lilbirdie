@@ -791,9 +791,7 @@ describe("WishlistService", () => {
       (
         prisma.wishlist.findMany as unknown as MockedFunction<typeof prisma.wishlist.findMany>
       ).mockResolvedValue(otherWishlists as unknown as any);
-      (
-        prisma.wishlist.update as unknown as MockedFunction<typeof prisma.wishlist.update>
-      )
+      (prisma.wishlist.update as unknown as MockedFunction<typeof prisma.wishlist.update>)
         .mockResolvedValueOnce(otherWishlists[0] as unknown as any)
         .mockResolvedValueOnce(mockDeletedWishlist as unknown as any);
 

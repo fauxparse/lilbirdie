@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { PermissionService } from "@/lib/services/PermissionService";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
 import { SocketEventEmitter } from "@/lib/socket";
 
@@ -31,31 +32,55 @@ export async function POST(request: NextRequest) {
     }
 
     const wishlistItemService = WishlistItemService.getInstance();
+    const permissionService = PermissionService.getInstance();
 
-    // Get items before moving to emit removal events
+    // Check permissions for target wishlist (user must be able to write to it)
+    const canWriteToTarget = await permissionService.hasPermission(
+      { userId: session.user.id, wishlistId: targetWishlistId },
+      "items:write"
+    );
+
+    if (!canWriteToTarget) {
+      return NextResponse.json(
+        { error: "Insufficient permissions for target wishlist" },
+        { status: 403 }
+      );
+    }
+
+    // Get items before moving to check source permissions and emit removal events
     const itemsBeforeMove = await Promise.all(
       itemIds.map(async (itemId) => {
         try {
           const item = await wishlistItemService.getItemById(itemId, session.user.id);
+
+          // Check if user can move items from the source wishlist
+          const canMoveFromSource = await permissionService.hasPermission(
+            { userId: session.user.id, wishlistId: item.wishlistId },
+            "items:move"
+          );
+
+          if (!canMoveFromSource) {
+            throw new Error(`Insufficient permissions to move item from source wishlist`);
+          }
+
           return {
             id: item.id,
             name: item.name,
             sourceWishlistId: item.wishlistId,
           };
-        } catch {
+        } catch (error) {
+          if (error instanceof Error) {
+            throw error; // Re-throw permission errors
+          }
           return null;
         }
       })
     );
 
     // Move the items
-    let movedItems;
+    let movedItems: any;
     try {
-      movedItems = await wishlistItemService.moveItems(
-        itemIds,
-        targetWishlistId,
-        session.user.id
-      );
+      movedItems = await wishlistItemService.moveItems(itemIds, targetWishlistId, session.user.id);
     } catch (error) {
       console.error("Error moving items:", error);
 

@@ -198,16 +198,75 @@ function WishlistPageContent() {
   if (isLoading) {
     return (
       <div className="container mx-auto max-w-4xl">
-        <div className="space-y-6">
-          <div className="animate-pulse">
-            <div className="h-8 bg-muted rounded w-1/3 mb-2" />
-            <div className="h-4 bg-muted rounded w-1/2" />
+        <div className="space-y-6 container-type-inline-size">
+          {/* Page Header Skeleton */}
+          <div className="flex flex-col items-start gap-2 pb-8">
+            {/* Breadcrumb Skeleton */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
+              <div className="h-4 bg-muted rounded w-12 animate-pulse" />
+              <div className="h-3.5 w-3.5 bg-muted rounded animate-pulse" />
+              <div className="h-4 bg-muted rounded w-20 animate-pulse" />
+            </div>
+
+            {/* Privacy Badge Skeleton */}
+            <div className="h-6 bg-muted rounded-full w-16 animate-pulse" />
+
+            {/* Title Skeleton */}
+            <div className="pt-8 md:pt-10 lg:pt-12 w-full">
+              <div className="h-10 md:h-12 lg:h-14 bg-muted rounded w-2/3 max-w-md animate-pulse" />
+            </div>
+
+            {/* Description Skeleton */}
+            <div className="h-5 bg-muted rounded w-full max-w-2xl animate-pulse" />
+            <div className="h-5 bg-muted rounded w-4/5 max-w-xl animate-pulse" />
+
+            {/* Actions Skeleton */}
+            <div className="flex w-full items-center justify-start gap-2 pt-2">
+              <div className="h-4 bg-muted rounded w-24 animate-pulse" />
+              <div className="h-9 w-9 bg-muted rounded animate-pulse" />
+            </div>
           </div>
-          <div className="grid gap-4 cq-sm:grid-cols-2">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-48 bg-muted rounded-lg" />
-              </div>
+
+          {/* Action Buttons Skeleton */}
+          <header className="flex flex-col">
+            <div className="flex gap-2">
+              <div className="h-10 bg-muted rounded w-28 animate-pulse" />
+              <div className="h-10 bg-muted rounded w-32 animate-pulse" />
+              <div className="h-10 bg-muted rounded w-32 animate-pulse" />
+            </div>
+          </header>
+
+          {/* Items Grid Skeleton */}
+          <div className="grid gap-4 cq-md:grid-cols-2 cq-lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <Card
+                key={i}
+                className="group grid grid-rows-[auto_1fr_auto] min-h-96 p-0 shadow-none"
+              >
+                {/* Image Header Skeleton */}
+                <div className="p-0 space-y-0 row-start-1 row-end-2 col-start-1 col-end-1 relative">
+                  <div className="w-full h-40 bg-muted rounded-t-lg animate-pulse" />
+                  <div className="absolute top-2 right-2 z-30">
+                    <div className="h-8 w-8 bg-background/80 backdrop-blur-sm rounded-full animate-pulse" />
+                  </div>
+                </div>
+
+                {/* Content Skeleton */}
+                <div className="row-start-2 row-span-1 col-start-1 col-span-1 space-y-3 p-4 pt-4">
+                  <div className="h-6 bg-muted rounded w-4/5 animate-pulse" />
+                  <div className="h-4 bg-muted rounded w-full animate-pulse" />
+                  <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
+                </div>
+
+                {/* Footer Skeleton */}
+                <div className="row-start-3 row-span-1 col-start-1 col-span-1 grid grid-cols-2 grid-rows-2 gap-1 px-4 py-4 items-center">
+                  <div className="col-start-1 col-span-2">
+                    <div className="h-4 bg-muted rounded w-32 animate-pulse" />
+                  </div>
+                  <div className="col-start-1 h-5 bg-muted rounded w-20 animate-pulse" />
+                  <div className="col-start-2 justify-self-end h-5 bg-muted rounded w-24 animate-pulse" />
+                </div>
+              </Card>
             ))}
           </div>
         </div>

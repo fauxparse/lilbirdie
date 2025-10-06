@@ -46,7 +46,15 @@
       "Bash(DATABASE_URL=\"postgresql://matt@localhost:5432/lil_birdie_dev\" npx prisma generate)",
       "Bash(xargs ls:*)",
       "Bash(git log:*)",
-      "Bash(yes)"
+      "Bash(yes)",
+      "Bash(while read dir)",
+      "Bash(do echo \"=== $dir ===\")",
+      "Bash(ls:*)",
+      "Bash(done)",
+      "Bash(while read f)",
+      "Bash(git add:*)",
+      "Bash(git reset:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

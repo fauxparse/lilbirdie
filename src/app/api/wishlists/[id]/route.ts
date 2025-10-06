@@ -1,6 +1,7 @@
 import { WishlistPrivacy } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { PermissionService } from "@/lib/services/PermissionService";
 import { UpdateWishlistData, WishlistService } from "@/lib/services/WishlistService";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -35,6 +36,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check permissions using PermissionService
+    const permissionService = PermissionService.getInstance();
+    const canWrite = await permissionService.hasPermission(
+      { userId: session.user.id, wishlistId: id },
+      "wishlists:write"
+    );
+
+    if (!canWrite) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -93,6 +105,17 @@ export async function DELETE(
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check permissions using PermissionService
+    const permissionService = PermissionService.getInstance();
+    const canDelete = await permissionService.hasPermission(
+      { userId: session.user.id, wishlistId: id },
+      "wishlists:delete"
+    );
+
+    if (!canDelete) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     const result = await WishlistService.getInstance().deleteWishlist(id, session.user.id);

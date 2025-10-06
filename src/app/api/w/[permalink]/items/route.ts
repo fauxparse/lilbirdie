@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { PermissionService } from "@/lib/services/PermissionService";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
 import { WishlistService } from "@/lib/services/WishlistService";
 import { SocketEventEmitter } from "@/lib/socket";
@@ -70,6 +71,17 @@ export async function POST(
 
     if (!wishlist) {
       return NextResponse.json({ error: "Wishlist not found" }, { status: 404 });
+    }
+
+    // Check permissions using PermissionService
+    const permissionService = PermissionService.getInstance();
+    const canWrite = await permissionService.hasPermission(
+      { userId: session.user.id, wishlistId: wishlist.id },
+      "items:write"
+    );
+
+    if (!canWrite) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     const item = await WishlistItemService.getInstance().createItem(wishlist.id, session.user.id, {

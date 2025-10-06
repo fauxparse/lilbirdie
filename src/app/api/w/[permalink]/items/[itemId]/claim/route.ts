@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { PermissionService } from "@/lib/services/PermissionService";
 import { SocketEventEmitter } from "@/lib/socket";
 
 export async function POST(
@@ -43,14 +44,20 @@ export async function POST(
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
-    // Check if user can access this wishlist
-    if (item.wishlist.privacy === "PRIVATE" && item.wishlist.ownerId !== session.user.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-    }
-
     // Prevent owner from claiming their own items
     if (item.wishlist.ownerId === session.user.id) {
       return NextResponse.json({ error: "Cannot claim your own items" }, { status: 400 });
+    }
+
+    // Check permissions using PermissionService
+    const permissionService = PermissionService.getInstance();
+    const canClaim = await permissionService.hasPermission(
+      { userId: session.user.id, wishlistId: item.wishlist.id },
+      "items:claim"
+    );
+
+    if (!canClaim) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     // Check if already claimed by this user
@@ -137,8 +144,14 @@ export async function DELETE(
       return NextResponse.json({ error: "Item not found" }, { status: 404 });
     }
 
-    // Check if user can access this wishlist
-    if (item.wishlist.privacy === "PRIVATE" && item.wishlist.ownerId !== session.user.id) {
+    // Check permissions using PermissionService
+    const permissionService = PermissionService.getInstance();
+    const canClaim = await permissionService.hasPermission(
+      { userId: session.user.id, wishlistId: item.wishlist.id },
+      "items:claim"
+    );
+
+    if (!canClaim) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

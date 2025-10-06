@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { PermissionService } from "@/lib/services/PermissionService";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
 import { SocketEventEmitter } from "@/lib/socket";
-import { UpdateWishlistItemData } from "@/types";
+import type { UpdateWishlistItemData } from "@/types";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -36,6 +38,27 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get wishlistId for permission check
+    const item = await prisma.wishlistItem.findUnique({
+      where: { id },
+      select: { wishlistId: true, isDeleted: true },
+    });
+
+    if (!item || item.isDeleted) {
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    }
+
+    // Check permissions using PermissionService
+    const permissionService = PermissionService.getInstance();
+    const canWrite = await permissionService.hasPermission(
+      { userId: session.user.id, wishlistId: item.wishlistId },
+      "items:write"
+    );
+
+    if (!canWrite) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     const body = await request.json();
     const { name, description, url, imageUrl, price, currency, priority, tags } = body;
 
@@ -56,19 +79,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (priority !== undefined) updateData.priority = Number(priority);
     if (tags !== undefined) updateData.tags = tags;
 
-    const item = await WishlistItemService.getInstance().updateItem(
+    const updatedItem = await WishlistItemService.getInstance().updateItem(
       id,
       session.user.id,
       updateData
     );
 
     // Emit real-time event for wishlist item updated
-    SocketEventEmitter.emitToWishlist(item.wishlistId, "wishlist:item:updated", {
-      itemId: item.id,
-      wishlistId: item.wishlistId,
+    SocketEventEmitter.emitToWishlist(updatedItem.wishlistId, "wishlist:item:updated", {
+      itemId: updatedItem.id,
+      wishlistId: updatedItem.wishlistId,
     });
 
-    return NextResponse.json(item);
+    return NextResponse.json(updatedItem);
   } catch (error) {
     console.error("Error updating item:", error);
 
@@ -99,8 +122,26 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get the item to get wishlist ID before deleting
-    const item = await WishlistItemService.getInstance().getItemById(id, session.user.id);
+    // Get wishlistId for permission check
+    const item = await prisma.wishlistItem.findUnique({
+      where: { id },
+      select: { wishlistId: true, isDeleted: true },
+    });
+
+    if (!item || item.isDeleted) {
+      return NextResponse.json({ error: "Item not found" }, { status: 404 });
+    }
+
+    // Check permissions using PermissionService
+    const permissionService = PermissionService.getInstance();
+    const canDelete = await permissionService.hasPermission(
+      { userId: session.user.id, wishlistId: item.wishlistId },
+      "items:delete"
+    );
+
+    if (!canDelete) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
 
     await WishlistItemService.getInstance().deleteItem(id, session.user.id);
 

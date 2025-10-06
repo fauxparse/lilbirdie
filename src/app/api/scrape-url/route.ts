@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
 import { UrlScrapingService } from "@/lib/services/UrlScrapingService";
 
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate user
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { url } = body;
 

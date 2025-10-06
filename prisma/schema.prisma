@@ -113,6 +113,7 @@ model WishlistItem {
   description String?
   url         String?
   imageUrl    String?
+  blurhash    String?
   price       Decimal?
   currency    String    @default("NZD")
   priority    Int       @default(0)
@@ -233,6 +234,7 @@ model ScrapedUrl {
   title       String?
   description String?
   imageUrl    String?
+  blurhash    String?
   price       String?
   currency    String?
   scrapedAt   DateTime @default(now())

@@ -13,6 +13,7 @@ import {
 import { useMemo } from "react";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
+import { BlurImage } from "@/components/ui/BlurImage";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
 import {
@@ -112,10 +113,11 @@ function WishlistItemCardContent({
     <Card className="group grid grid-rows-[auto_1fr_auto] min-h-96 p-0 shadow-none">
       <CardHeader className="p-0 space-y-0 row-start-1 row-end-2 col-start-1 col-end-1 relative">
         {item.imageUrl && (
-          <img
+          <BlurImage
             src={item.imageUrl}
+            blurhash={item.blurhash}
             alt={item.name}
-            className="w-full h-40 block object-cover rounded-t-[calc(var(--radius-lg)-1px)]"
+            className="w-full h-40 rounded-t-[calc(var(--radius-lg)-1px)]"
           />
         )}
         <div className="absolute top-2 right-2 z-30">

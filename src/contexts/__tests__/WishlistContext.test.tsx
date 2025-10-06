@@ -49,6 +49,7 @@ function TestComponent() {
             description: null,
             url: null,
             imageUrl: null,
+            blurhash: null,
             price: null,
             currency: "NZD",
             priority: 0,

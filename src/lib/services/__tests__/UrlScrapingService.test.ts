@@ -2,6 +2,15 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { server } from "../../../test/mocks/server";
 import { UrlScrapingService } from "../UrlScrapingService";
 
+// Mock BlurhashService
+vi.mock("../BlurhashService", () => ({
+  BlurhashService: {
+    getInstance: vi.fn(() => ({
+      generateBlurhash: vi.fn().mockResolvedValue("LEHV6nWB2yk8pyo0adR*.7kCMdnj"),
+    })),
+  },
+}));
+
 // Mock fetch globally
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -175,6 +184,7 @@ describe("UrlScrapingService", () => {
         description: "A great test product",
         url: "https://example.com",
         imageUrl: "https://example.com/image.jpg",
+        blurhash: "LEHV6nWB2yk8pyo0adR*.7kCMdnj",
         price: 29.99,
         currency: "USD",
       });
@@ -207,6 +217,7 @@ describe("UrlScrapingService", () => {
         description: "Twitter description",
         url: "https://example.co.uk",
         imageUrl: "https://example.co.uk/twitter-image.jpg",
+        blurhash: "LEHV6nWB2yk8pyo0adR*.7kCMdnj",
         price: 45,
         currency: "GBP",
       });
@@ -297,6 +308,7 @@ describe("UrlScrapingService", () => {
         name: "Amazon Test Product",
         url: "https://amazon.com.au/product/test",
         imageUrl: "https://images-na.ssl-images-amazon.com/images/I/test.jpg",
+        blurhash: "LEHV6nWB2yk8pyo0adR*.7kCMdnj",
         price: 59.17,
         currency: "AUD",
       });

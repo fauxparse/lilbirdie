@@ -34,6 +34,7 @@ export class WishlistItemService {
         description: data.description,
         url: data.url,
         imageUrl: data.imageUrl,
+        blurhash: data.blurhash,
         price: data.price ? new Prisma.Decimal(data.price) : null,
         currency: data.currency || "USD",
         priority: data.priority || 0,
@@ -211,6 +212,7 @@ export class WishlistItemService {
       description?: string | null;
       url?: string | null;
       imageUrl?: string | null;
+      blurhash?: string | null;
       price?: Prisma.Decimal | null;
       currency?: string;
       priority?: number;
@@ -221,6 +223,7 @@ export class WishlistItemService {
     if (data.description !== undefined) updateData.description = data.description;
     if (data.url !== undefined) updateData.url = data.url;
     if (data.imageUrl !== undefined) updateData.imageUrl = data.imageUrl;
+    if (data.blurhash !== undefined) updateData.blurhash = data.blurhash;
     if (data.price !== undefined)
       updateData.price = data.price ? new Prisma.Decimal(data.price) : null;
     if (data.currency !== undefined) updateData.currency = data.currency;

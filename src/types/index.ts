@@ -62,6 +62,7 @@ export interface CreateWishlistItemData {
   description?: string;
   url?: string;
   imageUrl?: string;
+  blurhash?: string;
   price?: number;
   currency?: string;
   priority?: number;
@@ -73,6 +74,7 @@ export interface UpdateWishlistItemData {
   description?: string;
   url?: string;
   imageUrl?: string;
+  blurhash?: string;
   price?: number;
   currency?: string;
   priority?: number;

@@ -1,10 +1,12 @@
 import type { Currency } from "@/types/currency";
+import { BlurhashService } from "./BlurhashService";
 
 export interface ScrapedData {
   name: string;
   description?: string;
   url: string;
   imageUrl?: string;
+  blurhash?: string;
   price?: number;
   currency?: Currency;
 }
@@ -153,12 +155,21 @@ export class UrlScrapingService {
       const htmlToProcess = html.length > maxHtmlSize ? html.substring(0, maxHtmlSize) : html;
 
       // Check if this is Amazon and use specialized scraping
+      let scrapedData: ScrapedData;
       if (hostname.includes("amazon.")) {
-        return this.scrapeAmazon(htmlToProcess, url);
+        scrapedData = this.scrapeAmazon(htmlToProcess, url);
+      } else {
+        // Extract OpenGraph and meta data for other sites
+        scrapedData = this.extractMetadata(htmlToProcess, url);
       }
 
-      // Extract OpenGraph and meta data for other sites
-      const scrapedData = this.extractMetadata(htmlToProcess, url);
+      // Generate blurhash if we have an image URL
+      if (scrapedData.imageUrl) {
+        const blurhash = await BlurhashService.getInstance().generateBlurhash(scrapedData.imageUrl);
+        if (blurhash) {
+          scrapedData.blurhash = blurhash;
+        }
+      }
 
       // Check if we got any useful data
       const hasUsefulData =

@@ -21,7 +21,7 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
-const mockPrisma = prisma as {
+const mockPrisma = prisma as unknown as {
   wishlist: {
     findFirst: MockedFunction<any>;
     findUnique: MockedFunction<any>;

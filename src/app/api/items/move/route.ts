@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Move the items
-    let movedItems: any;
+    let movedItems: Awaited<ReturnType<typeof wishlistItemService.moveItems>>;
     try {
       movedItems = await wishlistItemService.moveItems(itemIds, targetWishlistId, session.user.id);
     } catch (error) {

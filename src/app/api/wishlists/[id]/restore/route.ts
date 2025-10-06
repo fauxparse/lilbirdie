@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { WishlistService } from "@/lib/services/WishlistService";
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Authenticate user
     const session = await auth.api.getSession({
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const wishlistId = params.id;
+    const { id: wishlistId } = await params;
     if (!wishlistId) {
       return NextResponse.json({ error: "Wishlist ID required" }, { status: 400 });
     }

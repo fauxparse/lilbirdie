@@ -1,14 +1,14 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Gift, Plus, Settings2, X } from "lucide-react";
+import { Gift, Plus, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { AddItemModal } from "@/components/AddItemModal";
 import { useAuth } from "@/components/AuthProvider";
-import { ItemForm, type ItemFormData } from "@/components/ItemForm";
+import { EditItemModal } from "@/components/EditItemModal";
 import { MoveItemsModal } from "@/components/MoveItemsModal";
 import { Button } from "@/components/ui/Button";
 import {
@@ -18,7 +18,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { InlineEditable } from "@/components/ui/InlineEditable";
 import { Label } from "@/components/ui/Label";
 import {
@@ -62,7 +62,6 @@ function WishlistPageContent() {
     error,
     refetch,
     claimMutation,
-    updateItemCache,
     removeItemFromCache,
     updateWishlist,
   } = useWishlist();
@@ -84,36 +83,7 @@ function WishlistPageContent() {
   const [hideClaimedItems, setHideClaimedItems] = useState(false);
 
   // Add item mutation - handled by AddItemModal
-
-  // Edit item mutation
-  const editItemMutation = useMutation({
-    mutationFn: async (data: ItemFormData) => {
-      if (!editingItem) throw new Error("No item selected for editing");
-
-      const response = await fetch(`/api/items/${editingItem.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update item");
-      }
-
-      return response.json();
-    },
-    onSuccess: (updatedItem) => {
-      updateItemCache(updatedItem);
-      setEditingItem(null);
-      toast.success("Item updated successfully!");
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  // Edit item mutation - handled by EditItemModal
 
   // Delete item mutation
   const deleteItemMutation = useMutation({
@@ -148,10 +118,6 @@ function WishlistPageContent() {
       toast.error(error.message);
     },
   });
-
-  const handleEditItem = (data: ItemFormData) => {
-    editItemMutation.mutate(data);
-  };
 
   const handleDeleteItem = (itemId: string) => {
     // Direct delete with undo functionality
@@ -416,47 +382,6 @@ function WishlistPageContent() {
           )}
         </header>
 
-        {/* Edit Item Form */}
-        {editingItem && isOwner && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Edit Item</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="small"
-                  onClick={() => setEditingItem(null)}
-                  className="h-8 w-8 p-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ItemForm
-                mode="edit"
-                initialData={{
-                  name: editingItem.name,
-                  description: editingItem.description || undefined,
-                  url: editingItem.url || undefined,
-                  imageUrl: editingItem.imageUrl || undefined,
-                  price:
-                    typeof editingItem.price === "number"
-                      ? editingItem.price
-                      : Number.parseFloat(editingItem.price?.toString() || "0"),
-                  currency: editingItem.currency,
-                  priority: editingItem.priority,
-                  tags: [], // TODO: Add tags when available in item data
-                }}
-                onSubmit={handleEditItem}
-                onCancel={() => setEditingItem(null)}
-                isSubmitting={editItemMutation.isPending}
-                error={editItemMutation.error?.message || null}
-              />
-            </CardContent>
-          </Card>
-        )}
-
         {/* Items */}
         {wishlist.items.length === 0 ? (
           <Card>
@@ -503,6 +428,29 @@ function WishlistPageContent() {
         onClose={() => setShowAddItem(false)}
         wishlistPermalink={wishlist?.permalink || ""}
       />
+
+      {editingItem && (
+        <EditItemModal
+          isOpen={!!editingItem}
+          onClose={() => setEditingItem(null)}
+          item={{
+            id: editingItem.id,
+            name: editingItem.name,
+            description: editingItem.description,
+            url: editingItem.url,
+            imageUrl: editingItem.imageUrl,
+            price:
+              typeof editingItem.price === "number"
+                ? editingItem.price
+                : editingItem.price
+                  ? Number.parseFloat(editingItem.price.toString())
+                  : null,
+            currency: editingItem.currency,
+            priority: editingItem.priority,
+            wishlistId: wishlist?.id || "",
+          }}
+        />
+      )}
 
       <MoveItemsModal
         isOpen={moveModalOpen}

@@ -42,7 +42,6 @@ describe("GET /api/permissions", () => {
 
   it("should return permissions for authenticated user with wishlist context", async () => {
     const { auth } = await import("@/lib/auth");
-    const { prisma } = await import("@/lib/db");
 
     // Mock session
     const mockSession = {

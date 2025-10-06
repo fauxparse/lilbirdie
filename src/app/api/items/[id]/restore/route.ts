@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
 import { SocketEventEmitter } from "@/lib/socket";
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Authenticate user
     const session = await auth.api.getSession({
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const itemId = params.id;
+    const { id: itemId } = await params;
     if (!itemId) {
       return NextResponse.json({ error: "Item ID required" }, { status: 400 });
     }

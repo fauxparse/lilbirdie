@@ -183,7 +183,7 @@ describe("useWishlistRealtime", () => {
 
     // Mock getItem to return the item
     const wrapper = createWrapper();
-    const { result } = renderHook(() => useWishlistRealtime("wishlist-1"), { wrapper });
+    renderHook(() => useWishlistRealtime("wishlist-1"), { wrapper });
 
     const claimCreatedHandler = mockSocketContext.on.mock.calls.find(
       ([event]) => event === "claim:created"

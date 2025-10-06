@@ -48,11 +48,11 @@ export function usePermissions(options: UsePermissionsOptions = {}) {
     },
     enabled: !!user?.id && (options.enabled ?? true),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  const permissions = permissionsData?.permissions ?? [];
-  const role = permissionsData?.role;
+  const permissions: Permission[] = permissionsData?.permissions ?? [];
+  const role: string | undefined = permissionsData?.role;
 
   /**
    * Check if user has a specific permission

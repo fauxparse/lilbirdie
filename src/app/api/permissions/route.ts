@@ -51,7 +51,9 @@ export async function GET(request: NextRequest) {
         actualWishlistId = wishlist.id;
       }
 
-      role = await permissionService.getUserWishlistRole(session.user.id, actualWishlistId);
+      role =
+        (await permissionService.getUserWishlistRole(session.user.id, actualWishlistId)) ||
+        undefined;
     } else if (organizationId) {
       const member = await prisma.member.findFirst({
         where: { userId: session.user.id, organizationId },

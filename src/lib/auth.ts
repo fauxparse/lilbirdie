@@ -1,7 +1,41 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { organization } from "better-auth/plugins";
+import { createAccessControl } from "better-auth/plugins/access";
 import { prisma } from "./db";
+
+// Define permission statements for access control
+const statement = {
+  wishlists: ["read", "write", "delete", "share"],
+  items: ["read", "write", "delete", "move", "claim"],
+  friends: ["invite", "manage"],
+  members: ["invite", "remove"],
+} as const;
+
+const ac = createAccessControl(statement);
+
+// Define roles with their permissions
+const owner = ac.newRole({
+  wishlists: ["read", "write", "delete", "share"],
+  items: ["read", "write", "delete", "move", "claim"],
+  friends: ["invite", "manage"],
+  members: ["invite", "remove"],
+});
+
+const collaborator = ac.newRole({
+  wishlists: ["read", "write"],
+  items: ["read", "write", "move", "claim"],
+});
+
+const friend = ac.newRole({
+  wishlists: ["read"],
+  items: ["read", "claim"],
+});
+
+const viewer = ac.newRole({
+  wishlists: ["read"],
+  items: ["read"],
+});
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || "fallback-secret-for-dev",
@@ -25,44 +59,12 @@ export const auth = betterAuth({
     organization({
       allowUserToCreateOrganization: true,
       organizationLimit: 10,
+      ac,
       roles: {
-        // Wishlist owner - full control
-        owner: {
-          permissions: [
-            "wishlists:read",
-            "wishlists:write",
-            "wishlists:delete",
-            "wishlists:share",
-            "items:read",
-            "items:write",
-            "items:delete",
-            "items:move",
-            "items:claim",
-            "friends:invite",
-            "friends:manage",
-            "members:invite",
-            "members:remove",
-          ],
-        },
-        // Collaborator - can edit but not delete/share
-        collaborator: {
-          permissions: [
-            "wishlists:read",
-            "wishlists:write",
-            "items:read",
-            "items:write",
-            "items:move",
-            "items:claim",
-          ],
-        },
-        // Friend - can view and claim items
-        friend: {
-          permissions: ["wishlists:read", "items:read", "items:claim"],
-        },
-        // Viewer - read-only access
-        viewer: {
-          permissions: ["wishlists:read", "items:read"],
-        },
+        owner,
+        collaborator,
+        friend,
+        viewer,
       },
     }),
   ],

@@ -43,7 +43,10 @@
       "Bash(DATABASE_URL=\"postgresql://matt@localhost:5432/lil_birdie_dev\" npx prisma migrate dev --name add-organization-rbac)",
       "Bash(DATABASE_URL=\"postgresql://matt@localhost:5432/lil_birdie_dev\" npx prisma migrate reset --force)",
       "Bash(DATABASE_URL=\"postgresql://matt@localhost:5432/lil_birdie_dev\" npx prisma db push)",
-      "Bash(DATABASE_URL=\"postgresql://matt@localhost:5432/lil_birdie_dev\" npx prisma generate)"
+      "Bash(DATABASE_URL=\"postgresql://matt@localhost:5432/lil_birdie_dev\" npx prisma generate)",
+      "Bash(xargs ls:*)",
+      "Bash(git log:*)",
+      "Bash(yes)"
     ],
     "deny": [],
     "ask": []

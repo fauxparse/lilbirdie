@@ -1,12 +1,10 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, CheckCircle, Gift, Heart, Package, TreePine, Zap } from "lucide-react";
+import { Calendar, CheckCircle, Gift, Heart, Package, TreePine } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
-import { ModalDemo } from "@/components/ModalDemo";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -68,7 +66,6 @@ interface DashboardData {
 export default function DashboardPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [showModalDemo, setShowModalDemo] = useState(false);
 
   const {
     data: dashboardData,
@@ -177,19 +174,9 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto max-w-6xl container-type-inline-size">
       <div className="space-y-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <Gift className="h-6 w-6" />
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-          </div>
-          <Button
-            onClick={() => setShowModalDemo(true)}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Zap className="h-4 w-4" />
-            Modal Demo
-          </Button>
+        <div className="flex items-center gap-2 mb-6">
+          <Gift className="h-6 w-6" />
+          <h1 className="text-3xl font-bold">Dashboard</h1>
         </div>
 
         <div className="grid gap-6 cq-lg:grid-cols-2">
@@ -372,20 +359,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Modal Demo */}
-        {showModalDemo && (
-          <div className="fixed inset-0 z-50 bg-background">
-            <div className="relative h-full">
-              <div className="absolute top-4 right-4">
-                <Button onClick={() => setShowModalDemo(false)} variant="outline" size="small">
-                  ← Back to Dashboard
-                </Button>
-              </div>
-              <ModalDemo />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

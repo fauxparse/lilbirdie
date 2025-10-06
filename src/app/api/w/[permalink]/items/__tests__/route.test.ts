@@ -19,6 +19,10 @@ const mockWishlistItemService = {
   createItem: vi.fn(),
 };
 
+const mockPermissionService = {
+  hasPermission: vi.fn(),
+};
+
 vi.mock("@/lib/services/WishlistService", () => ({
   WishlistService: {
     getInstance: vi.fn(() => mockWishlistService),
@@ -28,6 +32,12 @@ vi.mock("@/lib/services/WishlistService", () => ({
 vi.mock("@/lib/services/WishlistItemService", () => ({
   WishlistItemService: {
     getInstance: vi.fn(() => mockWishlistItemService),
+  },
+}));
+
+vi.mock("@/lib/services/PermissionService", () => ({
+  PermissionService: {
+    getInstance: vi.fn(() => mockPermissionService),
   },
 }));
 
@@ -66,6 +76,9 @@ describe("POST /api/w/[permalink]/items", () => {
     };
 
     mockWishlistService.getWishlistByPermalink.mockResolvedValue(mockWishlist);
+
+    // Mock permission check
+    mockPermissionService.hasPermission.mockResolvedValue(true);
 
     // Mock created item
     const now = new Date();
@@ -259,6 +272,69 @@ describe("POST /api/w/[permalink]/items", () => {
 
     // Should return not found
     expect(response.status).toBe(404);
+
+    // Should not emit socket event
+    expect(SocketEventEmitter.emitToWishlist).not.toHaveBeenCalled();
+  });
+
+  it("should return 403 when user lacks items:write permission", async () => {
+    const { auth } = await import("@/lib/auth");
+    const { SocketEventEmitter } = await import("@/lib/socket");
+
+    // Mock session
+    const mockSession = {
+      user: {
+        id: "user-1",
+        name: "Test User",
+        email: "test@example.com",
+      },
+    } as any;
+
+    vi.mocked(auth.api.getSession).mockResolvedValue(mockSession);
+
+    // Mock wishlist
+    const mockWishlist = {
+      id: "wishlist-1",
+      title: "Test Wishlist",
+      permalink: "test-wishlist",
+      ownerId: "user-2",
+    };
+
+    mockWishlistService.getWishlistByPermalink.mockResolvedValue(mockWishlist);
+
+    // Mock permission check to deny access
+    mockPermissionService.hasPermission.mockResolvedValue(false);
+
+    // Create request
+    const request = new NextRequest("http://localhost:3000/api/w/test-wishlist/items", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: "Test Item",
+      }),
+    });
+
+    // Mock params
+    const params = Promise.resolve({ permalink: "test-wishlist" });
+
+    // Call the route handler
+    const response = await POST(request, { params });
+
+    // Should return forbidden
+    expect(response.status).toBe(403);
+    const data = await response.json();
+    expect(data.error).toBe("Access denied");
+
+    // Should check permission
+    expect(mockPermissionService.hasPermission).toHaveBeenCalledWith(
+      { userId: "user-1", wishlistId: "wishlist-1" },
+      "items:write"
+    );
+
+    // Should not create item
+    expect(mockWishlistItemService.createItem).not.toHaveBeenCalled();
 
     // Should not emit socket event
     expect(SocketEventEmitter.emitToWishlist).not.toHaveBeenCalled();

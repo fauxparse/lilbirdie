@@ -25,6 +25,16 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+const mockPermissionService = {
+  hasPermission: vi.fn(),
+};
+
+vi.mock("@/lib/services/PermissionService", () => ({
+  PermissionService: {
+    getInstance: vi.fn(() => mockPermissionService),
+  },
+}));
+
 vi.mock("@/lib/socket", () => ({
   SocketEventEmitter: {
     emitToWishlist: vi.fn(),
@@ -64,6 +74,9 @@ describe("POST /api/w/[permalink]/items/[itemId]/claim", () => {
     } as any;
 
     vi.mocked(prisma.wishlistItem.findFirst).mockResolvedValue(mockItem);
+
+    // Mock permission check
+    mockPermissionService.hasPermission.mockResolvedValue(true);
 
     // Mock no existing claim
     vi.mocked(prisma.claim.findUnique).mockResolvedValue(null);
@@ -214,6 +227,9 @@ describe("DELETE /api/w/[permalink]/items/[itemId]/claim", () => {
 
     vi.mocked(prisma.wishlistItem.findFirst).mockResolvedValue(mockItem);
 
+    // Mock permission check
+    mockPermissionService.hasPermission.mockResolvedValue(true);
+
     // Mock existing claim
     const mockClaim = {
       id: "claim-1",
@@ -293,6 +309,9 @@ describe("DELETE /api/w/[permalink]/items/[itemId]/claim", () => {
     } as any;
 
     vi.mocked(prisma.wishlistItem.findFirst).mockResolvedValue(mockItem);
+
+    // Mock permission check
+    mockPermissionService.hasPermission.mockResolvedValue(true);
 
     // Mock no existing claim
     vi.mocked(prisma.claim.findFirst).mockResolvedValue(null);

@@ -711,6 +711,113 @@ async function createPendingFriendRequests(userIds: { [key: string]: string }) {
   }
 }
 
+async function createCurrencyRates() {
+  console.log("Creating currency conversion rates...");
+
+  // Current exchange rates as of October 2025
+  // Base currency: USD = 1.0
+  const rates = [
+    // USD conversions
+    { from: "USD", to: "EUR", rate: 0.9105 }, // 1 USD = 0.9105 EUR
+    { from: "USD", to: "GBP", rate: 0.7651 }, // 1 USD = 0.7651 GBP
+    { from: "USD", to: "AUD", rate: 1.4823 }, // 1 USD = 1.4823 AUD
+    { from: "USD", to: "NZD", rate: 1.6234 }, // 1 USD = 1.6234 NZD
+    { from: "USD", to: "CAD", rate: 1.3567 }, // 1 USD = 1.3567 CAD
+    { from: "USD", to: "JPY", rate: 149.23 }, // 1 USD = 149.23 JPY
+
+    // EUR conversions
+    { from: "EUR", to: "USD", rate: 1.0983 }, // 1 EUR = 1.0983 USD
+    { from: "EUR", to: "GBP", rate: 0.8402 }, // 1 EUR = 0.8402 GBP
+    { from: "EUR", to: "AUD", rate: 1.6281 }, // 1 EUR = 1.6281 AUD
+    { from: "EUR", to: "NZD", rate: 1.7829 }, // 1 EUR = 1.7829 NZD
+    { from: "EUR", to: "CAD", rate: 1.4901 }, // 1 EUR = 1.4901 CAD
+    { from: "EUR", to: "JPY", rate: 163.87 }, // 1 EUR = 163.87 JPY
+
+    // GBP conversions
+    { from: "GBP", to: "USD", rate: 1.3071 }, // 1 GBP = 1.3071 USD
+    { from: "GBP", to: "EUR", rate: 1.1901 }, // 1 GBP = 1.1901 EUR
+    { from: "GBP", to: "AUD", rate: 1.9377 }, // 1 GBP = 1.9377 AUD
+    { from: "GBP", to: "NZD", rate: 2.1218 }, // 1 GBP = 2.1218 NZD
+    { from: "GBP", to: "CAD", rate: 1.7738 }, // 1 GBP = 1.7738 CAD
+    { from: "GBP", to: "JPY", rate: 195.04 }, // 1 GBP = 195.04 JPY
+
+    // AUD conversions
+    { from: "AUD", to: "USD", rate: 0.6747 }, // 1 AUD = 0.6747 USD
+    { from: "AUD", to: "EUR", rate: 0.6142 }, // 1 AUD = 0.6142 EUR
+    { from: "AUD", to: "GBP", rate: 0.5161 }, // 1 AUD = 0.5161 GBP
+    { from: "AUD", to: "NZD", rate: 1.0952 }, // 1 AUD = 1.0952 NZD
+    { from: "AUD", to: "CAD", rate: 0.9153 }, // 1 AUD = 0.9153 CAD
+    { from: "AUD", to: "JPY", rate: 100.65 }, // 1 AUD = 100.65 JPY
+
+    // NZD conversions
+    { from: "NZD", to: "USD", rate: 0.616 }, // 1 NZD = 0.6160 USD
+    { from: "NZD", to: "EUR", rate: 0.561 }, // 1 NZD = 0.5610 EUR
+    { from: "NZD", to: "GBP", rate: 0.4713 }, // 1 NZD = 0.4713 GBP
+    { from: "NZD", to: "AUD", rate: 0.9131 }, // 1 NZD = 0.9131 AUD
+    { from: "NZD", to: "CAD", rate: 0.8358 }, // 1 NZD = 0.8358 CAD
+    { from: "NZD", to: "JPY", rate: 91.93 }, // 1 NZD = 91.93 JPY
+
+    // CAD conversions
+    { from: "CAD", to: "USD", rate: 0.7371 }, // 1 CAD = 0.7371 USD
+    { from: "CAD", to: "EUR", rate: 0.6711 }, // 1 CAD = 0.6711 EUR
+    { from: "CAD", to: "GBP", rate: 0.5638 }, // 1 CAD = 0.5638 GBP
+    { from: "CAD", to: "AUD", rate: 1.0925 }, // 1 CAD = 1.0925 AUD
+    { from: "CAD", to: "NZD", rate: 1.1964 }, // 1 CAD = 1.1964 NZD
+    { from: "CAD", to: "JPY", rate: 110.0 }, // 1 CAD = 110.00 JPY
+
+    // JPY conversions
+    { from: "JPY", to: "USD", rate: 0.0067 }, // 1 JPY = 0.0067 USD
+    { from: "JPY", to: "EUR", rate: 0.0061 }, // 1 JPY = 0.0061 EUR
+    { from: "JPY", to: "GBP", rate: 0.0051 }, // 1 JPY = 0.0051 GBP
+    { from: "JPY", to: "AUD", rate: 0.0099 }, // 1 JPY = 0.0099 AUD
+    { from: "JPY", to: "NZD", rate: 0.0109 }, // 1 JPY = 0.0109 NZD
+    { from: "JPY", to: "CAD", rate: 0.0091 }, // 1 JPY = 0.0091 CAD
+  ];
+
+  for (const rate of rates) {
+    try {
+      // Check if rate already exists
+      const existing = await prisma.currencyRate.findUnique({
+        where: {
+          fromCurrency_toCurrency: {
+            fromCurrency: rate.from,
+            toCurrency: rate.to,
+          },
+        },
+      });
+
+      if (existing) {
+        // Update existing rate
+        await prisma.currencyRate.update({
+          where: {
+            fromCurrency_toCurrency: {
+              fromCurrency: rate.from,
+              toCurrency: rate.to,
+            },
+          },
+          data: {
+            rate: rate.rate,
+            updatedAt: new Date(),
+          },
+        });
+      } else {
+        // Create new rate
+        await prisma.currencyRate.create({
+          data: {
+            fromCurrency: rate.from,
+            toCurrency: rate.to,
+            rate: rate.rate,
+          },
+        });
+      }
+    } catch (error) {
+      console.error(`Error creating rate ${rate.from} -> ${rate.to}:`, error);
+    }
+  }
+
+  console.log(`Created/updated ${rates.length} currency conversion rates`);
+}
+
 async function main() {
   console.log("🌱 Starting database seeding...");
 
@@ -739,6 +846,9 @@ async function main() {
 
   // Create pending friend requests
   await createPendingFriendRequests(userIds);
+
+  // Create currency conversion rates
+  await createCurrencyRates();
 
   // Create profiles for existing users who don't have them
   console.log("Creating profiles for existing users...");

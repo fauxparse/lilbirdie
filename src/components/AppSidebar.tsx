@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Gift, Heart, Home, LayoutDashboard, LogOut, Plus, Users } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import {
   Sidebar,
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/Sidebar";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useFriends } from "@/hooks/useFriends";
+import { useIsMounted } from "@/hooks/useIsMounted";
 import { signOut } from "@/lib/auth-client";
 
 interface Wishlist {
@@ -31,11 +31,7 @@ interface Wishlist {
 
 export function AppSidebar() {
   const { user } = useAuth();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   const {
     data: wishlists,

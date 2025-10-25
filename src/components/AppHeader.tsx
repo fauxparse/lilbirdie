@@ -1,20 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 import { SidebarTrigger } from "@/components/ui/Sidebar";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { useIsMounted } from "@/hooks/useIsMounted";
 
 export function AppHeader() {
   const { user, isLoading } = useAuth();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useIsMounted();
 
   return (
     <header className="self-stretch flex h-16 shrink-0 items-center gap-2 px-4 border-b">

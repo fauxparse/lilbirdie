@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { useIsMounted } from "@/hooks/useIsMounted";
 import { useUserProfile } from "@/hooks/useUserProfile";
 
 type Theme = "light" | "dark" | "system";
@@ -30,7 +31,7 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>("system");
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const [pendingTheme, setPendingTheme] = useState<Theme | null>(null);
   const { user, isLoading: isAuthLoading } = useAuth();
   const { data: profile, isLoading: isProfileLoading } = useUserProfile();
@@ -77,11 +78,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     },
     [mounted]
   );
-
-  // Initialize theme from user profile or localStorage and mark as mounted
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Update theme when profile data changes
   useEffect(() => {

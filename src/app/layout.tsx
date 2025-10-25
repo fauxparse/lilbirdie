@@ -28,8 +28,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={geist.className}>
-      <body>
+    <html lang="en" className={geist.className} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 1 1"

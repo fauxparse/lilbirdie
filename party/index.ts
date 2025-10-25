@@ -53,33 +53,129 @@ interface ConnectionState {
 
 class WishlistServer implements Party.Server {
   connectionStates: Map<string, ConnectionState>;
+  state: DurableObjectState;
 
-  constructor(readonly room: Party.Room) {
+  constructor(state: DurableObjectState, readonly room: Party.Room) {
+    this.state = state;
     this.connectionStates = new Map();
   }
 
-  onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
-    console.log(`Connected: ${conn.id} to room ${this.room.id}`);
+  // Handle incoming requests (WebSocket upgrades and HTTP)
+  async fetch(request: Request): Promise<Response> {
+    const url = new URL(request.url);
 
-    // Initialize connection state
-    this.connectionStates.set(conn.id, {
-      userId: undefined,
-      joinedWishlists: new Set(),
-      joinedUserRooms: new Set(),
-    });
+    // Handle WebSocket upgrade
+    if (request.headers.get("Upgrade") === "websocket") {
+      const pair = new WebSocketPair();
+      const [client, server] = Object.values(pair);
 
-    // Extract user ID from URL parameters if provided
-    const url = new URL(ctx.request.url);
-    const userId = url.searchParams.get("userId");
-    if (userId) {
-      const state = this.connectionStates.get(conn.id);
-      if (state) {
-        state.userId = userId;
-      }
+      // Accept the WebSocket connection
+      this.state.acceptWebSocket(server);
+
+      // Create a connection ID
+      const connId = crypto.randomUUID();
+
+      // Initialize connection state
+      const userId = url.searchParams.get("userId") || undefined;
+      this.connectionStates.set(connId, {
+        userId,
+        joinedWishlists: new Set(),
+        joinedUserRooms: new Set(),
+      });
+
+      // Store connection ID in the WebSocket
+      (server as WebSocket & { connId?: string }).connId = connId;
+
+      // Send connected confirmation
+      server.send(JSON.stringify({ type: "connected" }));
+
+      console.log(`WebSocket connected: ${connId} to room ${this.room.id}`);
+
+      return new Response(null, { status: 101, webSocket: client });
     }
 
-    // Send connected confirmation
-    conn.send(JSON.stringify({ type: "connected" }));
+    // Handle HTTP requests (for broadcasting from API)
+    return this.onRequest(request);
+  }
+
+  // Handle WebSocket messages
+  async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) {
+    const connId = (ws as WebSocket & { connId?: string }).connId;
+    if (!connId) return;
+
+    if (typeof message !== "string") return;
+
+    try {
+      const msg = JSON.parse(message) as ClientMessage;
+      const state = this.connectionStates.get(connId);
+
+      if (!state) {
+        ws.send(JSON.stringify({ type: "error", message: "Invalid connection state" }));
+        return;
+      }
+
+      switch (msg.type) {
+        case "join:wishlist": {
+          state.joinedWishlists.add(msg.wishlistId);
+          console.log(`Connection ${connId} joined wishlist ${msg.wishlistId}`);
+          break;
+        }
+
+        case "leave:wishlist": {
+          state.joinedWishlists.delete(msg.wishlistId);
+          console.log(`Connection ${connId} left wishlist ${msg.wishlistId}`);
+          break;
+        }
+
+        case "join:user": {
+          if (state.userId !== msg.userId) {
+            ws.send(JSON.stringify({ type: "error", message: "Can only join your own user room" }));
+            return;
+          }
+          state.joinedUserRooms.add(msg.userId);
+          console.log(`Connection ${connId} joined user room ${msg.userId}`);
+          break;
+        }
+
+        case "leave:user": {
+          state.joinedUserRooms.delete(msg.userId);
+          console.log(`Connection ${connId} left user room ${msg.userId}`);
+          break;
+        }
+
+        case "ping": {
+          ws.send(JSON.stringify({ type: "pong" }));
+          break;
+        }
+
+        default: {
+          ws.send(JSON.stringify({ type: "error", message: "Unknown message type" }));
+        }
+      }
+    } catch (error) {
+      console.error("Error processing message:", error);
+      ws.send(JSON.stringify({ type: "error", message: "Failed to process message" }));
+    }
+  }
+
+  // Handle WebSocket close
+  async webSocketClose(ws: WebSocket) {
+    const connId = (ws as WebSocket & { connId?: string }).connId;
+    if (connId) {
+      this.connectionStates.delete(connId);
+      console.log(`WebSocket disconnected: ${connId}`);
+    }
+  }
+
+  // Handle WebSocket errors
+  async webSocketError(ws: WebSocket, error: unknown) {
+    const connId = (ws as WebSocket & { connId?: string }).connId;
+    console.error(`WebSocket error on connection ${connId}:`, error);
+  }
+
+  // Legacy PartyKit compatibility methods (kept for compatibility but not used)
+  onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
+    // This won't be called when using Cloudflare Workers directly
   }
 
   onMessage(message: string | ArrayBuffer, sender: Party.Connection) {
@@ -175,9 +271,16 @@ class WishlistServer implements Party.Server {
               this.broadcastToWishlist(wishlistId, body);
             }
           } else if (body.type === "friend:request" || body.type === "friend:accepted") {
-            // These need to be sent to specific user rooms
-            // The API will call this with a specific room ID
-            this.room.broadcast(JSON.stringify(body));
+            // Broadcast to all connected clients (they filter on the client side)
+            const connections = this.state.getWebSockets();
+            const messageStr = JSON.stringify(body);
+            for (const ws of connections) {
+              try {
+                ws.send(messageStr);
+              } catch (error) {
+                console.error("Error broadcasting friend notification:", error);
+              }
+            }
           }
         }
 
@@ -192,11 +295,21 @@ class WishlistServer implements Party.Server {
   }
 
   private broadcastToWishlist(wishlistId: string, message: ServerMessage) {
-    const connections = [...this.room.getConnections()];
-    for (const conn of connections) {
-      const state = this.connectionStates.get(conn.id);
-      if (state?.joinedWishlists.has(wishlistId)) {
-        conn.send(JSON.stringify(message));
+    // Get all WebSocket connections from the Durable Object state
+    const connections = this.state.getWebSockets();
+    const messageStr = JSON.stringify(message);
+
+    for (const ws of connections) {
+      const connId = (ws as WebSocket & { connId?: string }).connId;
+      if (connId) {
+        const state = this.connectionStates.get(connId);
+        if (state?.joinedWishlists.has(wishlistId)) {
+          try {
+            ws.send(messageStr);
+          } catch (error) {
+            console.error(`Error sending to connection ${connId}:`, error);
+          }
+        }
       }
     }
   }

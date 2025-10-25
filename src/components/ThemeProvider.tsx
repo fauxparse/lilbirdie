@@ -59,21 +59,20 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   // Update resolved theme based on system preference
   const updateResolvedTheme = useCallback(
     (currentTheme: Theme) => {
+      // Skip if not mounted (server-side)
+      if (!mounted || typeof window === "undefined") {
+        return;
+      }
+
       if (currentTheme === "system") {
         const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
           ? "dark"
           : "light";
         setResolvedTheme(systemTheme);
-        // Only apply DOM changes if we're mounted (client-side)
-        if (mounted) {
-          document.documentElement.classList.toggle("dark", systemTheme === "dark");
-        }
+        document.documentElement.classList.toggle("dark", systemTheme === "dark");
       } else {
         setResolvedTheme(currentTheme);
-        // Only apply DOM changes if we're mounted (client-side)
-        if (mounted) {
-          document.documentElement.classList.toggle("dark", currentTheme === "dark");
-        }
+        document.documentElement.classList.toggle("dark", currentTheme === "dark");
       }
     },
     [mounted]
@@ -86,25 +85,29 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   // Update theme when profile data changes
   useEffect(() => {
-    if (!isAuthLoading && !isProfileLoading) {
-      let initialTheme: Theme;
-
-      if (user && profile?.theme && ["light", "dark", "system"].includes(profile.theme)) {
-        // Use user's saved theme from database profile
-        initialTheme = profile.theme as Theme;
-      } else if (!user) {
-        // Fall back to localStorage for non-authenticated users
-        const storedTheme = localStorage.getItem("theme") as Theme | null;
-        initialTheme = storedTheme || "system";
-      } else {
-        // User is authenticated but no profile theme yet
-        initialTheme = "system";
-      }
-
-      setThemeState(initialTheme);
-      updateResolvedTheme(initialTheme);
+    if (!mounted || isAuthLoading || isProfileLoading) {
+      return;
     }
-  }, [user, profile, isAuthLoading, isProfileLoading, updateResolvedTheme]);
+
+    let initialTheme: Theme;
+
+    if (user && profile?.theme && ["light", "dark", "system"].includes(profile.theme)) {
+      // Use user's saved theme from database profile
+      initialTheme = profile.theme as Theme;
+    } else if (!user) {
+      // Fall back to localStorage for non-authenticated users (only on client)
+      const storedTheme = typeof window !== "undefined"
+        ? (localStorage.getItem("theme") as Theme | null)
+        : null;
+      initialTheme = storedTheme || "system";
+    } else {
+      // User is authenticated but no profile theme yet
+      initialTheme = "system";
+    }
+
+    setThemeState(initialTheme);
+    updateResolvedTheme(initialTheme);
+  }, [mounted, user, profile, isAuthLoading, isProfileLoading, updateResolvedTheme]);
 
   // Apply theme to DOM when mounted state changes
   useEffect(() => {
@@ -115,6 +118,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   // Listen for system theme changes
   useEffect(() => {
+    if (!mounted || typeof window === "undefined") {
+      return;
+    }
+
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const handleSystemThemeChange = () => {
@@ -125,7 +132,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
     mediaQuery.addEventListener("change", handleSystemThemeChange);
     return () => mediaQuery.removeEventListener("change", handleSystemThemeChange);
-  }, [theme, updateResolvedTheme]);
+  }, [mounted, theme, updateResolvedTheme]);
 
   // Save pending theme when user becomes available
   useEffect(() => {
@@ -157,7 +164,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const setTheme = useCallback(
     async (newTheme: Theme) => {
       setThemeState(newTheme);
-      localStorage.setItem("theme", newTheme);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("theme", newTheme);
+      }
       updateResolvedTheme(newTheme);
 
       if (user) {

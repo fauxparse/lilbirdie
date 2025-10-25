@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/Button";
@@ -9,6 +10,11 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 
 export function AppHeader() {
   const { user, isLoading } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <header className="self-stretch flex h-16 shrink-0 items-center gap-2 px-4 border-b">
@@ -20,7 +26,7 @@ export function AppHeader() {
 
       <div className="flex items-center gap-2">
         <ThemeToggle />
-        {isLoading ? (
+        {!mounted || isLoading ? (
           <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
         ) : user ? (
           <div className="flex items-center gap-2">

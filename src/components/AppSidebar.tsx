@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Gift, Heart, Home, LayoutDashboard, LogOut, Plus, Users } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import {
   Sidebar,
@@ -30,6 +31,11 @@ interface Wishlist {
 
 export function AppSidebar() {
   const { user } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const {
     data: wishlists,
@@ -90,7 +96,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>My Wishlists</SidebarGroupLabel>
           <SidebarMenu>
-            {isLoading && user ? (
+            {!mounted || (isLoading && user) ? (
               // Show loading skeletons
               <>
                 <SidebarMenuSkeleton showIcon />
@@ -133,7 +139,7 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            {friendsLoading && user ? (
+            {!mounted || (friendsLoading && user) ? (
               // Show loading skeletons
               <>
                 <SidebarMenuSkeleton showIcon />

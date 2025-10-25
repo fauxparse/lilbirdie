@@ -62,7 +62,8 @@
       "Bash(npx partykit@latest init)",
       "Bash(rm:*)",
       "Bash(mkdir:*)",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(npx wrangler deploy:*)"
     ],
     "deny": [],
     "ask": []

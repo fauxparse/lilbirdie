@@ -51,7 +51,7 @@ interface ConnectionState {
   joinedUserRooms: Set<string>;
 }
 
-export default class WishlistServer implements Party.Server {
+class WishlistServer implements Party.Server {
   connectionStates: Map<string, ConnectionState>;
 
   constructor(readonly room: Party.Room) {
@@ -203,3 +203,7 @@ export default class WishlistServer implements Party.Server {
 }
 
 WishlistServer satisfies Party.Worker;
+
+// Export for both PartyKit and Cloudflare Workers
+export default WishlistServer;
+export { WishlistServer };

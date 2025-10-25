@@ -1,0 +1,12 @@
+name = "lil-birdie-party"
+main = "party/index.ts"
+compatibility_date = "2024-08-01"
+workers_dev = true
+
+[[durable_objects.bindings]]
+name = "parties"
+class_name = "WishlistServer"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["WishlistServer"]

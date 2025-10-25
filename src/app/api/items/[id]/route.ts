@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { PartyKitEventEmitter } from "@/lib/partykit";
 import { PermissionService } from "@/lib/services/PermissionService";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
-import { SocketEventEmitter } from "@/lib/socket";
 import type { UpdateWishlistItemData } from "@/types";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -86,7 +86,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     );
 
     // Emit real-time event for wishlist item updated
-    SocketEventEmitter.emitToWishlist(updatedItem.wishlistId, "wishlist:item:updated", {
+    await PartyKitEventEmitter.emitToWishlist(updatedItem.wishlistId, "wishlist:item:updated", {
       itemId: updatedItem.id,
       wishlistId: updatedItem.wishlistId,
     });
@@ -146,7 +146,7 @@ export async function DELETE(
     await WishlistItemService.getInstance().deleteItem(id, session.user.id);
 
     // Emit real-time event for wishlist item deleted
-    SocketEventEmitter.emitToWishlist(item.wishlistId, "wishlist:item:deleted", {
+    await PartyKitEventEmitter.emitToWishlist(item.wishlistId, "wishlist:item:deleted", {
       itemId: id,
       wishlistId: item.wishlistId,
     });

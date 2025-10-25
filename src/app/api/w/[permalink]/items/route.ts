@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { PartyKitEventEmitter } from "@/lib/partykit";
 import { PermissionService } from "@/lib/services/PermissionService";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
 import { WishlistService } from "@/lib/services/WishlistService";
-import { SocketEventEmitter } from "@/lib/socket";
 
 export async function GET(
   request: NextRequest,
@@ -96,7 +96,7 @@ export async function POST(
     });
 
     // Emit real-time event for wishlist item added
-    SocketEventEmitter.emitToWishlist(wishlist.id, "wishlist:item:added", {
+    await PartyKitEventEmitter.emitToWishlist(wishlist.id, "wishlist:item:added", {
       item,
       wishlistId: wishlist.id,
     });

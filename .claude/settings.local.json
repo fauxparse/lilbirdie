@@ -57,7 +57,12 @@
       "Bash(git commit:*)",
       "Bash(DATABASE_URL=\"postgresql://matt@localhost:5432/lil_birdie_dev\" npx prisma migrate dev --name add-blurhash-fields)",
       "Bash(cat:*)",
-      "WebFetch(domain:www.oanda.com)"
+      "WebFetch(domain:www.oanda.com)",
+      "WebFetch(domain:docs.partykit.io)",
+      "Bash(npx partykit@latest init)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(pnpm build:*)"
     ],
     "deny": [],
     "ask": []

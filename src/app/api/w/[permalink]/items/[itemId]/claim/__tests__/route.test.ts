@@ -35,8 +35,8 @@ vi.mock("@/lib/services/PermissionService", () => ({
   },
 }));
 
-vi.mock("@/lib/socket", () => ({
-  SocketEventEmitter: {
+vi.mock("@/lib/partykit", () => ({
+  PartyKitEventEmitter: {
     emitToWishlist: vi.fn(),
   },
 }));
@@ -49,7 +49,7 @@ describe("POST /api/w/[permalink]/items/[itemId]/claim", () => {
   it("should emit socket event when claim is created successfully", async () => {
     const { auth } = await import("@/lib/auth");
     const { prisma } = await import("@/lib/db");
-    const { SocketEventEmitter } = await import("@/lib/socket");
+    const { PartyKitEventEmitter } = await import("@/lib/partykit");
 
     // Mock session
     const mockSession = {
@@ -132,9 +132,13 @@ describe("POST /api/w/[permalink]/items/[itemId]/claim", () => {
     });
 
     // Should emit socket event
-    expect(SocketEventEmitter.emitToWishlist).toHaveBeenCalledWith("wishlist-1", "claim:created", {
-      claim: mockClaim,
-    });
+    expect(PartyKitEventEmitter.emitToWishlist).toHaveBeenCalledWith(
+      "wishlist-1",
+      "claim:created",
+      {
+        claim: mockClaim,
+      }
+    );
 
     // Response should indicate success
     const responseData = await response.json();
@@ -145,7 +149,7 @@ describe("POST /api/w/[permalink]/items/[itemId]/claim", () => {
   it("should not emit socket event when claiming own item", async () => {
     const { auth } = await import("@/lib/auth");
     const { prisma } = await import("@/lib/db");
-    const { SocketEventEmitter } = await import("@/lib/socket");
+    const { PartyKitEventEmitter } = await import("@/lib/partykit");
 
     // Mock session
     const mockSession = {
@@ -189,7 +193,7 @@ describe("POST /api/w/[permalink]/items/[itemId]/claim", () => {
     expect(response.status).toBe(400);
 
     // Should not emit socket event
-    expect(SocketEventEmitter.emitToWishlist).not.toHaveBeenCalled();
+    expect(PartyKitEventEmitter.emitToWishlist).not.toHaveBeenCalled();
   });
 });
 
@@ -201,7 +205,7 @@ describe("DELETE /api/w/[permalink]/items/[itemId]/claim", () => {
   it("should emit socket event when claim is removed successfully", async () => {
     const { auth } = await import("@/lib/auth");
     const { prisma } = await import("@/lib/db");
-    const { SocketEventEmitter } = await import("@/lib/socket");
+    const { PartyKitEventEmitter } = await import("@/lib/partykit");
 
     // Mock session
     const mockSession = {
@@ -269,11 +273,15 @@ describe("DELETE /api/w/[permalink]/items/[itemId]/claim", () => {
     });
 
     // Should emit socket event
-    expect(SocketEventEmitter.emitToWishlist).toHaveBeenCalledWith("wishlist-1", "claim:removed", {
-      itemId: "item-1",
-      wishlistId: "wishlist-1",
-      userId: "user-1",
-    });
+    expect(PartyKitEventEmitter.emitToWishlist).toHaveBeenCalledWith(
+      "wishlist-1",
+      "claim:removed",
+      {
+        itemId: "item-1",
+        wishlistId: "wishlist-1",
+        userId: "user-1",
+      }
+    );
 
     // Response should indicate success
     const responseData = await response.json();
@@ -284,7 +292,7 @@ describe("DELETE /api/w/[permalink]/items/[itemId]/claim", () => {
   it("should not emit socket event when claim not found", async () => {
     const { auth } = await import("@/lib/auth");
     const { prisma } = await import("@/lib/db");
-    const { SocketEventEmitter } = await import("@/lib/socket");
+    const { PartyKitEventEmitter } = await import("@/lib/partykit");
 
     // Mock session
     const mockSession = {
@@ -334,6 +342,6 @@ describe("DELETE /api/w/[permalink]/items/[itemId]/claim", () => {
     expect(response.status).toBe(404);
 
     // Should not emit socket event
-    expect(SocketEventEmitter.emitToWishlist).not.toHaveBeenCalled();
+    expect(PartyKitEventEmitter.emitToWishlist).not.toHaveBeenCalled();
   });
 });

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { PartyKitEventEmitter } from "@/lib/partykit";
 import { PermissionService } from "@/lib/services/PermissionService";
-import { SocketEventEmitter } from "@/lib/socket";
 
 export async function POST(
   request: NextRequest,
@@ -93,7 +93,7 @@ export async function POST(
     });
 
     // Emit real-time event for claim created
-    SocketEventEmitter.emitToWishlist(item.wishlist.id, "claim:created", {
+    await PartyKitEventEmitter.emitToWishlist(item.wishlist.id, "claim:created", {
       claim,
     });
 
@@ -184,7 +184,7 @@ export async function DELETE(
     });
 
     // Emit real-time event for claim removed
-    SocketEventEmitter.emitToWishlist(item.wishlist.id, "claim:removed", {
+    await PartyKitEventEmitter.emitToWishlist(item.wishlist.id, "claim:removed", {
       itemId,
       wishlistId: item.wishlist.id,
       userId: session.user.id,

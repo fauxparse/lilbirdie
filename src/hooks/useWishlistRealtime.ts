@@ -18,48 +18,53 @@ export function useWishlistRealtime(wishlistId: string | null) {
     joinWishlist(wishlistId);
 
     // Define event handlers
-    const handleItemAdded = (data: { item: WishlistItemResponse; wishlistId: string }) => {
-      addItemToCache(data.item);
+    const handleItemAdded = (data: Record<string, unknown>) => {
+      const typedData = data as { item: WishlistItemResponse; wishlistId: string };
+      addItemToCache(typedData.item);
     };
 
-    const handleItemUpdated = (data: { itemId: string; wishlistId: string }) => {
+    const handleItemUpdated = (data: Record<string, unknown>) => {
+      const typedData = data as { itemId: string; wishlistId: string };
       // Invalidate wishlist queries to show updated item
       queryClient.invalidateQueries({
         queryKey: ["wishlist"],
       });
       // Also invalidate individual item query if it exists
       queryClient.invalidateQueries({
-        queryKey: ["item", data.itemId],
+        queryKey: ["item", typedData.itemId],
       });
     };
 
-    const handleItemDeleted = (data: { itemId: string; wishlistId: string }) => {
-      removeItemFromCache(data.itemId);
+    const handleItemDeleted = (data: Record<string, unknown>) => {
+      const typedData = data as { itemId: string; wishlistId: string };
+      removeItemFromCache(typedData.itemId);
     };
 
-    const handleWishlistUpdated = (_data: { wishlistId: string }) => {
+    const handleWishlistUpdated = (_data: Record<string, unknown>) => {
       // Invalidate wishlist queries to show metadata changes
       queryClient.invalidateQueries({
         queryKey: ["wishlist"],
       });
     };
 
-    const handleClaimCreated = (data: { claim: ClaimWithUser }) => {
-      const item = getItem(data.claim.itemId);
+    const handleClaimCreated = (data: Record<string, unknown>) => {
+      const typedData = data as { claim: ClaimWithUser };
+      const item = getItem(typedData.claim.itemId);
       if (item) {
         updateItemCache({
           ...item,
-          claims: [...(item.claims || []), data.claim],
+          claims: [...(item.claims || []), typedData.claim],
         });
       }
     };
 
-    const handleClaimRemoved = (data: { itemId: string; wishlistId: string; userId: string }) => {
-      const item = getItem(data.itemId);
+    const handleClaimRemoved = (data: Record<string, unknown>) => {
+      const typedData = data as { itemId: string; wishlistId: string; userId: string };
+      const item = getItem(typedData.itemId);
       if (item) {
         updateItemCache({
           ...item,
-          claims: (item.claims || []).filter((claim) => claim.userId !== data.userId),
+          claims: (item.claims || []).filter((claim) => claim.userId !== typedData.userId),
         });
       }
     };

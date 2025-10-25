@@ -15,7 +15,7 @@ export function useFriendRealtime() {
     }
 
     // Define event handlers for friend-related real-time updates
-    const handleFriendRequest = (_data: { requestId: string; requesterId: string }) => {
+    const handleFriendRequest = (_data: Record<string, unknown>) => {
       // Invalidate friend requests query to show new request
       queryClient.invalidateQueries({
         queryKey: ["friend-requests", user.id],
@@ -28,7 +28,7 @@ export function useFriendRealtime() {
       });
     };
 
-    const handleFriendAccepted = (_data: { friendshipId: string; userId: string }) => {
+    const handleFriendAccepted = (_data: Record<string, unknown>) => {
       // Invalidate both friends and friend requests queries
       queryClient.invalidateQueries({
         queryKey: ["friends", user.id],

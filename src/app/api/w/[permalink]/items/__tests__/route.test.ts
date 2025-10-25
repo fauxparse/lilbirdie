@@ -41,8 +41,8 @@ vi.mock("@/lib/services/PermissionService", () => ({
   },
 }));
 
-vi.mock("@/lib/socket", () => ({
-  SocketEventEmitter: {
+vi.mock("@/lib/partykit", () => ({
+  PartyKitEventEmitter: {
     emitToWishlist: vi.fn(),
   },
 }));
@@ -54,7 +54,7 @@ describe("POST /api/w/[permalink]/items", () => {
 
   it("should emit socket event when item is created successfully", async () => {
     const { auth } = await import("@/lib/auth");
-    const { SocketEventEmitter } = await import("@/lib/socket");
+    const { PartyKitEventEmitter } = await import("@/lib/partykit");
 
     // Mock session
     const mockSession = {
@@ -134,7 +134,7 @@ describe("POST /api/w/[permalink]/items", () => {
     });
 
     // Should emit socket event
-    expect(SocketEventEmitter.emitToWishlist).toHaveBeenCalledWith(
+    expect(PartyKitEventEmitter.emitToWishlist).toHaveBeenCalledWith(
       "wishlist-1",
       "wishlist:item:added",
       {
@@ -154,7 +154,7 @@ describe("POST /api/w/[permalink]/items", () => {
 
   it("should not emit socket event when item creation fails", async () => {
     const { auth } = await import("@/lib/auth");
-    const { SocketEventEmitter } = await import("@/lib/socket");
+    const { PartyKitEventEmitter } = await import("@/lib/partykit");
 
     // Mock session
     const mockSession = {
@@ -201,12 +201,12 @@ describe("POST /api/w/[permalink]/items", () => {
     expect(response.status).toBe(500);
 
     // Should not emit socket event
-    expect(SocketEventEmitter.emitToWishlist).not.toHaveBeenCalled();
+    expect(PartyKitEventEmitter.emitToWishlist).not.toHaveBeenCalled();
   });
 
   it("should not emit socket event when unauthorized", async () => {
     const { auth } = await import("@/lib/auth");
-    const { SocketEventEmitter } = await import("@/lib/socket");
+    const { PartyKitEventEmitter } = await import("@/lib/partykit");
 
     // Mock no session
     vi.mocked(auth.api.getSession).mockResolvedValue(null);
@@ -232,12 +232,12 @@ describe("POST /api/w/[permalink]/items", () => {
     expect(response.status).toBe(401);
 
     // Should not emit socket event
-    expect(SocketEventEmitter.emitToWishlist).not.toHaveBeenCalled();
+    expect(PartyKitEventEmitter.emitToWishlist).not.toHaveBeenCalled();
   });
 
   it("should not emit socket event when wishlist not found", async () => {
     const { auth } = await import("@/lib/auth");
-    const { SocketEventEmitter } = await import("@/lib/socket");
+    const { PartyKitEventEmitter } = await import("@/lib/partykit");
 
     // Mock session
     const mockSession = {
@@ -274,12 +274,12 @@ describe("POST /api/w/[permalink]/items", () => {
     expect(response.status).toBe(404);
 
     // Should not emit socket event
-    expect(SocketEventEmitter.emitToWishlist).not.toHaveBeenCalled();
+    expect(PartyKitEventEmitter.emitToWishlist).not.toHaveBeenCalled();
   });
 
   it("should return 403 when user lacks items:write permission", async () => {
     const { auth } = await import("@/lib/auth");
-    const { SocketEventEmitter } = await import("@/lib/socket");
+    const { PartyKitEventEmitter } = await import("@/lib/partykit");
 
     // Mock session
     const mockSession = {
@@ -337,6 +337,6 @@ describe("POST /api/w/[permalink]/items", () => {
     expect(mockWishlistItemService.createItem).not.toHaveBeenCalled();
 
     // Should not emit socket event
-    expect(SocketEventEmitter.emitToWishlist).not.toHaveBeenCalled();
+    expect(PartyKitEventEmitter.emitToWishlist).not.toHaveBeenCalled();
   });
 });

@@ -40,8 +40,8 @@ vi.mock("@/lib/services/PermissionService", () => ({
   },
 }));
 
-vi.mock("@/lib/socket", () => ({
-  SocketEventEmitter: {
+vi.mock("@/lib/partykit", () => ({
+  PartyKitEventEmitter: {
     emitToWishlist: vi.fn(),
   },
 }));
@@ -125,7 +125,7 @@ describe("PUT /api/items/[id]", () => {
   it("should update item when user has items:write permission", async () => {
     const { auth } = await import("@/lib/auth");
     const { prisma } = await import("@/lib/db");
-    const { SocketEventEmitter } = await import("@/lib/socket");
+    const { PartyKitEventEmitter } = await import("@/lib/partykit");
 
     const mockSession = {
       user: {
@@ -181,7 +181,7 @@ describe("PUT /api/items/[id]", () => {
       "items:write"
     );
     expect(mockWishlistItemService.updateItem).toHaveBeenCalled();
-    expect(SocketEventEmitter.emitToWishlist).toHaveBeenCalledWith(
+    expect(PartyKitEventEmitter.emitToWishlist).toHaveBeenCalledWith(
       "wishlist-1",
       "wishlist:item:updated",
       {
@@ -259,7 +259,7 @@ describe("DELETE /api/items/[id]", () => {
   it("should delete item when user has items:delete permission", async () => {
     const { auth } = await import("@/lib/auth");
     const { prisma } = await import("@/lib/db");
-    const { SocketEventEmitter } = await import("@/lib/socket");
+    const { PartyKitEventEmitter } = await import("@/lib/partykit");
 
     const mockSession = {
       user: {
@@ -296,7 +296,7 @@ describe("DELETE /api/items/[id]", () => {
       "items:delete"
     );
     expect(mockWishlistItemService.deleteItem).toHaveBeenCalledWith("item-1", "user-1");
-    expect(SocketEventEmitter.emitToWishlist).toHaveBeenCalledWith(
+    expect(PartyKitEventEmitter.emitToWishlist).toHaveBeenCalledWith(
       "wishlist-1",
       "wishlist:item:deleted",
       {

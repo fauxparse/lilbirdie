@@ -1,16 +1,16 @@
 "use client";
 
 import { createContext, type ReactNode, useContext } from "react";
-import { useSocket } from "@/hooks/useSocket";
-import type { ServerToClientEvents } from "@/lib/socket";
+import { usePartySocket } from "@/hooks/usePartySocket";
+import type { ServerMessage } from "../../party/index";
 
 interface SocketContextType {
   isConnected: boolean;
   error: string | null;
   joinWishlist: (wishlistId: string) => void;
   leaveWishlist: (wishlistId: string) => void;
-  on: <K extends keyof ServerToClientEvents>(event: K, listener: ServerToClientEvents[K]) => void;
-  off: <K extends keyof ServerToClientEvents>(event: K, listener?: ServerToClientEvents[K]) => void;
+  on: (event: ServerMessage["type"], listener: (data: Record<string, unknown>) => void) => void;
+  off: (event: ServerMessage["type"], listener?: (data: Record<string, unknown>) => void) => void;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
@@ -20,7 +20,7 @@ interface SocketProviderProps {
 }
 
 export function SocketProvider({ children }: SocketProviderProps) {
-  const socketData = useSocket();
+  const socketData = usePartySocket();
 
   return <SocketContext.Provider value={socketData}>{children}</SocketContext.Provider>;
 }

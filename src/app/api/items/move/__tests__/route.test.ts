@@ -24,8 +24,8 @@ vi.mock("@/lib/services/WishlistItemService", () => ({
 }));
 
 // Mock the socket module
-vi.mock("@/lib/socket", () => ({
-  SocketEventEmitter: {
+vi.mock("@/lib/partykit", () => ({
+  PartyKitEventEmitter: {
     emitToWishlist: vi.fn(),
   },
 }));
@@ -48,7 +48,7 @@ describe("POST /api/items/move", () => {
 
   it("should move items successfully and emit real-time events", async () => {
     const { auth } = await import("@/lib/auth");
-    const { SocketEventEmitter } = await import("@/lib/socket");
+    const { PartyKitEventEmitter } = await import("@/lib/partykit");
 
     // Mock session
     const mockSession = {
@@ -141,7 +141,7 @@ describe("POST /api/items/move", () => {
     );
 
     // Should emit real-time events for removal from source
-    expect(SocketEventEmitter.emitToWishlist).toHaveBeenCalledWith(
+    expect(PartyKitEventEmitter.emitToWishlist).toHaveBeenCalledWith(
       "source-wishlist",
       "wishlist:item:deleted",
       {
@@ -150,7 +150,7 @@ describe("POST /api/items/move", () => {
       }
     );
 
-    expect(SocketEventEmitter.emitToWishlist).toHaveBeenCalledWith(
+    expect(PartyKitEventEmitter.emitToWishlist).toHaveBeenCalledWith(
       "source-wishlist",
       "wishlist:item:deleted",
       {
@@ -160,7 +160,7 @@ describe("POST /api/items/move", () => {
     );
 
     // Should emit real-time events for addition to target
-    expect(SocketEventEmitter.emitToWishlist).toHaveBeenCalledWith(
+    expect(PartyKitEventEmitter.emitToWishlist).toHaveBeenCalledWith(
       "target-wishlist",
       "wishlist:item:added",
       {
@@ -169,7 +169,7 @@ describe("POST /api/items/move", () => {
       }
     );
 
-    expect(SocketEventEmitter.emitToWishlist).toHaveBeenCalledWith(
+    expect(PartyKitEventEmitter.emitToWishlist).toHaveBeenCalledWith(
       "target-wishlist",
       "wishlist:item:added",
       {

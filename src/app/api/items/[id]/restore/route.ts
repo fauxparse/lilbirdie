@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { PartyKitEventEmitter } from "@/lib/partykit";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
-import { SocketEventEmitter } from "@/lib/socket";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const restoredItem = await wishlistItemService.restoreItem(itemId, session.user.id);
 
     // Emit real-time event
-    SocketEventEmitter.emitToWishlist(restoredItem.wishlistId, "wishlist:item:added", {
+    await PartyKitEventEmitter.emitToWishlist(restoredItem.wishlistId, "wishlist:item:added", {
       item: restoredItem,
       wishlistId: restoredItem.wishlistId,
     });

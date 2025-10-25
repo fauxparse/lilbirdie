@@ -34,12 +34,17 @@ A modern wishlist web application built with Next.js, TypeScript, and PostgreSQL
 
 ## Development Commands
 
-- `pnpm dev` - Start development server
+- `pnpm dev` - Start Next.js development server
+- `pnpm dev:party` - Start PartyKit development server (run in separate terminal)
 - `pnpm build` - Build for production
+- `pnpm build:party` - Build PartyKit server
+- `pnpm deploy:party` - Deploy PartyKit server
 - `pnpm start` - Start production server
 - `npx biome check --write` - Run linting with auto-fix
 - `tsc --noEmit` - Run TypeScript type checking
 - `pnpm test` - Run tests with Vitest
+
+**Note:** For development, you need to run both `pnpm dev` and `pnpm dev:party` in separate terminals.
 
 ## Implementation Status
 
@@ -94,7 +99,52 @@ A modern wishlist web application built with Next.js, TypeScript, and PostgreSQL
 - [ ] Offline functionality (Service Workers)
 - [ ] Mobile responsiveness improvements
 - [ ] Performance optimization
-- [ ] Deployment setup
+
+## Deployment
+
+This application is designed to deploy to Vercel with PartyKit for real-time features.
+
+### Prerequisites
+1. A Vercel account
+2. A PartyKit account (free tier available)
+3. A PostgreSQL database (e.g., Vercel Postgres, Supabase, or Neon)
+
+### Deployment Steps
+
+1. **Deploy PartyKit Server**
+   ```bash
+   pnpm deploy:party
+   ```
+   This will deploy your PartyKit server and provide you with a URL (e.g., `https://lil-birdie.your-username.partykit.dev`)
+
+2. **Deploy to Vercel**
+   - Connect your GitHub repository to Vercel
+   - Configure environment variables in Vercel dashboard:
+     - `DATABASE_URL` - Your PostgreSQL connection string
+     - `BETTER_AUTH_SECRET` - Generate a secure random string
+     - `BETTER_AUTH_URL` - Your Vercel deployment URL
+     - `GOOGLE_CLIENT_ID` - Your Google OAuth client ID
+     - `GOOGLE_CLIENT_SECRET` - Your Google OAuth client secret
+     - `BLOB_READ_WRITE_TOKEN` - Your Vercel Blob storage token
+     - `CURRENCY_API_KEY` - Your currency exchange rate API key
+     - `NEXT_PUBLIC_PARTYKIT_HOST` - Your PartyKit deployment URL (from step 1)
+     - `PARTYKIT_HOST` - Same as `NEXT_PUBLIC_PARTYKIT_HOST`
+
+3. **Run Database Migrations**
+   After the first deployment, run migrations:
+   ```bash
+   # Using Vercel CLI
+   vercel env pull .env.production.local
+   npx prisma migrate deploy
+   ```
+
+4. **Update Google OAuth**
+   Add your Vercel deployment URL to your Google OAuth authorized redirect URIs:
+   - `https://your-app.vercel.app/api/auth/callback/google`
+
+### Environment Variables
+
+See `.env.example` for all required environment variables.
 
 ### 🔧 TODO - Infrastructure
 - [ ] Logging system

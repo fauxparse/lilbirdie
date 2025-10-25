@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { SocketEventEmitter } from "@/lib/socket";
+import { PartyKitEventEmitter } from "@/lib/partykit";
 
 export async function POST(
   request: NextRequest,
@@ -74,11 +74,11 @@ export async function POST(
       });
 
       // Emit real-time events to notify both users about the new friendship
-      SocketEventEmitter.emitToUser(friendRequest.requesterId, "friend:accepted", {
+      await PartyKitEventEmitter.emitToUser(friendRequest.requesterId, "friend:accepted", {
         friendshipId: friendship.id,
         userId: currentUserId,
       });
-      SocketEventEmitter.emitToUser(currentUserId, "friend:accepted", {
+      await PartyKitEventEmitter.emitToUser(currentUserId, "friend:accepted", {
         friendshipId: friendship.id,
         userId: friendRequest.requesterId,
       });

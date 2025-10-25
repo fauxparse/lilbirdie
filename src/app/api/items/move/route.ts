@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { PartyKitEventEmitter } from "@/lib/partykit";
 import { PermissionService } from "@/lib/services/PermissionService";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
-import { SocketEventEmitter } from "@/lib/socket";
 
 interface MoveItemsRequest {
   itemIds: string[];
@@ -100,16 +100,20 @@ export async function POST(request: NextRequest) {
     for (const itemBefore of itemsBeforeMove) {
       if (itemBefore && itemBefore.sourceWishlistId !== targetWishlistId) {
         // Emit removal from source wishlist
-        SocketEventEmitter.emitToWishlist(itemBefore.sourceWishlistId, "wishlist:item:deleted", {
-          itemId: itemBefore.id,
-          wishlistId: itemBefore.sourceWishlistId,
-        });
+        await PartyKitEventEmitter.emitToWishlist(
+          itemBefore.sourceWishlistId,
+          "wishlist:item:deleted",
+          {
+            itemId: itemBefore.id,
+            wishlistId: itemBefore.sourceWishlistId,
+          }
+        );
       }
     }
 
     // Emit addition to target wishlist for each moved item
     for (const movedItem of movedItems) {
-      SocketEventEmitter.emitToWishlist(targetWishlistId, "wishlist:item:added", {
+      await PartyKitEventEmitter.emitToWishlist(targetWishlistId, "wishlist:item:added", {
         item: movedItem,
         wishlistId: targetWishlistId,
       });

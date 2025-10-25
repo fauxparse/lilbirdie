@@ -104,7 +104,7 @@ export function useSendFriendRequest() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to send friend request");
       }
 
@@ -138,7 +138,7 @@ export function useHandleFriendRequest() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to handle friend request");
       }
 
@@ -167,7 +167,7 @@ export function useRemoveFriend() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to remove friend");
       }
 

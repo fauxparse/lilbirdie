@@ -87,19 +87,19 @@ function WishlistPageContent() {
 
   // Delete item mutation
   const deleteItemMutation = useMutation({
-    mutationFn: async (itemId: string) => {
+    mutationFn: async (itemId: string): Promise<{ name?: string }> => {
       const response = await fetch(`/api/items/${itemId}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to delete item");
       }
 
-      return response.json();
+      return response.json() as Promise<{ name?: string }>;
     },
-    onSuccess: (deletedItem, itemId) => {
+    onSuccess: (deletedItem: { name?: string }, itemId) => {
       // Remove item from cache immediately
       removeItemFromCache(itemId);
 

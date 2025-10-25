@@ -9,7 +9,8 @@ export async function POST(
 ) {
   try {
     const { requestId } = await params;
-    const { action } = await request.json();
+    const body = (await request.json()) as { action?: string };
+    const { action } = body;
 
     if (!action || !["accept", "ignore"].includes(action)) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });

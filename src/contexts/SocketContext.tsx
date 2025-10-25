@@ -2,7 +2,7 @@
 
 import { createContext, type ReactNode, useContext } from "react";
 import { usePartySocket } from "@/hooks/usePartySocket";
-import type { ServerMessage } from "../../party/index";
+import type { ServerMessage } from "@/types/party";
 
 interface SocketContextType {
   isConnected: boolean;

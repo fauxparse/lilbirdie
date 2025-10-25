@@ -31,24 +31,36 @@ export default function EditWishlistPage({ params }: EditWishlistPageProps) {
     error: wishlistError,
   } = useQuery({
     queryKey: ["wishlist", permalink],
-    queryFn: async () => {
+    queryFn: async (): Promise<{
+      owner: { id: string };
+      title: string;
+      description?: string;
+      privacy: "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE";
+      isDefault?: boolean;
+    }> => {
       const response = await fetch(`/api/w/${permalink}`);
 
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error("Wishlist not found");
         }
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to fetch wishlist");
       }
 
-      return response.json();
+      return response.json() as Promise<{
+        owner: { id: string };
+        title: string;
+        description?: string;
+        privacy: "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE";
+        isDefault?: boolean;
+      }>;
     },
     enabled: !!user && !!permalink,
   });
 
   const updateWishlistMutation = useMutation({
-    mutationFn: async (data: WishlistFormData) => {
+    mutationFn: async (data: WishlistFormData): Promise<{ permalink: string }> => {
       const response = await fetch(`/api/wishlists/${permalink}`, {
         method: "PUT",
         headers: {
@@ -58,13 +70,13 @@ export default function EditWishlistPage({ params }: EditWishlistPageProps) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to update wishlist");
       }
 
-      return response.json();
+      return response.json() as Promise<{ permalink: string }>;
     },
-    onSuccess: (updatedWishlist) => {
+    onSuccess: (updatedWishlist: { permalink: string }) => {
       // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ queryKey: ["wishlists"] });
       queryClient.invalidateQueries({ queryKey: ["wishlist", permalink] });

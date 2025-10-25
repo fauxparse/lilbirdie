@@ -129,6 +129,9 @@ importers:
       '@biomejs/biome':
         specifier: ^2.2.4
         version: 2.2.4
+      '@cloudflare/workers-types':
+        specifier: ^4.20251014.0
+        version: 4.20251014.0
       '@testing-library/jest-dom':
         specifier: ^6.2.0
         version: 6.8.0
@@ -194,7 +197,7 @@ importers:
         version: 3.2.4(@types/node@20.19.13)(jsdom@23.2.0)(lightningcss@1.30.1)(msw@2.11.2(@types/node@20.19.13)(typescript@5.9.2))
       wrangler:
         specifier: ^4.45.0
-        version: 4.45.0
+        version: 4.45.0(@cloudflare/workers-types@4.20251014.0)
 
 packages:
 
@@ -550,6 +553,9 @@ packages:
 
   '@cloudflare/workers-types@4.20240718.0':
     resolution: {integrity: sha512-7RqxXIM9HyhjfZ9ztXjITuc7mL0w4s+zXgypqKmMuvuObC3DgXutJ3bOYbQ+Ss5QbywrzWSNMlmGdL/ldg/yZg==}
+
+  '@cloudflare/workers-types@4.20251014.0':
+    resolution: {integrity: sha512-tEW98J/kOa0TdylIUOrLKRdwkUw0rvvYVlo+Ce0mqRH3c8kSoxLzUH9gfCvwLe0M89z1RkzFovSKAW2Nwtyn3w==}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -5070,6 +5076,8 @@ snapshots:
 
   '@cloudflare/workers-types@4.20240718.0': {}
 
+  '@cloudflare/workers-types@4.20251014.0': {}
+
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
@@ -8939,7 +8947,7 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20251011.0
       '@cloudflare/workerd-windows-64': 1.20251011.0
 
-  wrangler@4.45.0:
+  wrangler@4.45.0(@cloudflare/workers-types@4.20251014.0):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.0
       '@cloudflare/unenv-preset': 2.7.8(unenv@2.0.0-rc.21)(workerd@1.20251011.0)
@@ -8950,6 +8958,7 @@ snapshots:
       unenv: 2.0.0-rc.21
       workerd: 1.20251011.0
     optionalDependencies:
+      '@cloudflare/workers-types': 4.20251014.0
       fsevents: 2.3.3
     transitivePeerDependencies:
       - bufferutil

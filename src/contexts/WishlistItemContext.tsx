@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { createContext, type ReactNode, useContext } from "react";
 import { toast } from "sonner";
-import type { WishlistItemResponse } from "@/types";
+import type { WishlistItemResponse, WishlistItemWithRelations } from "@/types";
 import { useWishlist } from "./WishlistContext";
 
 interface ItemFormData {
@@ -45,7 +45,7 @@ export function WishlistItemProvider({ children, itemId }: WishlistItemProviderP
   const item = getItem(itemId) || wishlist?.items.find((i) => i.id === itemId);
 
   const updateItemMutation = useMutation({
-    mutationFn: async (data: Partial<ItemFormData>) => {
+    mutationFn: async (data: Partial<ItemFormData>): Promise<WishlistItemWithRelations> => {
       const response = await fetch(`/api/items/${itemId}`, {
         method: "PUT",
         headers: {
@@ -55,11 +55,11 @@ export function WishlistItemProvider({ children, itemId }: WishlistItemProviderP
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to update item");
       }
 
-      return response.json();
+      return response.json() as Promise<WishlistItemWithRelations>;
     },
     onSuccess: (updatedItem: WishlistItemResponse) => {
       updateItemCache(updatedItem);

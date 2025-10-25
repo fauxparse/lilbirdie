@@ -107,7 +107,7 @@ export class CurrencyService {
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { rates?: Record<string, number> };
 
     if (!data.rates || !data.rates[toCurrency]) {
       throw new Error(`No rate available for ${toCurrency}`);

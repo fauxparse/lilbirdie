@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { itemIds, targetWishlistId }: MoveItemsRequest = body;
+    const body = (await request.json()) as MoveItemsRequest;
+    const { itemIds, targetWishlistId } = body;
 
     if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
       return NextResponse.json({ error: "Item IDs are required" }, { status: 400 });

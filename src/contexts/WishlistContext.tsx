@@ -7,7 +7,12 @@ import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { useWishlistRealtime } from "@/hooks/useWishlistRealtime";
 import { UpdateWishlistData } from "@/lib/services/WishlistService";
-import type { WishlistItemResponse, WishlistResponse } from "@/types";
+import type {
+  ClaimWithUser,
+  WishlistItemResponse,
+  WishlistResponse,
+  WishlistWithItems,
+} from "@/types";
 
 interface WishlistContextValue {
   wishlist: WishlistResponse | undefined;
@@ -96,18 +101,24 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
 
   // Centralized claim mutation
   const claimMutation = useMutation({
-    mutationFn: async ({ itemId, action }: { itemId: string; action: "claim" | "unclaim" }) => {
+    mutationFn: async ({
+      itemId,
+      action,
+    }: {
+      itemId: string;
+      action: "claim" | "unclaim";
+    }): Promise<{ claim: ClaimWithUser }> => {
       const method = action === "claim" ? "POST" : "DELETE";
       const response = await fetch(`/api/w/${permalink}/items/${itemId}/claim`, {
         method,
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || `Failed to ${action} item`);
       }
 
-      return response.json();
+      return response.json() as Promise<{ claim: ClaimWithUser }>;
     },
     onMutate: async ({ itemId, action }) => {
       // Cancel any outgoing refetches
@@ -229,7 +240,7 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
   };
 
   const updateWishlist = useMutation({
-    mutationFn: async (data: Partial<UpdateWishlistData>) => {
+    mutationFn: async (data: Partial<UpdateWishlistData>): Promise<WishlistWithItems> => {
       if (!wishlist) {
         throw new Error("Wishlist not found");
       }
@@ -251,11 +262,11 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to update wishlist");
       }
 
-      return response.json();
+      return response.json() as Promise<WishlistWithItems>;
     },
     meta: { previous: queryClient.getQueryData(["wishlist", permalink]) },
     onSuccess: (updatedWishlist: WishlistResponse) => {

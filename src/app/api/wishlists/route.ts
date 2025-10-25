@@ -32,21 +32,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as {
+      title?: string;
+      description?: string;
+      privacy?: string;
+      isDefault?: boolean;
+    };
     const { title, description, privacy, isDefault } = body;
 
     if (!title || title.trim() === "") {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
-    if (!privacy || !Object.values(WishlistPrivacy).includes(privacy)) {
+    if (!privacy || !(Object.values(WishlistPrivacy) as string[]).includes(privacy)) {
       return NextResponse.json({ error: "Valid privacy setting is required" }, { status: 400 });
     }
 
     const wishlist = await WishlistService.getInstance().createWishlist(session.user.id, {
       title: title.trim(),
       description: description?.trim(),
-      privacy,
+      privacy: privacy as WishlistPrivacy,
       isDefault: !!isDefault,
     });
 

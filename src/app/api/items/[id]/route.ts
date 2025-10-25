@@ -59,7 +59,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as {
+      name?: string;
+      description?: string;
+      url?: string;
+      imageUrl?: string;
+      price?: number;
+      currency?: string;
+      priority?: number;
+      tags?: string[];
+    };
     const { name, description, url, imageUrl, price, currency, priority, tags } = body;
 
     const updateData: UpdateWishlistItemData = {};

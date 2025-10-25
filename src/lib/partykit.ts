@@ -1,4 +1,4 @@
-import type { ServerMessage } from "../../party/index";
+import type { ServerMessage } from "@/types/party";
 
 /**
  * Get the PartyKit host URL based on environment

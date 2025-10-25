@@ -14,7 +14,7 @@ export default function NewWishlistPage() {
   const queryClient = useQueryClient();
 
   const createWishlistMutation = useMutation({
-    mutationFn: async (data: WishlistFormData) => {
+    mutationFn: async (data: WishlistFormData): Promise<{ permalink: string }> => {
       const response = await fetch("/api/wishlists", {
         method: "POST",
         headers: {
@@ -24,13 +24,13 @@ export default function NewWishlistPage() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to create wishlist");
       }
 
-      return response.json();
+      return response.json() as Promise<{ permalink: string }>;
     },
-    onSuccess: (wishlist) => {
+    onSuccess: (wishlist: { permalink: string }) => {
       // Invalidate wishlists query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["wishlists"] });
       // Navigate to the new wishlist

@@ -87,7 +87,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to add item");
       }
 

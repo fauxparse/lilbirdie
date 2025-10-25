@@ -13,11 +13,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as { theme?: string };
     const { theme } = body;
 
     // Validate theme value
-    if (!["light", "dark", "system"].includes(theme)) {
+    if (!theme || !["light", "dark", "system"].includes(theme)) {
       return NextResponse.json({ error: "Invalid theme value" }, { status: 400 });
     }
 

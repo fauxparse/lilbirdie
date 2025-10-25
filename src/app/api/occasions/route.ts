@@ -43,7 +43,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as {
+      title?: string;
+      date?: string;
+      type?: string;
+      isRecurring?: boolean;
+      startYear?: number;
+      entityType?: string;
+      entityId?: string;
+      description?: string;
+    };
     const { title, date, type, isRecurring, startYear, entityType, entityId, description } = body;
 
     if (!title || title.trim() === "") {
@@ -86,7 +95,7 @@ export async function POST(request: NextRequest) {
       date: parsedDate,
       type: type as OccasionType,
       isRecurring: isRecurring !== false, // Default to true
-      startYear: startYear ? Number.parseInt(startYear, 10) : undefined,
+      startYear: typeof startYear === "number" ? startYear : startYear ? Number.parseInt(String(startYear), 10) : undefined,
       entityType: entityType as EntityType | undefined,
       entityId: entityId || undefined,
       description: description?.trim(),

@@ -49,12 +49,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as {
+      title?: string | null;
+      description?: string | null;
+      privacy?: string;
+      isDefault?: boolean;
+    };
     const { title, description, privacy, isDefault } = body;
 
     const updateData: UpdateWishlistData = {};
 
-    if (title !== undefined) {
+    if (title !== undefined && title !== null) {
       if (title.trim() === "") {
         return NextResponse.json({ error: "Title cannot be empty" }, { status: 400 });
       }
@@ -62,14 +67,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     if (description !== undefined) {
-      updateData.description = description?.trim() || null;
+      updateData.description = description?.trim() || undefined;
     }
 
     if (privacy !== undefined) {
-      if (!Object.values(WishlistPrivacy).includes(privacy)) {
+      if (!(Object.values(WishlistPrivacy) as string[]).includes(privacy)) {
         return NextResponse.json({ error: "Invalid privacy setting" }, { status: 400 });
       }
-      updateData.privacy = privacy;
+      updateData.privacy = privacy as WishlistPrivacy;
     }
 
     if (isDefault !== undefined) {

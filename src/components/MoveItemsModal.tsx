@@ -61,7 +61,7 @@ export function MoveItemsModal({
 
   // Create new wishlist mutation
   const createWishlistMutation = useMutation({
-    mutationFn: async (title: string) => {
+    mutationFn: async (title: string): Promise<{ id: string; title: string }> => {
       const response = await fetch("/api/wishlists", {
         method: "POST",
         headers: {
@@ -76,13 +76,13 @@ export function MoveItemsModal({
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to create wishlist");
       }
 
-      return response.json();
+      return response.json() as Promise<{ id: string; title: string }>;
     },
-    onSuccess: (newWishlist) => {
+    onSuccess: (newWishlist: { id: string; title: string }) => {
       // Invalidate wishlists query to show the new wishlist
       queryClient.invalidateQueries({ queryKey: ["wishlists"] });
       // Auto-select the new wishlist
@@ -98,7 +98,10 @@ export function MoveItemsModal({
 
   // Move items mutation
   const moveItemsMutation = useMutation({
-    mutationFn: async (targetWishlistId: string) => {
+    mutationFn: async (targetWishlistId: string): Promise<{
+      movedItemsCount: number;
+      targetWishlistId: string;
+    }> => {
       const response = await fetch("/api/items/move", {
         method: "POST",
         headers: {
@@ -111,13 +114,16 @@ export function MoveItemsModal({
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to move items");
       }
 
-      return response.json();
+      return response.json() as Promise<{
+        movedItemsCount: number;
+        targetWishlistId: string;
+      }>;
     },
-    onSuccess: (result) => {
+    onSuccess: (result: { movedItemsCount: number; targetWishlistId: string }) => {
       // Invalidate queries to refresh both source and target wishlists
       queryClient.invalidateQueries({ queryKey: ["wishlist"] });
       queryClient.invalidateQueries({ queryKey: ["wishlists"] });

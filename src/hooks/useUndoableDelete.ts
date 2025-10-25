@@ -22,7 +22,7 @@ export function useUndoableDelete() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to restore item");
       }
 
@@ -42,7 +42,7 @@ export function useUndoableDelete() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to restore wishlist");
       }
 

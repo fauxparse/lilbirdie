@@ -35,7 +35,7 @@ export function EditItemModal({ isOpen, onClose, item }: EditItemModalProps) {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = (await response.json()) as { error?: string };
         throw new Error(error.error || "Failed to update item");
       }
 

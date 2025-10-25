@@ -1,7 +1,7 @@
 import PartySocket from "partysocket";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import type { ClientMessage, ServerMessage } from "../../party/index";
+import type { ClientMessage, ServerMessage } from "@/types/party";
 
 export function usePartySocket() {
   const { user, isLoading } = useAuth();

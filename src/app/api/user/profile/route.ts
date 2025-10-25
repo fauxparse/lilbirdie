@@ -34,7 +34,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as {
+      preferredCurrency?: string;
+      theme?: string;
+    };
     const { preferredCurrency, theme } = body;
 
     const updates: Partial<Profile> = {};

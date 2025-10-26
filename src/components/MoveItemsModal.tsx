@@ -98,7 +98,9 @@ export function MoveItemsModal({
 
   // Move items mutation
   const moveItemsMutation = useMutation({
-    mutationFn: async (targetWishlistId: string): Promise<{
+    mutationFn: async (
+      targetWishlistId: string
+    ): Promise<{
       movedItemsCount: number;
       targetWishlistId: string;
     }> => {

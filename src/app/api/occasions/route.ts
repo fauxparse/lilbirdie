@@ -95,7 +95,12 @@ export async function POST(request: NextRequest) {
       date: parsedDate,
       type: type as OccasionType,
       isRecurring: isRecurring !== false, // Default to true
-      startYear: typeof startYear === "number" ? startYear : startYear ? Number.parseInt(String(startYear), 10) : undefined,
+      startYear:
+        typeof startYear === "number"
+          ? startYear
+          : startYear
+            ? Number.parseInt(String(startYear), 10)
+            : undefined,
       entityType: entityType as EntityType | undefined,
       entityId: entityId || undefined,
       description: description?.trim(),

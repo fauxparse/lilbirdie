@@ -171,6 +171,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
               <ItemForm
                 initialData={scrapedData || { name: "" }}
                 onBack={() => setModalState("paste")}
+                onCancel={onClose}
                 onSubmit={handleSubmit}
               />
             </motion.div>

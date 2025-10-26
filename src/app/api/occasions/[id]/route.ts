@@ -87,7 +87,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       date: parsedDate,
       type: type as OccasionType | undefined,
       isRecurring,
-      startYear: typeof startYear === "number" ? startYear : startYear ? Number.parseInt(String(startYear), 10) : undefined,
+      startYear:
+        typeof startYear === "number"
+          ? startYear
+          : startYear
+            ? Number.parseInt(String(startYear), 10)
+            : undefined,
       entityType: entityType as EntityType | undefined,
       entityId: entityId || undefined,
       description: description?.trim(),

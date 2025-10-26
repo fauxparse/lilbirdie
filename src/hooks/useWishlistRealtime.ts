@@ -24,15 +24,9 @@ export function useWishlistRealtime(wishlistId: string | null) {
     };
 
     const handleItemUpdated = (data: Record<string, unknown>) => {
-      const typedData = data as { itemId: string; wishlistId: string };
-      // Invalidate wishlist queries to show updated item
-      queryClient.invalidateQueries({
-        queryKey: ["wishlist"],
-      });
-      // Also invalidate individual item query if it exists
-      queryClient.invalidateQueries({
-        queryKey: ["item", typedData.itemId],
-      });
+      const typedData = data as { item: WishlistItemResponse; wishlistId: string };
+      // Update cache directly instead of invalidating to avoid race conditions
+      updateItemCache(typedData.item);
     };
 
     const handleItemDeleted = (data: Record<string, unknown>) => {

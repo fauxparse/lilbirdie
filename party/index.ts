@@ -19,7 +19,10 @@ class WishlistServer implements Party.Server {
   connectionStates: Map<string, ConnectionState>;
   state: DurableObjectState;
 
-  constructor(state: DurableObjectState, readonly room: Party.Room) {
+  constructor(
+    state: DurableObjectState,
+    readonly room: Party.Room
+  ) {
     this.state = state;
     this.connectionStates = new Map();
   }
@@ -138,7 +141,7 @@ class WishlistServer implements Party.Server {
   }
 
   // Legacy PartyKit compatibility methods (kept for compatibility but not used)
-  onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
+  onConnect(_conn: Party.Connection, _ctx: Party.ConnectionContext) {
     // This won't be called when using Cloudflare Workers directly
   }
 

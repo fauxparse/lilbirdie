@@ -12,6 +12,7 @@ import { Label } from "../ui/Label";
 import { PriceInput } from "../ui/PriceInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/Select";
 import { StarInput } from "../ui/StarInput";
+import { Textarea } from "../ui/Textarea";
 
 const itemSchema = z.object({
   name: z.string().min(1),
@@ -30,6 +31,7 @@ interface ItemFormProps {
   initialData: ItemFormData;
   busy?: boolean;
   onBack?: () => void;
+  onCancel?: () => void;
   onSubmit: (data: ItemFormData) => void;
 }
 
@@ -37,6 +39,7 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   initialData,
   busy = false,
   onBack,
+  onCancel,
   onSubmit,
 }) => {
   const { preferredCurrency } = useUserPreferredCurrency();
@@ -80,6 +83,20 @@ export const ItemForm: React.FC<ItemFormProps> = ({
                   placeholder="Name"
                   value={state.value || ""}
                   onChange={(e) => handleChange(e.target.value)}
+                />
+              )}
+            </form.Field>
+          </div>
+          <div className="space-y-2 flex flex-col gap-1">
+            <Label htmlFor="description">Description</Label>
+            <form.Field name="description">
+              {({ state, handleChange }) => (
+                <Textarea
+                  id="description"
+                  placeholder="Description"
+                  value={state.value || ""}
+                  onChange={(e) => handleChange(e.target.value)}
+                  rows={3}
                 />
               )}
             </form.Field>
@@ -179,9 +196,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({
           )}
         </div>
         <div className="flex items-center gap-3">
-          <Button type="button" variant="outline">
-            Cancel
-          </Button>
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
           <form.Subscribe
             selector={(state) => ({
               isSubmitting: state.isSubmitting,

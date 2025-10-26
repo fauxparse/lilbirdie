@@ -92,9 +92,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       initialTheme = profile.theme as Theme;
     } else if (!user) {
       // Fall back to localStorage for non-authenticated users (only on client)
-      const storedTheme = typeof window !== "undefined"
-        ? (localStorage.getItem("theme") as Theme | null)
-        : null;
+      const storedTheme =
+        typeof window !== "undefined" ? (localStorage.getItem("theme") as Theme | null) : null;
       initialTheme = storedTheme || "system";
     } else {
       // User is authenticated but no profile theme yet

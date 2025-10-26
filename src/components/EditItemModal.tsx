@@ -1,7 +1,10 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Prisma } from "@prisma/client";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useWishlist } from "@/contexts/WishlistContext";
+import type { WishlistItemResponse } from "@/types";
 import { ItemForm, type ItemFormData } from "./AddItemModal/ItemForm";
 import { Modal, ModalHeader, ModalTitle } from "./ui/Modal";
 
@@ -22,12 +25,12 @@ interface EditItemModalProps {
 }
 
 export function EditItemModal({ isOpen, onClose, item }: EditItemModalProps) {
-  const queryClient = useQueryClient();
+  const { updateItemCache, getItem } = useWishlist();
 
   const updateItemMutation = useMutation({
-    mutationFn: async (data: ItemFormData) => {
+    mutationFn: async (data: ItemFormData): Promise<WishlistItemResponse> => {
       const response = await fetch(`/api/items/${item.id}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -39,19 +42,41 @@ export function EditItemModal({ isOpen, onClose, item }: EditItemModalProps) {
         throw new Error(error.error || "Failed to update item");
       }
 
-      return response.json();
+      return response.json() as Promise<WishlistItemResponse>;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["wishlist", item.wishlistId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["items"],
-      });
+    onMutate: async (data) => {
+      // Get the current item from cache
+      const currentItem = getItem(item.id);
+
+      if (currentItem) {
+        // Optimistically update cache with new values
+        updateItemCache({
+          ...currentItem,
+          ...data,
+          // Handle price conversion from number to Decimal
+          price:
+            data.price !== undefined
+              ? data.price !== null
+                ? new Prisma.Decimal(data.price)
+                : null
+              : currentItem.price,
+        });
+      }
+
+      // Return snapshot for potential rollback
+      return { previousItem: currentItem };
+    },
+    onSuccess: (updatedItem) => {
+      // Update cache with actual server response
+      updateItemCache(updatedItem);
       toast.success("Item updated successfully");
       onClose();
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousItem) {
+        updateItemCache(context.previousItem);
+      }
       toast.error(error.message || "Failed to update item");
     },
   });
@@ -79,6 +104,7 @@ export function EditItemModal({ isOpen, onClose, item }: EditItemModalProps) {
       <ItemForm
         initialData={initialData}
         busy={updateItemMutation.isPending}
+        onCancel={onClose}
         onSubmit={handleSubmit}
       />
     </Modal>

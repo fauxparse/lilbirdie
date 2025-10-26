@@ -96,7 +96,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     // Emit real-time event for wishlist item updated
     await PartyKitEventEmitter.emitToWishlist(updatedItem.wishlistId, "wishlist:item:updated", {
-      itemId: updatedItem.id,
+      item: updatedItem,
       wishlistId: updatedItem.wishlistId,
     });
 

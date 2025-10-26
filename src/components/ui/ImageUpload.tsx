@@ -4,6 +4,7 @@ import { Image as ImageIcon, Loader2, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { cn } from "@/lib/utils";
+import { Button } from "./Button";
 
 interface ImageUploadProps {
   value?: string | null;
@@ -403,13 +404,30 @@ export function ImageUpload({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => !disabled && !isProcessing && fileInputRef.current?.click()}
+          onClick={(e) => e.currentTarget.focus()}
         >
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
             <ImageIcon className="h-8 w-8" />
-            <div className="text-center">
+            <div className="flex flex-col items-center gap-2 text-center">
               <p className="text-sm font-medium">Drop an image here</p>
-              <p className="text-xs">or click to browse</p>
+              <div className="relative">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileInputChange}
+                  className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
+                  disabled={disabled || isProcessing}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="small"
+                  onClick={() => !disabled && !isProcessing && fileInputRef.current?.click()}
+                >
+                  Browse files
+                </Button>
+              </div>
             </div>
             <p className="text-xs text-muted-foreground/75">
               PNG, JPEG, WebP, GIF - any size (auto-resized)
@@ -418,14 +436,6 @@ export function ImageUpload({
               Focus and paste image or URL (Ctrl+V)
             </p>
           </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileInputChange}
-            className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
-            disabled={disabled || isProcessing}
-          />
         </button>
       )}
     </div>

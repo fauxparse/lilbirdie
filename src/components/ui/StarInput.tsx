@@ -48,7 +48,8 @@ export const StarInput: React.FC<StarInputProps> = ({
               if (e.currentTarget.checked) onChange(index + 1);
             }}
             onClick={(e) => {
-              if (e.currentTarget.checked) {
+              // If clicking on already selected star, deselect it
+              if (value === index + 1) {
                 e.preventDefault();
                 e.stopPropagation();
                 onChange(0);

@@ -12,6 +12,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMounted } from "@/hooks/useIsMounted";
 import { cn } from "@/lib/utils";
 
 const SIDEBAR_STORAGE_KEY = "sidebar_state";
@@ -663,10 +664,15 @@ export const SidebarMenuSkeleton = React.forwardRef<
     showIcon?: boolean;
   }
 >(({ className, showIcon = false, ...props }, ref) => {
-  // Random width between 50 to 90%.
+  const isMounted = useIsMounted();
+
+  // Random width between 50 to 90%, but only after mounting to avoid hydration mismatch
   const width = React.useMemo(() => {
+    if (!isMounted) {
+      return "75%"; // Fixed width during SSR
+    }
     return `${Math.floor(Math.random() * 40) + 50}%`;
-  }, []);
+  }, [isMounted]);
 
   return (
     <div

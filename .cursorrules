@@ -40,6 +40,8 @@
 - **CLEAN UP AFTER YOURSELF**: Fix ALL TypeScript errors you introduce, even if they seem unrelated
 - Never claim errors are "not related to your changes" - if they weren't there before, you caused them
 - Run full TypeScript check (`tsc --noEmit`) after making changes to ensure no new errors
+- Never propose or accept `as any` or `as unknown` as a fix for a type/linting error
+- Never propose or accept an ignore comment as a fix for a type/linting error
 
 ### 6. File Search Best Practices
 

@@ -8,11 +8,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useFriendRequests, useHandleFriendRequest } from "@/hooks/useFriends";
 
-export function FriendRequests() {
+interface FriendRequestsProps {
+  initialData?: Array<{
+    id: string;
+    createdAt: string;
+    requester: {
+      id: string;
+      name: string;
+      email: string;
+      image?: string;
+    };
+  }>;
+}
+
+export function FriendRequests({ initialData }: FriendRequestsProps) {
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   // React Query hooks
-  const { data: friendRequests, isLoading: loading } = useFriendRequests();
+  const { data: friendRequests, isLoading: loading } = useFriendRequests(initialData);
   const handleFriendRequestMutation = useHandleFriendRequest();
 
   const handleRequest = (requestId: string, action: "accept" | "ignore") => {

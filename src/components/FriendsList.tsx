@@ -9,7 +9,16 @@ import { ConfirmModal } from "@/components/ui/Modal";
 import { UserAvatar } from "@/components/ui/UserAvatar";
 import { useFriends, useRemoveFriend } from "@/hooks/useFriends";
 
-export function FriendsList() {
+interface FriendsListProps {
+  initialData?: Array<{
+    id: string;
+    name: string;
+    email: string;
+    image?: string;
+  }>;
+}
+
+export function FriendsList({ initialData }: FriendsListProps) {
   // Add friend dialog state
   const [showAddDialog, setShowAddDialog] = useState(false);
 
@@ -17,7 +26,7 @@ export function FriendsList() {
   const [friendToRemove, setFriendToRemove] = useState<{ id: string; name: string } | null>(null);
 
   // React Query hooks
-  const { data: friends, isLoading: loading } = useFriends();
+  const { data: friends, isLoading: loading } = useFriends(initialData);
   const removeFriendMutation = useRemoveFriend();
 
   const handleRemoveFriend = (friend: { id: string; name: string }) => {

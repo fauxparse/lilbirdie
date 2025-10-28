@@ -4,18 +4,17 @@ import { useAuth } from "@/components/AuthProvider";
 export interface Friend {
   id: string;
   name: string;
-  image: string | null;
+  image?: string;
 }
 
 export interface FriendRequest {
   id: string;
-  email: string;
   createdAt: string;
   requester: {
     id: string;
-    name: string | null;
+    name: string;
     email: string;
-    image: string | null;
+    image?: string;
   };
 }
 
@@ -26,7 +25,7 @@ export interface UserSearchResult {
   friendshipStatus: "none" | "friends" | "pending_sent" | "pending_received";
 }
 
-export function useFriends() {
+export function useFriends(initialData?: Friend[]) {
   const { user, isLoading: isAuthLoading } = useAuth();
 
   return useQuery({
@@ -42,12 +41,13 @@ export function useFriends() {
       return response.json();
     },
     enabled: !isAuthLoading && !!user,
+    initialData,
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,
   });
 }
 
-export function useFriendRequests() {
+export function useFriendRequests(initialData?: FriendRequest[]) {
   const { user, isLoading: isAuthLoading } = useAuth();
 
   return useQuery({
@@ -63,6 +63,7 @@ export function useFriendRequests() {
       return response.json();
     },
     enabled: !isAuthLoading && !!user,
+    initialData,
     staleTime: 30 * 1000, // 30 seconds for more frequent updates
     retry: 1,
   });

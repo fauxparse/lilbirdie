@@ -13,9 +13,10 @@ import type {
   WishlistResponse,
   WishlistWithItems,
 } from "@/types";
+import type { SerializedWishlist } from "@/types/serialized";
 
 interface WishlistContextValue {
-  wishlist: WishlistResponse | undefined;
+  wishlist: SerializedWishlist | undefined;
   isLoading: boolean;
   isOwner: boolean;
   error: Error | null;
@@ -44,9 +45,10 @@ export function useWishlist() {
 interface WishlistProviderProps {
   children: ReactNode;
   permalink: string;
+  initialData?: SerializedWishlist | null;
 }
 
-export function WishlistProvider({ children, permalink }: WishlistProviderProps) {
+export function WishlistProvider({ children, permalink, initialData }: WishlistProviderProps) {
   const queryClient = useQueryClient();
 
   const { user } = useAuth();
@@ -56,7 +58,7 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
     isLoading,
     error,
     refetch,
-  } = useQuery<WishlistResponse>({
+  } = useQuery<SerializedWishlist>({
     queryKey: ["wishlist", permalink],
     queryFn: async () => {
       const response = await fetch(`/api/w/${permalink}`);
@@ -68,6 +70,8 @@ export function WishlistProvider({ children, permalink }: WishlistProviderProps)
       }
       return response.json();
     },
+    initialData: initialData || undefined,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Populate individual item cache entries when wishlist data is available

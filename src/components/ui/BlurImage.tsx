@@ -20,7 +20,36 @@ export function BlurImage({ src, blurhash, alt, className, width, height }: Blur
   useEffect(() => {
     setImageSrc(src);
     setImageLoaded(false);
+
+    // Check if image is already loaded (for SSR cases)
+    const img = new Image();
+    img.onload = () => setImageLoaded(true);
+    img.onerror = () => setImageLoaded(true);
+    img.src = src;
+
+    // If the image is already cached and loaded
+    if (img.complete) {
+      setImageLoaded(true);
+    }
+
+    // Fallback: check after a short delay in case the image loads very quickly
+    const timeout = setTimeout(() => {
+      if (img.complete && img.naturalWidth > 0) {
+        setImageLoaded(true);
+      }
+    }, 100);
+
+    return () => clearTimeout(timeout);
   }, [src]);
+
+  // Handle image load events
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+
+  const handleImageError = () => {
+    setImageLoaded(true);
+  };
 
   return (
     <div className={cn("relative overflow-hidden", className)} style={{ width, height }}>
@@ -42,11 +71,8 @@ export function BlurImage({ src, blurhash, alt, className, width, height }: Blur
           "block w-full h-full object-cover transition-opacity duration-300",
           imageLoaded ? "opacity-100" : "opacity-0"
         )}
-        onLoad={() => setImageLoaded(true)}
-        onError={() => {
-          // Fallback to showing without blurhash if image fails to load
-          setImageLoaded(true);
-        }}
+        onLoad={handleImageLoad}
+        onError={handleImageError}
       />
     </div>
   );

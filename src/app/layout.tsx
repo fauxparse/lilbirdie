@@ -25,7 +25,13 @@ export const metadata: Metadata = {
   description: "A modern wishlist app for sharing your wishes and coordinating gifts with friends.",
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({
+  children,
+  modal,
+}: {
+  children: React.ReactNode;
+  modal: React.ReactNode;
+}) {
   // Get the user's theme preference server-side
   const serverTheme = await getServerTheme();
   const resolvedTheme = resolveTheme(serverTheme);
@@ -49,6 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <ModalProvider>
                     <AppHeader />
                     {children}
+                    {modal}
                     <RealTimeManager />
                   </ModalProvider>
                 </MotionProvider>

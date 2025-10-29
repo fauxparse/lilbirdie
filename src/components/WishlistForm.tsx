@@ -146,7 +146,7 @@ export function WishlistForm({
             <Button type="submit" disabled={!title.trim() || isSubmitting} className="flex-1">
               {isSubmitting ? submittingLabel : submitLabel || defaultSubmitLabel}
             </Button>
-            <Button type="button" variant="outline" asChild onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onCancel}>
               Cancel
             </Button>
           </div>

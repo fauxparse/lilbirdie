@@ -185,7 +185,7 @@ describe("PUT /api/items/[id]", () => {
       "wishlist-1",
       "wishlist:item:updated",
       {
-        itemId: "item-1",
+        item: mockUpdatedItem,
         wishlistId: "wishlist-1",
       }
     );

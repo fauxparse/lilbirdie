@@ -1,9 +1,9 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { server } from "../../../test/mocks/server";
-import { UrlScrapingService } from "../UrlScrapingService";
+import { UrlScrapingService } from "@/lib/services/UrlScrapingService";
+import { server } from "@/test/mocks/server";
 
 // Mock BlurhashService
-vi.mock("../BlurhashService", () => ({
+vi.mock("@/lib/services/BlurhashService", () => ({
   BlurhashService: {
     getInstance: vi.fn(() => ({
       generateBlurhash: vi.fn().mockResolvedValue("LEHV6nWB2yk8pyo0adR*.7kCMdnj"),

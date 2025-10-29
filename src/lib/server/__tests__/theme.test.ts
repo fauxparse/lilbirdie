@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ProfileService } from "../../services/ProfileService";
-import { getServerTheme, resolveTheme } from "../theme";
+import { getServerTheme, resolveTheme } from "@/lib/server/theme";
+import { ProfileService } from "@/lib/services/ProfileService";
 
 // Mock the ProfileService
-vi.mock("../../services/ProfileService");
-vi.mock("../auth", () => ({
+vi.mock("@/lib/services/ProfileService");
+vi.mock("@/lib/server/auth", () => ({
   getServerSession: vi.fn(),
 }));
 
@@ -16,7 +16,7 @@ describe("getServerTheme", () => {
   });
 
   it("should return 'system' when no session", async () => {
-    const { getServerSession } = await import("../auth");
+    const { getServerSession } = await import("@/lib/server/auth");
     vi.mocked(getServerSession).mockResolvedValue(null);
 
     const result = await getServerTheme();
@@ -24,7 +24,7 @@ describe("getServerTheme", () => {
   });
 
   it("should return 'system' when user has no profile", async () => {
-    const { getServerSession } = await import("../auth");
+    const { getServerSession } = await import("@/lib/server/auth");
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } });
     mockProfileService.getInstance.mockReturnValue({
       getProfile: vi.fn().mockResolvedValue(null),
@@ -35,7 +35,7 @@ describe("getServerTheme", () => {
   });
 
   it("should return user's theme from profile", async () => {
-    const { getServerSession } = await import("../auth");
+    const { getServerSession } = await import("@/lib/server/auth");
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } });
     mockProfileService.getInstance.mockReturnValue({
       getProfile: vi.fn().mockResolvedValue({ theme: "dark" }),
@@ -46,7 +46,7 @@ describe("getServerTheme", () => {
   });
 
   it("should return 'system' for invalid theme values", async () => {
-    const { getServerSession } = await import("../auth");
+    const { getServerSession } = await import("@/lib/server/auth");
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } });
     mockProfileService.getInstance.mockReturnValue({
       getProfile: vi.fn().mockResolvedValue({ theme: "invalid" }),
@@ -57,11 +57,13 @@ describe("getServerTheme", () => {
   });
 
   it("should return 'system' on error", async () => {
-    const { getServerSession } = await import("../auth");
+    const { getServerSession } = await import("@/lib/server/auth");
     vi.mocked(getServerSession).mockRejectedValue(new Error("Database error"));
 
-    const result = await getServerTheme();
-    expect(result).toBe("system");
+    await expect(async () => {
+      const result = await getServerTheme();
+      expect(result).toBe("system");
+    }).toLogError(/Database error/);
   });
 });
 

@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterAll, beforeAll, beforeEach, vi } from "vitest";
-import { server } from "../../test/mocks/server";
-import { useWishlist, WishlistProvider } from "../WishlistContext";
+import { useWishlist, WishlistProvider } from "@/contexts/WishlistContext";
+import { server } from "@/test/mocks/server";
 
 // Mock fetch globally
 const mockFetch = vi.fn();

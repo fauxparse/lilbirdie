@@ -201,10 +201,12 @@ export async function POST(request: NextRequest) {
 
 #### Test Utilities
 
+- Tests are run with `pnpm test:run`
 - Create reusable test utilities and helpers
 - Use `@testing-library/user-event` for user interactions
 - Mock WebSocket connections for real-time features
 - Create test data factories for consistent test data
+- Always hide expected stderr output from test output. I should only see console errors when something unexpected happens.
 
 ### 8. README-First Workflow
 

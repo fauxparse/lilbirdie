@@ -15,19 +15,19 @@ interface DashboardLayoutClientProps {
 const tabs = [
   {
     name: "My Lists",
-    href: "/dashboard" as const,
+    href: "/wishlists" as const,
     icon: Heart,
     description: "Your wishlists and items",
   },
   {
     name: "Friends",
-    href: "/dashboard/friends" as const,
+    href: "/friends" as const,
     icon: Users,
     description: "Manage friends and requests",
   },
   {
     name: "Coming Up",
-    href: "/dashboard/upcoming" as const,
+    href: "/upcoming" as const,
     icon: Calendar,
     description: "Upcoming gift occasions",
   },
@@ -79,7 +79,7 @@ export function DashboardLayoutClient({ children, user }: DashboardLayoutClientP
     setTargetTab(href);
     setIsNavigating(true);
     startTransition(() => {
-      router.push(href as "/dashboard" | "/dashboard/friends" | "/dashboard/upcoming");
+      router.push(href as "/wishlists" | "/friends" | "/upcoming");
       // Reset loading state after a short delay to allow for smooth transition
       setTimeout(() => {
         setIsNavigating(false);
@@ -91,9 +91,9 @@ export function DashboardLayoutClient({ children, user }: DashboardLayoutClientP
   const renderSkeleton = () => {
     if (!targetTab) return <TabSkeleton />;
 
-    if (targetTab === "/dashboard/friends") {
+    if (targetTab === "/friends") {
       return <FriendsSkeleton />;
-    } else if (targetTab === "/dashboard/upcoming") {
+    } else if (targetTab === "/upcoming") {
       return <UpcomingSkeleton />;
     } else {
       return <TabSkeleton />;

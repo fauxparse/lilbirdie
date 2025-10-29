@@ -142,14 +142,25 @@ describe("useWishlistRealtime", () => {
       ([event]) => event === "wishlist:item:updated"
     )?.[1];
 
-    updatedHandler?.({ itemId: "item-1", wishlistId: "wishlist-1" });
+    const mockItem = {
+      id: "item-1",
+      name: "Updated Item",
+      description: null,
+      url: null,
+      imageUrl: null,
+      price: null,
+      currency: "USD",
+      priority: 0,
+      tags: [],
+      wishlistId: "wishlist-1",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      claims: [],
+    };
 
-    expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["wishlist"],
-    });
-    expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["item", "item-1"],
-    });
+    updatedHandler?.({ item: mockItem, wishlistId: "wishlist-1" });
+
+    expect(mockQueryClient.setQueryData).toHaveBeenCalledWith(["item", "item-1"], mockItem);
   });
 
   it("should handle wishlist:item:deleted event", async () => {

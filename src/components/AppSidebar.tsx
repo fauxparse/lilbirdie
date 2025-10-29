@@ -71,7 +71,7 @@ export function AppSidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link href="/dashboard">
+                <Link href="/wishlists">
                   <LayoutDashboard className="h-4 w-4" />
                   <span>Dashboard</span>
                 </Link>
@@ -129,7 +129,7 @@ export function AppSidebar() {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
-                <Link href="/dashboard/friends">
+                <Link href="/friends">
                   <Users className="h-4 w-4" />
                   <span>Manage Friends</span>
                 </Link>

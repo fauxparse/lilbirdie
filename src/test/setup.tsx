@@ -2,6 +2,7 @@ import "@testing-library/jest-dom";
 import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, expect, vi } from "vitest";
 import { server } from "./mocks/server";
+import "./matchers"; // Import custom matchers
 
 // Extend Vitest's expect with jest-dom matchers
 expect.extend({});

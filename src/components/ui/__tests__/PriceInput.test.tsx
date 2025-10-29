@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "../../../test/utils";
-import { PriceInput } from "../PriceInput";
+import { PriceInput } from "@/components/ui/PriceInput";
+import { fireEvent, render, screen } from "@/test/utils";
 
 describe("PriceInput", () => {
   it("renders with null value as empty string", () => {

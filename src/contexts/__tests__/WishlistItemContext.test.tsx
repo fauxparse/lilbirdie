@@ -2,9 +2,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterAll, beforeAll, beforeEach, vi } from "vitest";
-import { server } from "../../test/mocks/server";
-import { WishlistProvider } from "../WishlistContext";
-import { useWishlistItem, WishlistItemProvider } from "../WishlistItemContext";
+import { WishlistProvider } from "@/contexts/WishlistContext";
+import { useWishlistItem, WishlistItemProvider } from "@/contexts/WishlistItemContext";
+import { server } from "@/test/mocks/server";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -70,7 +70,7 @@ function renderWithProviders(permalink: string, itemId: string) {
     items: [mockItem],
   };
 
-  queryClient.setQueryData(["public-wishlist", permalink], mockWishlist);
+  queryClient.setQueryData(["wishlist", permalink], mockWishlist);
 
   return render(
     <QueryClientProvider client={queryClient}>

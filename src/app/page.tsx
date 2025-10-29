@@ -13,7 +13,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace("/dashboard");
+      router.replace("/wishlists");
     }
   }, [user, isLoading, router]);
 

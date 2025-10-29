@@ -1,6 +1,6 @@
 import { HttpResponse, http } from "msw";
-import type { CreateWishlistItemData, UpdateWishlistItemData } from "../../types";
-import { mockUser, mockWishlist, mockWishlistItem } from "../utils";
+import { mockUser, mockWishlist, mockWishlistItem } from "@/test/utils";
+import type { CreateWishlistItemData, UpdateWishlistItemData } from "@/types";
 
 // Request body types for mock handlers
 interface CreateWishlistData {

@@ -139,9 +139,8 @@ When you use `router.push('/your-feature/new')` or a Link component:
 
 ### Direct URL Access
 When someone visits `/your-feature/new` directly:
-- The original `new/page.tsx` is shown as a full page
-- No modal, just the normal page content
-- Can still navigate back to the list
+- By default, the original `new/page.tsx` is shown as a full page (not the modal)
+- To always show the modal even on direct access, use the redirect pattern (see below)
 
 ## Example: Wishlist Creation Modal
 
@@ -207,6 +206,77 @@ export default function NewWishlistModal() {
   );
 }
 ```
+
+## Always Show Modal (Even on Direct URL Access)
+
+If you want the modal to **always** appear, even when someone directly visits the URL, use this query parameter pattern:
+
+**Step 1: Update the action route (your-feature/new/page.tsx):**
+```tsx
+import { redirect } from "next/navigation";
+import { getServerSession } from "@/lib/server/auth";
+
+/**
+ * This page redirects to /your-feature with a query parameter.
+ * The your-feature page will detect the parameter and open the modal.
+ * This ensures the base page loads first, then the modal opens on top.
+ */
+export default async function NewFeaturePage() {
+  const session = await getServerSession();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  // Redirect to base page with query param to trigger modal
+  redirect("/your-feature?openModal=new");
+}
+```
+
+**Step 2: Update the base page client component (YourFeatureClient.tsx):**
+```tsx
+"use client";
+
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+
+export function YourFeatureClient({ initialData }: YourFeatureClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check if we should open a modal based on query param
+  useEffect(() => {
+    const openModal = searchParams.get("openModal");
+    if (openModal === "new") {
+      // Clear the query param and navigate to the modal route
+      router.replace("/your-feature");
+      setTimeout(() => {
+        router.push("/your-feature/new");
+      }, 50);
+    }
+  }, [searchParams, router]);
+
+  // ... rest of your component
+}
+```
+
+**How it works:**
+1. User visits `/your-feature/new` directly or refreshes the page
+2. Server checks authentication
+3. If not authenticated, server redirects to `/login`
+4. If authenticated, server redirects to `/your-feature?openModal=new`
+5. Base page loads with all its data and renders
+6. Client component detects the `openModal=new` query param
+7. Client clears the query param and navigates to `/your-feature/new`
+8. This navigation triggers the intercepting route, showing the modal over the loaded page
+
+**Benefits:**
+- ✅ Modal always shows, regardless of how the user accessed the URL
+- ✅ Base page fully loads before modal opens (no empty background)
+- ✅ Server-side auth check prevents race conditions on page refresh
+- ✅ Back button works correctly (goes to `/your-feature`)
+- ✅ Clean URL (query param is removed)
+- ✅ Simple and maintainable
 
 ## Common Patterns
 

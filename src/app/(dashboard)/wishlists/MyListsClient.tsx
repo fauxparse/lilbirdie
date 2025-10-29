@@ -2,6 +2,8 @@
 
 import { Gift, Heart, Plus } from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { BlurImage } from "@/components/ui/BlurImage";
 import { Button } from "@/components/ui/Button";
 import { PrivacyBadge } from "@/components/ui/PrivacyBadge";
@@ -14,6 +16,20 @@ interface MyListsClientProps {
 
 export function MyListsClient({ initialData }: MyListsClientProps) {
   const dashboardData = initialData;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check if we should open the new wishlist modal
+  useEffect(() => {
+    const openModal = searchParams.get("openModal");
+    if (openModal === "new") {
+      // Clear the query param and navigate to the modal route
+      router.replace("/wishlists");
+      setTimeout(() => {
+        router.push("/wishlists/new");
+      }, 50);
+    }
+  }, [searchParams, router]);
 
   const { wishlists } = dashboardData;
 

@@ -59,10 +59,11 @@
    * ============================================================================= */
 
   /* Base Colors */
-  --color-background: var(--color-white);
+  --color-background: var(--color-neutral-50);
+  --color-background-hover: var(--color-white);
   --color-foreground: var(--color-slate-900);
   --color-muted: var(--color-slate-100);
-  --color-muted-foreground: var(--color-slate-600);
+  --color-muted-foreground: var(--color-slate-500);
   --color-subtle: var(--color-slate-50);
   --color-border: var(--color-slate-300);
   --color-input: var(--color-slate-300);
@@ -136,6 +137,7 @@
 .dark {
   /* Base Colors - Dark Mode */
   --color-background: var(--color-slate-800);
+  --color-background-hover: var(--color-slate-900);
   --color-foreground: var(--color-slate-50);
   --color-muted: var(--color-slate-700);
   --color-muted-foreground: var(--color-slate-400);
@@ -208,70 +210,6 @@ body {
   }
 }
 
-/* Container Query Support */
-@layer utilities {
-  .container-type-size {
-    container-type: size;
-  }
-
-  .container-type-inline-size {
-    container-type: inline-size;
-  }
-
-  /* Container query breakpoints */
-  @container (min-width: 320px) {
-    .cq-xs\:grid-cols-1 {
-      grid-template-columns: repeat(1, minmax(0, 1fr));
-    }
-  }
-
-  @container (min-width: 480px) {
-    .cq-sm\:grid-cols-2 {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @container (min-width: 640px) {
-    .cq-md\:grid-cols-2 {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .cq-md\:grid-cols-3 {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  @container (min-width: 768px) {
-    .cq-lg\:grid-cols-2 {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .cq-lg\:grid-cols-3 {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    .cq-lg\:grid-cols-4 {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-
-  @container (min-width: 1024px) {
-    .cq-xl\:grid-cols-3 {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-    .cq-xl\:grid-cols-4 {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-
-  /* Container query col-span utilities */
-  @container (min-width: 768px) {
-    .cq-lg\:col-span-2 {
-      grid-column: span 2 / span 2;
-    }
-    .cq-lg\:col-span-3 {
-      grid-column: span 3 / span 3;
-    }
-  }
-}
-
 .squircle {
-  clip-path: url(#squircle);
+  corner-shape: squircle;
 }

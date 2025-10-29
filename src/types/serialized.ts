@@ -64,6 +64,12 @@ export interface SerializedWishlistSummary {
   _count: {
     items: number;
   };
+  items?: Array<{
+    id: string;
+    name: string;
+    imageUrl?: string;
+    imageBlurhash?: string;
+  }>;
 }
 
 export interface SerializedUser {

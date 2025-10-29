@@ -27,7 +27,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
   const currentUserId = session.user.id;
 
-  // Get user's wishlists
+  // Get user's wishlists with first 4 items for preview
   const wishlists = await prisma.wishlist.findMany({
     where: {
       ownerId: currentUserId,
@@ -43,6 +43,21 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       _count: {
         select: {
           items: true,
+        },
+      },
+      items: {
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+          imageUrl: true,
+          blurhash: true,
+        },
+        take: 4,
+        orderBy: {
+          createdAt: "desc",
         },
       },
     },
@@ -217,6 +232,12 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       isDefault: wishlist.isDefault,
       createdAt: wishlist.createdAt.toISOString(),
       _count: wishlist._count,
+      items: wishlist.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        imageUrl: item.imageUrl || undefined,
+        imageBlurhash: item.blurhash || undefined,
+      })),
     })),
     upcomingGifts: upcomingGifts.map((gift) => ({
       ...gift,

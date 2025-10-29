@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Toaster } from "sonner";
-import { AppHeader } from "@/components/AppHeader";
-import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider } from "@/components/AuthProvider";
 import { MotionProvider } from "@/components/MotionProvider";
 import { QueryProvider } from "@/components/QueryProvider";
 import { RealTimeManager } from "@/components/RealTimeManager";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ModalProvider } from "@/components/ui/Modal";
-import { SidebarInset, SidebarProvider } from "@/components/ui/Sidebar";
 import { SocketProvider } from "@/contexts/SocketContext";
+import { getServerTheme, resolveTheme } from "@/lib/server/theme";
 
 import "./globals.css";
+import { AppHeader } from "@/components/AppHeader";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -26,42 +25,30 @@ export const metadata: Metadata = {
   description: "A modern wishlist app for sharing your wishes and coordinating gifts with friends.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Get the user's theme preference server-side
+  const serverTheme = await getServerTheme();
+  const resolvedTheme = resolveTheme(serverTheme);
+
+  // Apply theme class to html element
+  const themeClass = resolvedTheme === "dark" ? "dark" : resolvedTheme === "light" ? "" : "";
+
   return (
-    <html lang="en" className={geist.className} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${geist.className} ${themeClass}`}
+      suppressHydrationWarning
+      data-theme={serverTheme}
+    >
       <body suppressHydrationWarning>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 1 1"
-          className="h-0 w-0 absolute top-0 left-0 -m-1"
-        >
-          <defs>
-            <clipPath id="squircle" clipPathUnits="objectBoundingBox">
-              <path
-                d="M 0,0.5
-                   C 0,0.0575  0.0575,0  0.5,0
-                     0.9425,0  1,0.0575  1,0.5
-                     1,0.9425  0.9425,1  0.5,1
-                     0.0575,1  0,0.9425  0,0.5"
-              />
-            </clipPath>
-          </defs>
-        </svg>
         <QueryProvider>
           <AuthProvider>
             <SocketProvider>
-              <ThemeProvider>
+              <ThemeProvider serverTheme={serverTheme}>
                 <MotionProvider>
                   <ModalProvider>
-                    <SidebarProvider defaultOpen={false}>
-                      <AppSidebar />
-                      <SidebarInset>
-                        <AppHeader />
-                        <main className="flex flex-col flex-1 items-center w-full p-4 bg-background text-foreground">
-                          {children}
-                        </main>
-                      </SidebarInset>
-                    </SidebarProvider>
+                    <AppHeader />
+                    {children}
                     <RealTimeManager />
                   </ModalProvider>
                 </MotionProvider>

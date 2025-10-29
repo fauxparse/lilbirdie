@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "dev:party": "partykit dev",
     "build": "dotenv -e .env.local -- prisma migrate deploy && dotenv -e .env.local -- prisma generate && next build",
     "build:party": "partykit build",

@@ -313,7 +313,7 @@ function WishlistPageInner() {
                 <>
                   <BreadcrumbItem>
                     <BreadcrumbLink asChild>
-                      <Link href="/friends">Friends</Link>
+                      <Link href="/dashboard/friends">Friends</Link>
                     </BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />

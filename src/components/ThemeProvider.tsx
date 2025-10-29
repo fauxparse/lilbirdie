@@ -26,10 +26,11 @@ export function useTheme() {
 
 interface ThemeProviderProps {
   children: React.ReactNode;
+  serverTheme?: Theme;
 }
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>("system");
+export function ThemeProvider({ children, serverTheme }: ThemeProviderProps) {
+  const [theme, setThemeState] = useState<Theme>(serverTheme || "system");
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
   const mounted = useIsMounted();
   const [pendingTheme, setPendingTheme] = useState<Theme | null>(null);
@@ -85,6 +86,25 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       return;
     }
 
+    // If we have a server theme, use it and don't override unless user changes it
+    if (serverTheme) {
+      // Only update if the profile theme is different from server theme
+      if (user && profile?.theme && profile.theme !== serverTheme) {
+        setThemeState(profile.theme as Theme);
+        updateResolvedTheme(profile.theme as Theme);
+      } else if (!user) {
+        // For non-authenticated users, check localStorage
+        const storedTheme =
+          typeof window !== "undefined" ? (localStorage.getItem("theme") as Theme | null) : null;
+        if (storedTheme && storedTheme !== serverTheme) {
+          setThemeState(storedTheme);
+          updateResolvedTheme(storedTheme);
+        }
+      }
+      return;
+    }
+
+    // Fallback logic when no server theme is provided
     let initialTheme: Theme;
 
     if (user && profile?.theme && ["light", "dark", "system"].includes(profile.theme)) {
@@ -102,7 +122,21 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
     setThemeState(initialTheme);
     updateResolvedTheme(initialTheme);
-  }, [mounted, user, profile, isAuthLoading, isProfileLoading, updateResolvedTheme]);
+  }, [mounted, user, profile, isAuthLoading, isProfileLoading, updateResolvedTheme, serverTheme]);
+
+  // Initialize resolved theme from server theme on mount
+  useEffect(() => {
+    if (mounted && serverTheme) {
+      if (serverTheme === "system") {
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+        setResolvedTheme(systemTheme);
+      } else {
+        setResolvedTheme(serverTheme);
+      }
+    }
+  }, [mounted, serverTheme]);
 
   // Apply theme to DOM when mounted state changes
   useEffect(() => {

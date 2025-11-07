@@ -1,5 +1,5 @@
 import { $Enums } from "@prisma/client";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, LucideIcon, Users } from "lucide-react";
 import { forwardRef } from "react";
 import { Badge, BadgeProps } from "./Badge";
 import {
@@ -18,10 +18,22 @@ interface PrivacyBadgeProps extends Omit<ReadOnlyPrivacyBadgeProps, "onChange"> 
   onChange?: (privacy: $Enums.WishlistPrivacy) => void;
 }
 
-const privacyLabels: Record<$Enums.WishlistPrivacy, string> = {
+export const privacyLabels: Record<$Enums.WishlistPrivacy, string> = {
   PUBLIC: "Public",
   FRIENDS_ONLY: "Friends only",
   PRIVATE: "Private",
+} as const;
+
+export const privacyDescriptions: Record<$Enums.WishlistPrivacy, string> = {
+  PUBLIC: "Anyone with the link",
+  FRIENDS_ONLY: "Only your friends",
+  PRIVATE: "Only you",
+} as const;
+
+export const privacyIcons: Record<$Enums.WishlistPrivacy, LucideIcon> = {
+  PUBLIC: Eye,
+  FRIENDS_ONLY: Users,
+  PRIVATE: EyeOff,
 } as const;
 
 const ReadOnlyPrivacyBadge = forwardRef<HTMLDivElement, ReadOnlyPrivacyBadgeProps>(

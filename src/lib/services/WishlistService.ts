@@ -1,13 +1,24 @@
-import { WishlistPrivacy } from "@prisma/client";
-import { ClaimWithUser, WishlistWithItems } from "@/types";
+import type { OccasionType, WishlistPrivacy } from "@prisma/client";
+import type { ClaimWithUser, WishlistWithItems } from "@/types";
 import { prisma } from "../db";
+import { OccasionService } from "./OccasionService";
 import { PrivacyService } from "./PrivacyService";
+
+export interface OccasionData {
+  id?: string;
+  type?: OccasionType;
+  date?: string;
+  title?: string;
+  isRecurring?: boolean;
+  startYear?: number;
+}
 
 export interface CreateWishlistData {
   title: string;
   description?: string;
   privacy: WishlistPrivacy;
   isDefault?: boolean;
+  occasions?: OccasionData[];
 }
 
 export interface UpdateWishlistData {
@@ -15,12 +26,14 @@ export interface UpdateWishlistData {
   description?: string;
   privacy?: WishlistPrivacy;
   isDefault?: boolean;
+  occasions?: OccasionData[];
 }
 
 export class WishlistService {
   private static instance: WishlistService | undefined;
 
   private privacyService = PrivacyService.getInstance();
+  private occasionService = OccasionService.getInstance();
 
   private constructor() {}
 
@@ -184,9 +197,12 @@ export class WishlistService {
       });
     }
 
-    return await prisma.wishlist.create({
+    const wishlist = await prisma.wishlist.create({
       data: {
-        ...data,
+        title: data.title,
+        description: data.description,
+        privacy: data.privacy,
+        isDefault: data.isDefault,
         permalink,
         ownerId: userId,
       },
@@ -200,6 +216,13 @@ export class WishlistService {
         },
       },
     });
+
+    // Create associated occasions if provided
+    if (data.occasions && data.occasions.length > 0) {
+      await this.syncWishlistOccasions(userId, wishlist.id, data.occasions);
+    }
+
+    return wishlist;
   }
 
   async updateWishlist(wishlistId: string, userId: string, data: Partial<UpdateWishlistData>) {
@@ -220,9 +243,14 @@ export class WishlistService {
       });
     }
 
-    return await prisma.wishlist.update({
+    const updatedWishlist = await prisma.wishlist.update({
       where: { id: wishlistId },
-      data,
+      data: {
+        title: data.title,
+        description: data.description,
+        privacy: data.privacy,
+        isDefault: data.isDefault,
+      },
       include: {
         items: {
           where: { isDeleted: false },
@@ -233,6 +261,13 @@ export class WishlistService {
         },
       },
     });
+
+    // Handle occasions update/creation/deletion
+    if (data.occasions !== undefined) {
+      await this.syncWishlistOccasions(userId, wishlistId, data.occasions);
+    }
+
+    return updatedWishlist;
   }
 
   async deleteWishlist(wishlistId: string, userId: string) {
@@ -343,9 +378,115 @@ export class WishlistService {
       throw new Error("Deleted wishlist not found");
     }
 
+    // Remove associated occasions
+    await this.removeAllOccasionAssociations(wishlistId);
+
     // Permanently delete the wishlist and all its items
     return await prisma.wishlist.delete({
       where: { id: wishlistId },
+    });
+  }
+
+  /**
+   * Get all occasions associated with a wishlist
+   */
+  async getWishlistOccasions(wishlistId: string) {
+    return await prisma.occasion.findMany({
+      where: {
+        entityType: "WISHLIST",
+        entityId: wishlistId,
+        isDeleted: false,
+      },
+      orderBy: { date: "asc" },
+    });
+  }
+
+  /**
+   * Sync occasions for a wishlist
+   * - Creates new occasions
+   * - Updates existing occasions
+   * - Removes occasions not in the new list
+   */
+  private async syncWishlistOccasions(
+    userId: string,
+    wishlistId: string,
+    newOccasions: OccasionData[]
+  ) {
+    // Get existing occasions for this wishlist
+    const existingOccasions = await this.getWishlistOccasions(wishlistId);
+
+    // Track which existing occasions to keep
+    const existingOccasionIds = new Set<string>();
+
+    // Create or update occasions
+    for (const occasionData of newOccasions) {
+      // Skip invalid occasions
+      if (!occasionData.type) {
+        continue;
+      }
+
+      // Auto-set dates for fixed holidays
+      let occasionDate = occasionData.date;
+      if (occasionData.type === "CHRISTMAS" && !occasionDate) {
+        const currentYear = new Date().getFullYear();
+        occasionDate = `${currentYear}-12-25`;
+      } else if (occasionData.type === "VALENTINES_DAY" && !occasionDate) {
+        const currentYear = new Date().getFullYear();
+        occasionDate = `${currentYear}-02-14`;
+      }
+
+      if (!occasionDate) {
+        continue; // Skip if no date provided and not a fixed holiday
+      }
+
+      const parsedDate = new Date(occasionDate);
+      if (Number.isNaN(parsedDate.getTime())) {
+        throw new Error("Invalid occasion date");
+      }
+
+      const occasionPayload = {
+        title: occasionData.title || occasionData.type,
+        date: parsedDate,
+        type: occasionData.type,
+        isRecurring: occasionData.isRecurring !== false,
+        startYear: occasionData.startYear,
+        entityType: "WISHLIST" as const,
+        entityId: wishlistId,
+      };
+
+      if (occasionData.id) {
+        // Update existing occasion
+        const existingOccasion = existingOccasions.find((o) => o.id === occasionData.id);
+        if (existingOccasion) {
+          await this.occasionService.updateOccasion(existingOccasion.id, userId, occasionPayload);
+          existingOccasionIds.add(existingOccasion.id);
+        }
+      } else {
+        // Create new occasion
+        const newOccasion = await this.occasionService.createOccasion(userId, occasionPayload);
+        existingOccasionIds.add(newOccasion.id);
+      }
+    }
+
+    // Delete occasions that are no longer in the list
+    for (const existingOccasion of existingOccasions) {
+      if (!existingOccasionIds.has(existingOccasion.id)) {
+        await prisma.occasion.delete({
+          where: { id: existingOccasion.id },
+        });
+      }
+    }
+  }
+
+  /**
+   * Remove all occasion associations for a wishlist
+   */
+  private async removeAllOccasionAssociations(wishlistId: string) {
+    await prisma.occasion.deleteMany({
+      where: {
+        entityType: "WISHLIST",
+        entityId: wishlistId,
+      },
     });
   }
 }

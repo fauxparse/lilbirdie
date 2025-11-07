@@ -8,7 +8,8 @@ import React from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/Button";
-import { WishlistForm, type WishlistFormData } from "@/components/WishlistForm";
+import type { WishlistFormData } from "@/components/WishlistForm";
+import { WishlistForm } from "@/components/WishlistForm";
 
 interface EditWishlistPageProps {
   params: Promise<{
@@ -24,19 +25,28 @@ export default function EditWishlistPage({ params }: EditWishlistPageProps) {
   // Get the permalink from params
   const { permalink } = React.use(params);
 
-  // Fetch the current wishlist data
+  // Fetch the current wishlist data and its occasions
   const {
     data: wishlist,
     isLoading: isWishlistLoading,
     error: wishlistError,
   } = useQuery({
-    queryKey: ["wishlist", permalink],
+    queryKey: ["wishlist", permalink, "with-occasions"],
     queryFn: async (): Promise<{
+      id: string;
       owner: { id: string };
       title: string;
       description?: string;
       privacy: "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE";
       isDefault?: boolean;
+      occasions?: Array<{
+        id: string;
+        title: string;
+        date: string;
+        type: string;
+        isRecurring: boolean;
+        startYear?: number;
+      }>;
     }> => {
       const response = await fetch(`/api/w/${permalink}`);
 
@@ -48,13 +58,52 @@ export default function EditWishlistPage({ params }: EditWishlistPageProps) {
         throw new Error(error.error || "Failed to fetch wishlist");
       }
 
-      return response.json() as Promise<{
+      const wishlistData = (await response.json()) as {
+        id: string;
         owner: { id: string };
         title: string;
         description?: string;
         privacy: "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE";
         isDefault?: boolean;
-      }>;
+      };
+
+      // Fetch associated occasions
+      try {
+        const occasionResponse = await fetch(`/api/occasions`);
+        if (occasionResponse.ok) {
+          const allOccasions = (await occasionResponse.json()) as Array<{
+            id: string;
+            title: string;
+            date: string;
+            type: string;
+            isRecurring: boolean;
+            startYear?: number;
+            entityType?: string;
+            entityId?: string;
+          }>;
+
+          // Filter occasions for this wishlist
+          const wishlistOccasions = allOccasions.filter(
+            (o) => o.entityType === "WISHLIST" && o.entityId === wishlistData.id
+          );
+
+          return {
+            ...wishlistData,
+            occasions: wishlistOccasions.map((o) => ({
+              id: o.id,
+              title: o.title,
+              date: o.date,
+              type: o.type,
+              isRecurring: o.isRecurring,
+              startYear: o.startYear,
+            })),
+          };
+        }
+      } catch (occasionError) {
+        console.error("Error fetching occasions:", occasionError);
+      }
+
+      return wishlistData;
     },
     enabled: !!user && !!permalink,
   });
@@ -175,11 +224,29 @@ export default function EditWishlistPage({ params }: EditWishlistPageProps) {
           description: wishlist.description,
           privacy: wishlist.privacy,
           isDefault: wishlist.isDefault,
+          occasions: wishlist.occasions
+            ? wishlist.occasions.map((occasion) => ({
+                id: occasion.id,
+                type: occasion.type as
+                  | "BIRTHDAY"
+                  | "CHRISTMAS"
+                  | "VALENTINES_DAY"
+                  | "ANNIVERSARY"
+                  | "GRADUATION"
+                  | "WEDDING"
+                  | "CUSTOM",
+                date: occasion.date.split("T")[0],
+                title: occasion.title,
+                isRecurring: occasion.isRecurring,
+                startYear: occasion.startYear,
+              }))
+            : undefined,
         }}
         onSubmit={handleSubmit}
         isSubmitting={updateWishlistMutation.isPending}
         error={updateWishlistMutation.error?.message || null}
         onCancel={() => router.push(`/w/${permalink}`)}
+        user={user}
       />
     </div>
   );

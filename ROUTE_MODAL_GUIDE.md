@@ -238,25 +238,48 @@ export default async function NewFeaturePage() {
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export function YourFeatureClient({ initialData }: YourFeatureClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const hasOpenedModalRef = useRef(false);
 
-  // Check if we should open a modal based on query param
+  // Check if we should open a modal based on query param (only once)
   useEffect(() => {
     const openModal = searchParams.get("openModal");
-    if (openModal === "new") {
-      // Clear the query param and navigate to the modal route
-      router.replace("/your-feature");
+    if (openModal === "new" && !hasOpenedModalRef.current) {
+      hasOpenedModalRef.current = true;
+      // First, clear the query param from the URL
+      // Use window.history.replaceState for immediate, synchronous effect
+      window.history.replaceState({}, "", "/your-feature");
+      // Then navigate to the modal route
       setTimeout(() => {
         router.push("/your-feature/new");
-      }, 50);
+      }, 10);
     }
   }, [searchParams, router]);
 
   // ... rest of your component
+}
+```
+
+**Step 3: The modal can use router.back() since we cleaned the history:**
+```tsx
+export default function NewFeatureModal() {
+  const router = useRouter();
+
+  const handleCancel = () => {
+    // Since we used router.replace() to clean the URL before opening the modal,
+    // router.back() now works correctly
+    router.back();
+  };
+
+  return (
+    <RouteModal>
+      <YourForm onCancel={handleCancel} />
+    </RouteModal>
+  );
 }
 ```
 
@@ -266,17 +289,26 @@ export function YourFeatureClient({ initialData }: YourFeatureClientProps) {
 3. If not authenticated, server redirects to `/login`
 4. If authenticated, server redirects to `/your-feature?openModal=new`
 5. Base page loads with all its data and renders
-6. Client component detects the `openModal=new` query param
-7. Client clears the query param and navigates to `/your-feature/new`
-8. This navigation triggers the intercepting route, showing the modal over the loaded page
+6. Client component detects the `openModal=new` query param (useRef ensures this only happens once)
+7. Client uses `window.history.replaceState()` to immediately clean the URL (removes query param synchronously)
+8. Client navigates to `/your-feature/new`, triggering the intercepting route
+9. Modal shows over the loaded page
+10. When modal closes with `router.back()`, it returns to the clean `/your-feature` URL
+
+**Important Notes:**
+- The `useRef` guard prevents the modal from reopening if the user navigates back in history
+- Using `window.history.replaceState()` instead of `router.replace()` ensures the URL is immediately and synchronously updated
+- This removes the query param from history so `router.back()` works correctly
+- The history stack ends up as: `[...previous pages, /your-feature, /your-feature/new]` with no query params
 
 **Benefits:**
 - ✅ Modal always shows, regardless of how the user accessed the URL
 - ✅ Base page fully loads before modal opens (no empty background)
 - ✅ Server-side auth check prevents race conditions on page refresh
-- ✅ Back button works correctly (goes to `/your-feature`)
-- ✅ Clean URL (query param is removed)
-- ✅ Simple and maintainable
+- ✅ Back button works correctly (goes to `/your-feature` without reopening modal)
+- ✅ Clean URL (query param is removed from history)
+- ✅ Simple and maintainable with standard `router.back()` behavior
+- ✅ No infinite modal loops or history issues
 
 ## Common Patterns
 

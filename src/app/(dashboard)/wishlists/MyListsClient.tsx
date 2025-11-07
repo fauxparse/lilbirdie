@@ -1,33 +1,49 @@
 "use client";
 
-import { Gift, Heart, Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Heart, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-import { BlurImage } from "@/components/ui/BlurImage";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
-import { PrivacyBadge } from "@/components/ui/PrivacyBadge";
+import { WishlistCard } from "@/components/WishlistCard";
 import type { DashboardData } from "@/lib/server/data-fetchers";
-import { cn } from "@/lib/utils";
 
 interface MyListsClientProps {
   initialData: DashboardData;
 }
 
 export function MyListsClient({ initialData }: MyListsClientProps) {
-  const dashboardData = initialData;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const hasOpenedModalRef = useRef(false);
 
-  // Check if we should open the new wishlist modal
+  // Use React Query to manage wishlists data with server data as initial data
+  const { data: dashboardData = initialData } = useQuery<DashboardData>({
+    queryKey: ["dashboard"],
+    queryFn: async () => {
+      const response = await fetch("/api/dashboard");
+      if (!response.ok) {
+        throw new Error("Failed to fetch dashboard data");
+      }
+      return response.json();
+    },
+    initialData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Check if we should open the new wishlist modal (only once)
   useEffect(() => {
     const openModal = searchParams.get("openModal");
-    if (openModal === "new") {
-      // Clear the query param and navigate to the modal route
-      router.replace("/wishlists");
+    if (openModal === "new" && !hasOpenedModalRef.current) {
+      hasOpenedModalRef.current = true;
+      // First, clear the query param from the URL
+      // Use window.history.replaceState for immediate effect
+      window.history.replaceState({}, "", "/wishlists");
+      // Then navigate to the modal route
       setTimeout(() => {
         router.push("/wishlists/new");
-      }, 50);
+      }, 10);
     }
   }, [searchParams, router]);
 
@@ -44,67 +60,21 @@ export function MyListsClient({ initialData }: MyListsClientProps) {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-4 @xl:grid-cols-6 gap-8">
-          {wishlists.map((wishlist) => {
-            const items = wishlist?.items?.slice(0, 4) ?? [];
-            return (
-              <Link
-                key={wishlist.id}
-                href={`/w/${wishlist.permalink}`}
-                className="grid grid-rows-[auto_1fr] gap-3 p-3 -m-3 hover:shadow-sm bg-transparent hover:bg-background-hover rounded-xl transition-all duration-300 group/list"
-              >
-                <div className="grid grid-cols-2 grid-rows-2 aspect-square gap-2">
-                  {items.map((item, i) => (
-                    <div
-                      key={item.id}
-                      className={cn(
-                        "relative rounded-lg overflow-hidden bg-muted",
-                        "brightness-100 group-hover/list:brightness-110 transition-all duration-300",
-                        gridPlacements[items.length][i]
-                      )}
-                    >
-                      {item.imageUrl ? (
-                        <BlurImage
-                          src={item.imageUrl}
-                          blurhash={item.imageBlurhash}
-                          alt={item.name}
-                          className="w-full h-full"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Gift className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <div className="text-lg font-medium">{wishlist.title}</div>
-                  <div className="text-sm text-muted-foreground flex items-center gap-2">
-                    {wishlist._count.items} item{wishlist._count.items !== 1 ? "s" : ""}
-                    <PrivacyBadge privacy={wishlist.privacy} readOnly />
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+        <div className="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-3 @xl:grid-cols-4 gap-8">
+          {wishlists.map((wishlist) => (
+            <WishlistCard key={wishlist.id} wishlist={wishlist} />
+          ))}
           <Link
             href="/wishlists/new"
-            className="flex flex-col gap-4 items-center justify-center rounded-lg border-3 border-dashed border-border text-muted-foreground"
+            className="flex flex-col gap-3 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground"
           >
-            <Plus className="size-10 " />
-            <div>Add a list</div>
+            <div className="w-full hover:bg-muted rounded-lg flex items-center justify-center border-3 border-dashed border-border aspect-square">
+              <Plus className="size-10 " />
+            </div>
+            <div className="text-lg font-medium">Add a list</div>
           </Link>
         </div>
       )}
     </div>
   );
 }
-
-const gridPlacements = [
-  [],
-  ["col-[1/-1] row-[1/-1]"],
-  ["col-[1/-1] row-1", "col-[1/-1] row-2"],
-  ["col-1 row-[1/-1]", "col-2 row-1", "col-2 row-2"],
-  ["col-1 row-1", "col-2 row-1", "col-1 row-2", "col-2 row-2"],
-] as const;

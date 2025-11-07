@@ -433,10 +433,12 @@ function WishlistPageInner() {
                 Add Item
               </Button>
               <Button variant="outline" asChild>
-                <Link href={`/wishlists/${wishlist.permalink}/edit`}>Edit Wishlist</Link>
+                <Link href={{ pathname: `/wishlists/${wishlist.permalink}/edit` }}>
+                  Edit Wishlist
+                </Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link href="/wishlists">My Wishlists</Link>
+                <Link href={{ pathname: "/wishlists" }}>My Wishlists</Link>
               </Button>
             </div>
           )}

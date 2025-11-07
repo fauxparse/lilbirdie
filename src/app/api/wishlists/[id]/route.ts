@@ -1,8 +1,10 @@
+import type { OccasionType } from "@prisma/client";
 import { WishlistPrivacy } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { PermissionService } from "@/lib/services/PermissionService";
-import { UpdateWishlistData, WishlistService } from "@/lib/services/WishlistService";
+import type { OccasionData, UpdateWishlistData } from "@/lib/services/WishlistService";
+import { WishlistService } from "@/lib/services/WishlistService";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -54,8 +56,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       description?: string | null;
       privacy?: string;
       isDefault?: boolean;
+      occasions?: Array<{
+        id?: string;
+        type?: string;
+        date?: string;
+        title?: string;
+        isRecurring?: boolean;
+        startYear?: number;
+      }> | null;
     };
-    const { title, description, privacy, isDefault } = body;
+    const { title, description, privacy, isDefault, occasions } = body;
 
     const updateData: UpdateWishlistData = {};
 
@@ -79,6 +89,39 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     if (isDefault !== undefined) {
       updateData.isDefault = !!isDefault;
+    }
+
+    // Handle occasions data
+    if (occasions !== undefined) {
+      if (occasions === null || occasions.length === 0) {
+        // Remove all occasion associations
+        updateData.occasions = [];
+      } else {
+        // Validate occasions data
+        const occasionsData: OccasionData[] = [];
+        for (const occasion of occasions) {
+          if (!occasion.type) continue;
+
+          // Validate date requirement for non-fixed holidays
+          if (
+            !occasion.date &&
+            occasion.type !== "CHRISTMAS" &&
+            occasion.type !== "VALENTINES_DAY"
+          ) {
+            return NextResponse.json({ error: "Occasion date is required" }, { status: 400 });
+          }
+
+          occasionsData.push({
+            id: occasion.id,
+            type: occasion.type as OccasionType,
+            date: occasion.date,
+            title: occasion.title,
+            isRecurring: occasion.isRecurring,
+            startYear: occasion.startYear,
+          });
+        }
+        updateData.occasions = occasionsData;
+      }
     }
 
     const wishlist = await WishlistService.getInstance().updateWishlist(

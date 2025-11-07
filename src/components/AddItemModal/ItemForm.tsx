@@ -20,7 +20,7 @@ const itemSchema = z.object({
   url: z.string().optional(),
   imageUrl: z.string().optional(),
   price: z.number().nullable().optional(),
-  currency: z.enum(["NZD", "USD", "AUD", "EUR", "GBP", "CAD", "JPY"] as const).optional(),
+  currency: z.enum(CURRENCY_CODES).optional(),
   priority: z.number().optional(),
   tags: z.array(z.string()).optional(),
 });
@@ -45,8 +45,11 @@ export const ItemForm: React.FC<ItemFormProps> = ({
   const { preferredCurrency } = useUserPreferredCurrency();
   const { convertPrice } = useCurrencyRates();
 
+  // Type default values with z.input to properly handle optional fields
+  const defaultFormValues: z.input<typeof itemSchema> = initialData;
+
   const form = useForm({
-    defaultValues: initialData,
+    defaultValues: defaultFormValues,
     validators: {
       onChange: itemSchema,
     },

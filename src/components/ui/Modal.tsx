@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion, type Variants } from "motion/react";
 import * as React from "react";
 import { createContext, type ReactNode, useContext, useEffect, useRef } from "react";
+import { RemoveScroll } from "react-remove-scroll";
 
 import { cn } from "@/lib/utils";
 import { Button } from "./Button";
@@ -215,22 +216,10 @@ export const Modal = ({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [closeOnEscape, isOpen, onClose]);
 
-  // Track modal level and prevent body scroll for first modal only
+  // Track modal level for nesting
   useEffect(() => {
     if (isOpen) {
-      const currentLevel = modalContext.level;
       modalContext.incrementLevel();
-
-      // Only prevent body scroll for the first modal (level was 0 before increment)
-      if (currentLevel === 0) {
-        const originalStyle = window.getComputedStyle(document.body).overflow;
-        document.body.style.overflow = "hidden";
-        return () => {
-          document.body.style.overflow = originalStyle;
-          modalContext.decrementLevel();
-        };
-      }
-
       return () => {
         modalContext.decrementLevel();
       };
@@ -251,59 +240,61 @@ export const Modal = ({
         <AnimatePresence mode="wait">
           {isOpen && (
             <DialogPrimitive.Portal forceMount>
-              <motion.div
-                className={cn(
-                  "fixed inset-0 flex items-center justify-center p-4",
-                  modalLevel.current === 0 ? "z-50 bg-modal-overlay/80" : "z-[51] bg-transparent"
-                )}
-                style={{
-                  // Dynamic z-index for deeply nested modals
-                  zIndex: 50 + (modalLevel.current || 0),
-                }}
-                data-slot="modal-overlay"
-                data-modal-level={modalLevel.current}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                variants={overlayVariants}
-                custom={modalLevel.current === 0}
-                onClick={handleOverlayClick}
-              >
-                {/* Content */}
-                <FocusTrap isActive={isOpen && !preventAutoFocus}>
-                  <motion.div
-                    ref={contentRef}
-                    className={cn(
-                      "relative w-full bg-background rounded-xl shadow-2xl ring-1 ring-border/10",
-                      "border border-border",
-                      "max-h-[90vh] overflow-hidden",
-                      sizeClasses[size],
-                      className
-                    )}
-                    style={{
-                      // Ensure content is above its overlay
-                      zIndex: 50 + (modalLevel.current || 0) + 1,
-                    }}
-                    variants={contentVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                    layout
-                    transition={{
-                      layout: {
-                        type: "spring",
-                        damping: 22,
-                        stiffness: 280,
-                      },
-                    }}
-                    role="dialog"
-                    aria-modal="true"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {children}
-                  </motion.div>
-                </FocusTrap>
-              </motion.div>
+              <RemoveScroll enabled={isOpen && modalLevel.current === 0}>
+                <motion.div
+                  className={cn(
+                    "fixed inset-0 flex items-center justify-center p-4",
+                    modalLevel.current === 0 ? "z-50 bg-modal-overlay/80" : "z-[51] bg-transparent"
+                  )}
+                  style={{
+                    // Dynamic z-index for deeply nested modals
+                    zIndex: 50 + (modalLevel.current || 0),
+                  }}
+                  data-slot="modal-overlay"
+                  data-modal-level={modalLevel.current}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  variants={overlayVariants}
+                  custom={modalLevel.current === 0}
+                  onClick={handleOverlayClick}
+                >
+                  {/* Content */}
+                  <FocusTrap isActive={isOpen && !preventAutoFocus}>
+                    <motion.div
+                      ref={contentRef}
+                      className={cn(
+                        "relative w-full bg-background rounded-xl shadow-2xl ring-1 ring-border/10",
+                        "border border-border",
+                        "max-h-[90vh] overflow-hidden",
+                        sizeClasses[size],
+                        className
+                      )}
+                      style={{
+                        // Ensure content is above its overlay
+                        zIndex: 50 + (modalLevel.current || 0) + 1,
+                      }}
+                      variants={contentVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      layout
+                      transition={{
+                        layout: {
+                          type: "spring",
+                          damping: 22,
+                          stiffness: 280,
+                        },
+                      }}
+                      role="dialog"
+                      aria-modal="true"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {children}
+                    </motion.div>
+                  </FocusTrap>
+                </motion.div>
+              </RemoveScroll>
             </DialogPrimitive.Portal>
           )}
         </AnimatePresence>
@@ -356,7 +347,7 @@ export function ModalTitle({
 }: ExceptLayoutProps<React.HTMLAttributes<HTMLHeadingElement>>) {
   return (
     <motion.h2
-      className={cn("text-lg font-semibold leading-6 text-foreground", className)}
+      className={cn("text-xl font-medium leading-6 text-foreground", className)}
       layout
       {...props}
     >
@@ -378,20 +369,27 @@ export function ModalDescription({
   );
 }
 
+type ModalContentProps = ExceptLayoutProps<React.HTMLAttributes<HTMLDivElement>> & {
+  padding?: number;
+};
+
 // Modal Content component
-export function ModalContent({
-  children,
-  className,
-  ...props
-}: ExceptLayoutProps<React.HTMLAttributes<HTMLDivElement>>) {
+export function ModalContent({ children, className, padding = 5, ...props }: ModalContentProps) {
   return (
     <motion.div
-      className="overflow-y-auto max-h-[60vh]"
+      className={cn("min-h-0 flex-1 flex flex-col", padding > 0 && "overflow-y-auto")}
       layout
       data-slot="modal-content"
       {...props}
     >
-      <motion.div className={cn("px-5 pt-2 pb-3 last:pb-5", className)} layout="position">
+      <motion.div
+        className={cn(
+          `flex-1 min-h-0 flex flex-col`,
+          padding > 0 && `px-${padding} pt-2 pb-3 last:pb-${padding}`,
+          className
+        )}
+        layout="position"
+      >
         {children}
       </motion.div>
     </motion.div>

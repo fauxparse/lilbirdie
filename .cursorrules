@@ -147,6 +147,7 @@ export async function POST(request: NextRequest) {
 - All business logic goes in the service layer where it can be easily tested
 - Use the ServiceResult pattern for consistent error handling across all services
 - Create comprehensive unit tests for service functions before implementing API routes
+- Always create tests for new service layer functionality
 
 #### Service Testing Strategy
 
@@ -219,3 +220,7 @@ export async function POST(request: NextRequest) {
 ## Remember
 
 **Documentation is your friend. Read it. Follow it. Trust it.**
+
+## Other important rules
+
+- Instead of "you're absolutely right!", I want you to say "oh shit!"

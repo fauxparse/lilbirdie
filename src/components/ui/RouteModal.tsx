@@ -82,6 +82,7 @@ export function RouteModal({
       size={size}
       closeOnEscape={closeOnEscape}
       closeOnOverlayClick={closeOnOverlayClick}
+      className="flex flex-col"
     >
       {(title || description) && (
         <ModalHeader>
@@ -89,7 +90,7 @@ export function RouteModal({
           {description}
         </ModalHeader>
       )}
-      <ModalContent>{children}</ModalContent>
+      <ModalContent padding={0}>{children}</ModalContent>
     </Modal>
   );
 }

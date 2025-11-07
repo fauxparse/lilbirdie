@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     const currentUserId = session.user.id;
 
-    // Get user's wishlists
+    // Get user's wishlists with first 4 items for preview
     const wishlists = await prisma.wishlist.findMany({
       where: {
         ownerId: currentUserId,
@@ -23,11 +23,29 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         title: true,
+        description: true,
         permalink: true,
+        privacy: true,
         isDefault: true,
+        createdAt: true,
         _count: {
           select: {
             items: true,
+          },
+        },
+        items: {
+          where: {
+            isDeleted: false,
+          },
+          select: {
+            id: true,
+            name: true,
+            imageUrl: true,
+            blurhash: true,
+          },
+          take: 4,
+          orderBy: {
+            createdAt: "desc",
           },
         },
       },
@@ -199,10 +217,45 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      wishlists,
-      upcomingGifts,
+      wishlists: wishlists.map((wishlist) => ({
+        id: wishlist.id,
+        title: wishlist.title,
+        description: wishlist.description || undefined,
+        permalink: wishlist.permalink,
+        privacy: wishlist.privacy as "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE",
+        isDefault: wishlist.isDefault,
+        createdAt: wishlist.createdAt.toISOString(),
+        _count: wishlist._count,
+        items: wishlist.items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          imageUrl: item.imageUrl || undefined,
+          imageBlurhash: item.blurhash || undefined,
+        })),
+      })),
+      upcomingGifts: upcomingGifts.map((gift) => ({
+        ...gift,
+        friend: {
+          ...gift.friend,
+          image: gift.friend.image || undefined,
+          profile: gift.friend.profile
+            ? {
+                birthday: gift.friend.profile.birthday?.toISOString(),
+              }
+            : undefined,
+        },
+      })),
       upcomingOccasions,
-      claimedGifts,
+      claimedGifts: claimedGifts.map((gift) => ({
+        ...gift,
+        createdAt: gift.createdAt.toISOString(),
+        item: {
+          ...gift.item,
+          description: gift.item.description || undefined,
+          price: gift.item.price ? Number(gift.item.price) : undefined,
+          imageUrl: gift.item.imageUrl || undefined,
+        },
+      })),
     });
   } catch (error) {
     console.error("Error fetching dashboard data:", error);

@@ -56,9 +56,21 @@ function WishlistItemCardContent({
   // Get item from context
   const { item, updateItem } = useWishlistItem();
 
+  // Helper to convert price (handles both number and Decimal-like objects)
+  const getPriceAsNumber = (price: unknown): number => {
+    if (!price) return 0;
+    if (typeof price === "number") return price;
+    if (typeof price === "object" && price !== null && "toNumber" in price) {
+      return (price as { toNumber: () => number }).toNumber();
+    }
+    return Number(price) || 0;
+  };
+
+  const priceValue = getPriceAsNumber(item?.price);
+
   const { preferredCurrency, isLoading: isCurrencyLoading } = useUserPreferredCurrency();
   const { convertedPrice, convertedCurrency } = useCurrencyConversion(
-    Number(item?.price) || 0,
+    priceValue,
     item?.currency || "NZD",
     preferredCurrency
   );
@@ -110,14 +122,14 @@ function WishlistItemCardContent({
   };
 
   return (
-    <Card className="group grid grid-rows-[auto_1fr_auto] min-h-96 p-0 shadow-none">
+    <Card className="group grid grid-rows-[auto_1fr_auto] -my-3 @md:-mx-3 gap-2 min-h-72 p-3 shadow-none hover:shadow-sm border-0 bg-transparent hover:bg-background-hover rounded-xl transition-all duration-300">
       <CardHeader className="p-0 space-y-0 row-start-1 row-end-2 col-start-1 col-end-1 relative">
         {item.imageUrl && (
           <BlurImage
             src={item.imageUrl}
             blurhash={item.blurhash}
             alt={item.name}
-            className="w-full h-40 rounded-t-[calc(var(--radius-lg)-1px)]"
+            className="w-full aspect-video rounded-lg brightness-100 group-hover:brightness-110 transition-all duration-300"
           />
         )}
         <div className="absolute top-2 right-2 z-30">
@@ -190,15 +202,13 @@ function WishlistItemCardContent({
         </div>
       </CardHeader>
 
-      <CardContent className="row-start-2 row-span-1 col-start-1 col-span-1 space-y-3 p-4 pt-4">
-        <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg line-clamp-2 leading-1.2">{item.name}</CardTitle>
-        </div>
+      <CardContent className="row-start-2 row-span-1 col-start-1 col-span-1 space-y-1 p-0">
+        <CardTitle className="text-base leading-tight line-clamp-2">{item.name}</CardTitle>
         {item.description && (
-          <p className="text-sm text-muted-foreground line-clamp-3">{item.description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
         )}
       </CardContent>
-      <CardFooter className="row-start-3 row-span-1 col-start-1 col-span-1 grid grid-cols-2 grid-rows-2 gap-1 px-4 py-4 items-center">
+      <CardFooter className="row-start-3 row-span-1 col-start-1 col-span-1 grid grid-cols-2 grid-rows-2 gap-1 p-0 items-center">
         <div className="col-start-1 col-span-2">
           {item.url && (
             <a
@@ -212,12 +222,12 @@ function WishlistItemCardContent({
             </a>
           )}
         </div>
-        {item.price && !isCurrencyLoading && (
+        {priceValue > 0 && (
           <PriceDisplay
-            originalPrice={Number(item.price)}
+            originalPrice={priceValue}
             originalCurrency={item.currency}
-            convertedPrice={convertedPrice || undefined}
-            convertedCurrency={convertedCurrency || undefined}
+            convertedPrice={!isCurrencyLoading ? convertedPrice || undefined : undefined}
+            convertedCurrency={!isCurrencyLoading ? convertedCurrency || undefined : undefined}
             className="font-medium text-base text-muted-foreground col-start-1 justify-self-start"
           />
         )}
@@ -228,7 +238,7 @@ function WishlistItemCardContent({
         />
       </CardFooter>
       {isClaimed && !isOwner && (
-        <div className="row-start-1 row-span-3 col-start-1 col-span-1 relative z-20 bg-background/85 backdrop-blur-sm rounded-[calc(var(--radius-lg)-1px)] grid place-items-center p-4 animate-in fade-in-0 duration-300">
+        <div className="row-start-1 row-span-3 col-start-1 col-span-1 relative z-20 bg-background/85 backdrop-blur-sm rounded-xl grid place-items-center p-4 animate-in fade-in-0 duration-300">
           <div className="flex flex-col items-center gap-3">
             <div className="flex flex-row-reverse justify-center">
               {[...claims].reverse().map((claim, index) => (

@@ -198,23 +198,21 @@ function WishlistPageInner() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto max-w-4xl">
-        <div className="space-y-6 container-type-inline-size">
+      <div className="container mx-auto px-4 py-8">
+        <div className="space-y-6 @container">
           {/* Page Header Skeleton */}
           <div className="flex flex-col items-start gap-2 pb-8">
             {/* Breadcrumb Skeleton */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <div className="h-4 bg-muted rounded w-12 animate-pulse" />
               <div className="h-3.5 w-3.5 bg-muted rounded animate-pulse" />
               <div className="h-4 bg-muted rounded w-20 animate-pulse" />
             </div>
 
-            {/* Privacy Badge Skeleton */}
-            <div className="h-6 bg-muted rounded-full w-16 animate-pulse" />
-
-            {/* Title Skeleton */}
-            <div className="pt-8 md:pt-10 lg:pt-12 w-full">
+            {/* Title and Privacy Badge Skeleton */}
+            <div className="flex items-center gap-3 pt-6 w-full">
               <div className="h-10 md:h-12 lg:h-14 bg-muted rounded w-2/3 max-w-md animate-pulse" />
+              <div className="h-6 bg-muted rounded-full w-16 animate-pulse" />
             </div>
 
             {/* Description Skeleton */}
@@ -222,45 +220,41 @@ function WishlistPageInner() {
             <div className="h-5 bg-muted rounded w-4/5 max-w-xl animate-pulse" />
 
             {/* Actions Skeleton */}
-            <div className="flex w-full items-center justify-start gap-2 pt-2">
-              <div className="h-4 bg-muted rounded w-24 animate-pulse" />
-              <div className="h-9 w-9 bg-muted rounded animate-pulse" />
-            </div>
-          </div>
-
-          {/* Action Buttons Skeleton */}
-          <header className="flex flex-col">
-            <div className="flex gap-2">
+            <div className="flex w-full items-center justify-start gap-2 pt-2 flex-wrap">
               <div className="h-10 bg-muted rounded w-28 animate-pulse" />
               <div className="h-10 bg-muted rounded w-32 animate-pulse" />
               <div className="h-10 bg-muted rounded w-32 animate-pulse" />
+              <div className="ml-auto flex items-center gap-3">
+                <div className="h-4 bg-muted rounded w-24 animate-pulse" />
+                <div className="h-9 w-9 bg-muted rounded animate-pulse" />
+              </div>
             </div>
-          </header>
+          </div>
 
           {/* Items Grid Skeleton */}
-          <div className="grid gap-4 cq-md:grid-cols-2 cq-lg:grid-cols-3">
+          <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4 @6xl:grid-cols-5 gap-8 items-start">
             {[...Array(6)].map((_, i) => (
               <Card
                 key={i}
-                className="group grid grid-rows-[auto_1fr_auto] min-h-96 p-0 shadow-none"
+                className="group grid grid-rows-[auto_1fr_auto] min-h-96 p-3 shadow-none border-0 bg-transparent"
               >
                 {/* Image Header Skeleton */}
                 <div className="p-0 space-y-0 row-start-1 row-end-2 col-start-1 col-end-1 relative">
-                  <div className="w-full h-40 bg-muted rounded-t-lg animate-pulse" />
+                  <div className="w-full h-40 bg-muted rounded-lg animate-pulse" />
                   <div className="absolute top-2 right-2 z-30">
                     <div className="h-8 w-8 bg-background/80 backdrop-blur-sm rounded-full animate-pulse" />
                   </div>
                 </div>
 
                 {/* Content Skeleton */}
-                <div className="row-start-2 row-span-1 col-start-1 col-span-1 space-y-3 p-4 pt-4">
+                <div className="row-start-2 row-span-1 col-start-1 col-span-1 space-y-3 p-0">
                   <div className="h-6 bg-muted rounded w-4/5 animate-pulse" />
                   <div className="h-4 bg-muted rounded w-full animate-pulse" />
                   <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
                 </div>
 
                 {/* Footer Skeleton */}
-                <div className="row-start-3 row-span-1 col-start-1 col-span-1 grid grid-cols-2 grid-rows-2 gap-1 px-4 py-4 items-center">
+                <div className="row-start-3 row-span-1 col-start-1 col-span-1 grid grid-cols-2 grid-rows-2 gap-1 p-0 items-center">
                   <div className="col-start-1 col-span-2">
                     <div className="h-4 bg-muted rounded w-32 animate-pulse" />
                   </div>
@@ -277,7 +271,7 @@ function WishlistPageInner() {
 
   if (error || !wishlist) {
     return (
-      <div className="container mx-auto max-w-4xl text-center">
+      <div className="container mx-auto px-4 py-8 text-center">
         <div className="py-12">
           <h1 className="text-2xl font-bold text-muted-foreground mb-4">Unable to load wishlist</h1>
           <p className="text-muted-foreground mb-6">
@@ -292,8 +286,8 @@ function WishlistPageInner() {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl">
-      <div className="space-y-6 container-type-inline-size">
+    <div className="container mx-auto px-4 py-8">
+      <div className="space-y-6 @container">
         <PageHeader>
           <Breadcrumb>
             <BreadcrumbList>
@@ -329,11 +323,7 @@ function WishlistPageInner() {
               )}
             </BreadcrumbList>
           </Breadcrumb>
-          <div className="flex flex-col gap-2 items-start pt-8 md:pt-10 lg:pt-12">
-            <PrivacyBadge
-              privacy={wishlist.privacy as "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE"}
-              onChange={isOwner ? (privacy) => updateWishlist({ privacy }) : undefined}
-            />
+          <div className="flex items-center gap-3 pt-6">
             <PageTitle>
               {isOwner ? (
                 <InlineEditable
@@ -344,6 +334,10 @@ function WishlistPageInner() {
                 wishlist.title
               )}
             </PageTitle>
+            <PrivacyBadge
+              privacy={wishlist.privacy as "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE"}
+              onChange={isOwner ? (privacy) => updateWishlist({ privacy }) : undefined}
+            />
           </div>
           <PageHeaderDescription>
             {isOwner ? (
@@ -355,9 +349,25 @@ function WishlistPageInner() {
               wishlist.description
             )}
           </PageHeaderDescription>
-          <PageActions>
+          <PageActions className="flex-wrap">
+            {isOwner && (
+              <div className="flex gap-2 flex-wrap">
+                <Button onClick={() => setShowAddItem(true)} className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Item
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href={{ pathname: `/wishlists/${wishlist.permalink}/edit` }}>
+                    Edit Wishlist
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href={{ pathname: "/wishlists" }}>My Wishlists</Link>
+                </Button>
+              </div>
+            )}
             {wishlist.items.length > 0 && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 ml-auto">
                 <div className="text-sm text-foreground">
                   {processedItems.length} of {wishlist.items.length} items
                   {hideClaimedItems && processedItems.length < wishlist.items.length && (
@@ -421,28 +431,6 @@ function WishlistPageInner() {
             )}
           </PageActions>
         </PageHeader>
-        <header className="flex flex-col">
-          <div className="flex items-center gap-3 mt-3 justify-between w-full">
-            <div className="flex items-center gap-2"></div>
-          </div>
-
-          {isOwner && (
-            <div className="flex gap-2">
-              <Button onClick={() => setShowAddItem(true)} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Add Item
-              </Button>
-              <Button variant="outline" asChild>
-                <Link href={{ pathname: `/wishlists/${wishlist.permalink}/edit` }}>
-                  Edit Wishlist
-                </Link>
-              </Button>
-              <Button variant="outline" asChild>
-                <Link href={{ pathname: "/wishlists" }}>My Wishlists</Link>
-              </Button>
-            </div>
-          )}
-        </header>
 
         {/* Items */}
         {wishlist.items.length === 0 ? (
@@ -465,7 +453,7 @@ function WishlistPageInner() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 cq-md:grid-cols-2 cq-lg:grid-cols-3">
+          <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4 @6xl:grid-cols-5 gap-8 items-start">
             {processedItems.map((item) => (
               <WishlistItemCard
                 key={item.id}

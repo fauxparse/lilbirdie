@@ -61,7 +61,7 @@ export function WishlistProvider({ children, permalink, initialData }: WishlistP
   } = useQuery<SerializedWishlist>({
     queryKey: ["wishlist", permalink],
     queryFn: async () => {
-      const response = await fetch(`/api/w/${permalink}`);
+      const response = await fetch(`/api/wishlists/${permalink}`);
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error("NOT_FOUND");
@@ -113,7 +113,7 @@ export function WishlistProvider({ children, permalink, initialData }: WishlistP
       action: "claim" | "unclaim";
     }): Promise<{ claim: ClaimWithUser }> => {
       const method = action === "claim" ? "POST" : "DELETE";
-      const response = await fetch(`/api/w/${permalink}/items/${itemId}/claim`, {
+      const response = await fetch(`/api/wishlists/${permalink}/items/${itemId}/claim`, {
         method,
       });
 

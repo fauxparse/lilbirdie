@@ -1,30 +1,10 @@
 {
-  "files.exclude": {
-    "**/.git": true,
-    "**/.svn": true,
-    "**/.hg": true,
-    "**/.DS_Store": true,
-    "**/Thumbs.db": true
-  },
-  "hide-files.files": [],
-  "editor.formatOnSave": true,
-  "editor.formatOnSaveTimeout": 5000,
-  "[javascript]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
-  "editor.codeActionsOnSave": {
-    "source.fixAll.biome": "explicit",
-    "source.organizeImports.biome": "explicit",
-    "source.fixAll.tsc": "explicit",
-    "quickfix.tsc": "explicit",
-    "source.organizeImports.tsc": "explicit"
-  },
-  "stylelint.packageManager": "pnpm",
-  "npm.packageManager": "pnpm"
+  "css.lint.unknownProperties": "ignore",
+  "css.lint.unknownAtRules": "ignore",
+  "css.customData": [".vscode/css-custom-data.json"],
+  "less.lint.unknownProperties": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownProperties": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "postcss.validate": false
 }

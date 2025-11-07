@@ -41,7 +41,7 @@ vi.mock("@/lib/partykit", () => ({
   },
 }));
 
-describe("POST /api/w/[permalink]/items/[itemId]/claim", () => {
+describe("POST /api/wishlists/[permalink]/items/[itemId]/claim", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -97,7 +97,7 @@ describe("POST /api/w/[permalink]/items/[itemId]/claim", () => {
     vi.mocked(prisma.claim.create).mockResolvedValue(mockClaim);
 
     // Create request
-    const request = new NextRequest("http://localhost:3000/api/w/test/items/item-1/claim", {
+    const request = new NextRequest("http://localhost:3000/api/wishlists/test/items/item-1/claim", {
       method: "POST",
     });
 
@@ -176,7 +176,7 @@ describe("POST /api/w/[permalink]/items/[itemId]/claim", () => {
     vi.mocked(prisma.wishlistItem.findFirst).mockResolvedValue(mockItem);
 
     // Create request
-    const request = new NextRequest("http://localhost:3000/api/w/test/items/item-1/claim", {
+    const request = new NextRequest("http://localhost:3000/api/wishlists/test/items/item-1/claim", {
       method: "POST",
     });
 
@@ -197,7 +197,7 @@ describe("POST /api/w/[permalink]/items/[itemId]/claim", () => {
   });
 });
 
-describe("DELETE /api/w/[permalink]/items/[itemId]/claim", () => {
+describe("DELETE /api/wishlists/[permalink]/items/[itemId]/claim", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -251,7 +251,7 @@ describe("DELETE /api/w/[permalink]/items/[itemId]/claim", () => {
     vi.mocked(prisma.claim.delete).mockResolvedValue(mockClaim);
 
     // Create request
-    const request = new NextRequest("http://localhost:3000/api/w/test/items/item-1/claim", {
+    const request = new NextRequest("http://localhost:3000/api/wishlists/test/items/item-1/claim", {
       method: "DELETE",
     });
 
@@ -325,7 +325,7 @@ describe("DELETE /api/w/[permalink]/items/[itemId]/claim", () => {
     vi.mocked(prisma.claim.findFirst).mockResolvedValue(null);
 
     // Create request
-    const request = new NextRequest("http://localhost:3000/api/w/test/items/item-1/claim", {
+    const request = new NextRequest("http://localhost:3000/api/wishlists/test/items/item-1/claim", {
       method: "DELETE",
     });
 

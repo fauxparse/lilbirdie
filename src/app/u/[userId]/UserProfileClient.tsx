@@ -41,7 +41,7 @@ export function UserProfileClient({ userId, initialData }: UserProfileClientProp
   } = useQuery<UserProfileData>({
     queryKey: ["user-profile", userId],
     queryFn: async () => {
-      const response = await fetch(`/api/u/${userId}`);
+      const response = await fetch(`/api/users/${userId}`);
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error("NOT_FOUND");
@@ -57,7 +57,7 @@ export function UserProfileClient({ userId, initialData }: UserProfileClientProp
   const friendshipMutation = useMutation({
     mutationFn: async (action: "add" | "remove") => {
       const method = action === "add" ? "POST" : "DELETE";
-      const response = await fetch(`/api/u/${userId}/friendship`, {
+      const response = await fetch(`/api/users/${userId}/friendship`, {
         method,
       });
 

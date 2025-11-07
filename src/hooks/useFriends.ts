@@ -97,7 +97,7 @@ export function useSendFriendRequest() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      const response = await fetch(`/api/u/${userId}/friendship`, {
+      const response = await fetch(`/api/users/${userId}/friendship`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -163,7 +163,7 @@ export function useRemoveFriend() {
 
   return useMutation({
     mutationFn: async (friendId: string) => {
-      const response = await fetch(`/api/u/${friendId}/friendship`, {
+      const response = await fetch(`/api/users/${friendId}/friendship`, {
         method: "DELETE",
       });
 

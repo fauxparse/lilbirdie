@@ -48,7 +48,7 @@ export default function EditWishlistPage({ params }: EditWishlistPageProps) {
         startYear?: number;
       }>;
     }> => {
-      const response = await fetch(`/api/w/${permalink}`);
+      const response = await fetch(`/api/wishlists/${permalink}`);
 
       if (!response.ok) {
         if (response.status === 404) {

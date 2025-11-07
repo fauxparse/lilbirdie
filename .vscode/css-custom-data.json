@@ -1,0 +1,33 @@
+{
+  "version": 1.1,
+  "properties": [
+    {
+      "name": "corner-shape",
+      "description": "Defines the shape of the corners. Part of CSS Borders Level 4 draft specification.",
+      "values": [
+        {
+          "name": "round"
+        },
+        {
+          "name": "angle"
+        },
+        {
+          "name": "scoop"
+        },
+        {
+          "name": "squircle"
+        }
+      ]
+    }
+  ],
+  "atDirectives": [
+    {
+      "name": "@theme",
+      "description": "Tailwind CSS v4 theme directive for defining design tokens."
+    },
+    {
+      "name": "@apply",
+      "description": "Tailwind CSS directive for applying utility classes inline."
+    }
+  ]
+}

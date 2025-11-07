@@ -47,7 +47,7 @@ vi.mock("@/lib/partykit", () => ({
   },
 }));
 
-describe("POST /api/w/[permalink]/items", () => {
+describe("POST /api/wishlists/[permalink]/items", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -100,7 +100,7 @@ describe("POST /api/w/[permalink]/items", () => {
     mockWishlistItemService.createItem.mockResolvedValue(mockItem);
 
     // Create request
-    const request = new NextRequest("http://localhost:3000/api/w/test-wishlist/items", {
+    const request = new NextRequest("http://localhost:3000/api/wishlists/test-wishlist/items", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -181,7 +181,7 @@ describe("POST /api/w/[permalink]/items", () => {
     mockWishlistItemService.createItem.mockRejectedValue(new Error("Database error"));
 
     // Create request
-    const request = new NextRequest("http://localhost:3000/api/w/test-wishlist/items", {
+    const request = new NextRequest("http://localhost:3000/api/wishlists/test-wishlist/items", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -212,7 +212,7 @@ describe("POST /api/w/[permalink]/items", () => {
     vi.mocked(auth.api.getSession).mockResolvedValue(null);
 
     // Create request
-    const request = new NextRequest("http://localhost:3000/api/w/test-wishlist/items", {
+    const request = new NextRequest("http://localhost:3000/api/wishlists/test-wishlist/items", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -254,7 +254,7 @@ describe("POST /api/w/[permalink]/items", () => {
     mockWishlistService.getWishlistByPermalink.mockResolvedValue(null);
 
     // Create request
-    const request = new NextRequest("http://localhost:3000/api/w/nonexistent/items", {
+    const request = new NextRequest("http://localhost:3000/api/wishlists/nonexistent/items", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -306,7 +306,7 @@ describe("POST /api/w/[permalink]/items", () => {
     mockPermissionService.hasPermission.mockResolvedValue(false);
 
     // Create request
-    const request = new NextRequest("http://localhost:3000/api/w/test-wishlist/items", {
+    const request = new NextRequest("http://localhost:3000/api/wishlists/test-wishlist/items", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

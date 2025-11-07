@@ -78,7 +78,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
 
   const { mutateAsync: addItem } = useMutation({
     mutationFn: async (data: ItemFormData): Promise<WishlistItemWithClaims> => {
-      const response = await fetch(`/api/w/${wishlistPermalink}/items`, {
+      const response = await fetch(`/api/wishlists/${wishlistPermalink}/items`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

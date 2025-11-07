@@ -5,6 +5,7 @@ interface CustomMatchers<R = unknown> {
 }
 
 declare module "vitest" {
+  // biome-ignore lint/suspicious/noExplicitAny: Vitest's Assertion interface uses any, we must match it
   interface Assertion<T = any> extends CustomMatchers<T> {}
   interface AsymmetricMatchersContaining extends CustomMatchers {}
 }
@@ -30,7 +31,7 @@ expect.extend({
     if (typeof received !== "function") {
       return {
         pass: false,
-        message: () => "toLogError expects a function, but received: " + typeof received,
+        message: () => `toLogError expects a function, but received: ${typeof received}`,
       };
     }
 

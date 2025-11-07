@@ -77,7 +77,7 @@ export function getWishlistIdFromParams(params: Record<string, string | string[]
   }
 
   if (typeof permalink === "string") {
-    // For routes like /api/w/[permalink]/items, we need to resolve the permalink
+    // For routes like /api/wishlists/[permalink]/items, we need to resolve the permalink
     // This will need to be handled in the specific route handler
     return permalink;
   }

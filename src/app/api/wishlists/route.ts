@@ -66,11 +66,7 @@ export async function POST(request: NextRequest) {
         if (!occasion.type) continue;
 
         // Validate date requirement for non-fixed holidays
-        if (
-          !occasion.date &&
-          occasion.type !== "CHRISTMAS" &&
-          occasion.type !== "VALENTINES_DAY"
-        ) {
+        if (!occasion.date && occasion.type !== "CHRISTMAS" && occasion.type !== "VALENTINES_DAY") {
           return NextResponse.json({ error: "Occasion date is required" }, { status: 400 });
         }
 

@@ -31,5 +31,5 @@
     ".next/types/**/*.ts",
     "prisma/**/*.ts"
   ],
-  "exclude": ["node_modules", "party", "**/*.test.ts", "**/*.test.tsx"]
+  "exclude": ["node_modules", "party", "**/*.test.ts", "**/*.test.tsx", ".next"]
 }

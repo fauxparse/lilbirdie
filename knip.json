@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignore": [
+    "**/*.config.{js,ts,mjs,cjs}",
+    "vitest.config.ts",
+    "tailwind.config.ts"
+  ],
+  "ignoreExportsUsedInFile": true
+}

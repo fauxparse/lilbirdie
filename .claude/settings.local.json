@@ -64,7 +64,8 @@
       "Bash(mkdir:*)",
       "Bash(pnpm build:*)",
       "Bash(npx wrangler deploy:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:knip.dev)"
     ],
     "deny": [],
     "ask": []

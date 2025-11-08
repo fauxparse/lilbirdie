@@ -711,6 +711,59 @@ async function createPendingFriendRequests(userIds: { [key: string]: string }) {
   }
 }
 
+async function createBirthdayOccasions(userIds: { [key: string]: string }) {
+  console.log("Creating birthday occasions...");
+
+  for (const [firstName, userId] of Object.entries(userIds)) {
+    const person = people.find((p) => p.name.split(" ")[0].toLowerCase() === firstName);
+
+    if (!person?.birthday) {
+      continue;
+    }
+
+    // Check if birthday occasion already exists
+    const existingOccasion = await prisma.occasion.findFirst({
+      where: {
+        ownerId: userId,
+        type: "BIRTHDAY",
+      },
+    });
+
+    if (existingOccasion) {
+      console.log(`Birthday occasion for ${person.name} already exists, skipping...`);
+      continue;
+    }
+
+    // Get the user's default wishlist
+    const defaultWishlist = await prisma.wishlist.findFirst({
+      where: {
+        ownerId: userId,
+        isDefault: true,
+      },
+    });
+
+    if (!defaultWishlist) {
+      console.log(`No default wishlist found for ${person.name}, skipping birthday occasion...`);
+      continue;
+    }
+
+    // Create birthday occasion
+    await prisma.occasion.create({
+      data: {
+        title: `${person.name.split(" ")[0]}'s Birthday`,
+        date: person.birthday,
+        type: "BIRTHDAY",
+        isRecurring: true,
+        ownerId: userId,
+        entityType: "WISHLIST",
+        entityId: defaultWishlist.id,
+      },
+    });
+
+    console.log(`Created birthday occasion for ${person.name} linked to default wishlist`);
+  }
+}
+
 async function createCurrencyRates() {
   console.log("Creating currency conversion rates...");
 
@@ -840,6 +893,9 @@ async function main() {
       );
     }
   }
+
+  // Create birthday occasions linked to default wishlists
+  await createBirthdayOccasions(userIds);
 
   // Create friendships
   await createFriendships(userIds);

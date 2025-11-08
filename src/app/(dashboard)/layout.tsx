@@ -1,5 +1,5 @@
 import { getServerSession } from "@/lib/server/auth";
-import { DashboardLayoutClient } from "./DashboardLayoutClient";
+import { DashboardLayout as DashboardLayoutClient } from "@/views/Dashboard/DashboardLayout";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   // Get the current user session on the server

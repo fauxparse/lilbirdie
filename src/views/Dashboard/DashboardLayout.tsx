@@ -7,7 +7,7 @@ import { UserAvatar } from "@/components/ui/UserAvatar";
 import type { User } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-interface DashboardLayoutClientProps {
+interface DashboardLayoutProps {
   children: React.ReactNode;
   user: User;
 }
@@ -66,7 +66,7 @@ function UpcomingSkeleton() {
   );
 }
 
-export function DashboardLayoutClient({ children, user }: DashboardLayoutClientProps) {
+export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();

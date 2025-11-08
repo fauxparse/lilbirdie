@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const currentUserId = session.user.id;
 
     // Get all friends for the current user
-    const friends = await prisma.friendship.findMany({
+    const friendships = await prisma.friendship.findMany({
       where: {
         userId: currentUserId,
       },
@@ -30,13 +30,31 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const friendsData = friends.map(({ friend }) => ({
-      id: friend.id,
-      name: friend.name || "Anonymous User",
-      image: friend.image,
-    }));
+    const friends = friendships.map((f) => f.friend);
 
-    return NextResponse.json(friendsData);
+    // Get visible wishlist counts for each friend
+    const friendsWithCounts = await Promise.all(
+      friends.map(async (friend) => {
+        const visibleWishlistCount = await prisma.wishlist.count({
+          where: {
+            ownerId: friend.id,
+            isDeleted: false,
+            privacy: {
+              in: ["PUBLIC", "FRIENDS_ONLY"],
+            },
+          },
+        });
+
+        return {
+          id: friend.id,
+          name: friend.name || "Anonymous User",
+          image: friend.image,
+          visibleWishlistCount,
+        };
+      })
+    );
+
+    return NextResponse.json(friendsWithCounts);
   } catch (error) {
     console.error("Error fetching friends:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

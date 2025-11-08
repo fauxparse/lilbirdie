@@ -1,6 +1,6 @@
 import { Gift } from "lucide-react";
-import Link from "next/link";
 import { BlurImage } from "@/components/ui/BlurImage";
+import { CardBase } from "@/components/ui/CardBase";
 import { PrivacyBadge } from "@/components/ui/PrivacyBadge";
 import { cn } from "@/lib/utils";
 import type { SerializedWishlistSummary } from "@/types/serialized";
@@ -21,9 +21,9 @@ export function WishlistCard({ wishlist }: WishlistCardProps) {
   const items = wishlist?.items?.slice(0, 4) ?? [];
 
   return (
-    <Link
+    <CardBase
       href={`/w/${wishlist.permalink}`}
-      className="grid grid-rows-[auto_1fr] gap-3 p-3 -m-3 hover:shadow-sm bg-transparent hover:bg-background-hover rounded-xl transition-all duration-300 group/list"
+      className="grid grid-rows-[auto_1fr] gap-3 group/list"
     >
       <div className="grid grid-cols-2 grid-rows-2 aspect-square gap-2">
         {items.map((item, i) => (
@@ -57,6 +57,6 @@ export function WishlistCard({ wishlist }: WishlistCardProps) {
           <PrivacyBadge privacy={wishlist.privacy} readOnly />
         </div>
       </div>
-    </Link>
+    </CardBase>
   );
 }

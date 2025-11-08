@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/PageHeader";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover";
 import { PrivacyBadge } from "@/components/ui/PrivacyBadge";
+import { ResponsiveGrid } from "@/components/ui/ResponsiveGrid";
 import {
   Select,
   SelectContent,
@@ -232,7 +233,7 @@ function WishlistPageInner() {
           </div>
 
           {/* Items Grid Skeleton */}
-          <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4 @6xl:grid-cols-5 gap-8 items-start">
+          <ResponsiveGrid>
             {[...Array(6)].map((_, i) => (
               <Card
                 key={i}
@@ -263,7 +264,7 @@ function WishlistPageInner() {
                 </div>
               </Card>
             ))}
-          </div>
+          </ResponsiveGrid>
         </div>
       </div>
     );
@@ -453,7 +454,7 @@ function WishlistPageInner() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4 @6xl:grid-cols-5 gap-8 items-start">
+          <ResponsiveGrid>
             {processedItems.map((item) => (
               <WishlistItemCard
                 key={item.id}
@@ -469,7 +470,7 @@ function WishlistPageInner() {
                 refetchWishlist={refetch}
               />
             ))}
-          </div>
+          </ResponsiveGrid>
         )}
       </div>
 

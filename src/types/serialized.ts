@@ -1,5 +1,7 @@
 // Serialized types for server-side data (with string dates and number prices)
 
+import { OccasionType } from "@prisma/client";
+
 export interface SerializedClaim {
   id: string;
   itemId: string;
@@ -94,22 +96,25 @@ export interface SerializedFriend {
   name: string;
   email: string;
   image?: string;
+  visibleWishlistCount: number;
 }
 
 export interface SerializedFriendRequest {
   id: string;
   createdAt: string;
-  requester: {
+  type: "incoming" | "outgoing";
+  requester?: {
     id: string;
     name: string;
     email: string;
     image?: string;
   };
+  email?: string;
 }
 
 export interface SerializedDashboardData {
   wishlists: SerializedWishlistSummary[];
-  upcomingGifts: Array<{
+  upcomingOccasions: Array<{
     friend: {
       id: string;
       name: string;
@@ -119,9 +124,11 @@ export interface SerializedDashboardData {
         birthday?: string;
       };
     };
-    occasion: "birthday" | "christmas";
+    occasionType: OccasionType;
+    occasionTitle: string;
     daysUntil: number;
     date: string;
+    wishlistPermalink: string | null;
   }>;
   claimedGifts: Array<{
     id: string;

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { OccasionService } from "@/lib/services/OccasionService";
 import { PrivacyService } from "@/lib/services/PrivacyService";
 import { WishlistService } from "@/lib/services/WishlistService";
 import type {
@@ -12,7 +13,7 @@ import { getServerSession } from "./auth";
 
 // Re-export serialized types for convenience
 export type DashboardData = SerializedDashboardData;
-export type WishlistData = SerializedWishlistSummary; // Changed to summary type
+export type WishlistData = SerializedWishlistSummary;
 export type UserProfileData = SerializedUserProfile;
 export type FriendsData = SerializedFriendsData;
 
@@ -115,75 +116,60 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     }
   }
 
-  // Calculate upcoming gift occasions
+  // Get upcoming occasions using OccasionService
   const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const upcomingGifts = [];
+  const upcomingOccasions = [];
+  const occasionService = OccasionService.getInstance();
 
   for (const { friend } of friends) {
-    const lastClaimDate = friendClaimsMap.get(friend.id);
+    // Get friend's upcoming occasions (next 4 months for ~120 day window)
+    const occasions = await occasionService.getUpcomingOccasions(friend.id, 4);
 
-    // Check birthday
-    if (friend.profile?.birthday) {
-      const birthdayThisYear = new Date(friend.profile.birthday);
-      birthdayThisYear.setFullYear(currentYear);
+    for (const occasion of occasions) {
+      if (!occasion.nextOccurrence) continue;
 
-      // If birthday already passed this year, check next year
-      if (birthdayThisYear < currentDate) {
-        birthdayThisYear.setFullYear(currentYear + 1);
-      }
-
-      const daysUntilBirthday = Math.ceil(
-        (birthdayThisYear.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)
+      // Calculate days until occasion
+      const daysUntil = Math.ceil(
+        (occasion.nextOccurrence.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      // Show birthdays within the next 60 days
-      if (daysUntilBirthday <= 60) {
-        const lastBirthday = new Date(friend.profile.birthday);
-        lastBirthday.setFullYear(birthdayThisYear.getFullYear() - 1);
+      // Get wishlist permalink - either from occasion entity or default wishlist
+      let wishlistPermalink: string | null = null;
 
-        // Check if claimed since last birthday
-        if (!lastClaimDate || lastClaimDate < lastBirthday) {
-          upcomingGifts.push({
-            friend,
-            occasion: "birthday" as const,
-            daysUntil: daysUntilBirthday,
-            date: birthdayThisYear.toISOString(),
-          });
-        }
-      }
-    }
-
-    // Check Christmas (December 25)
-    const christmasThisYear = new Date(currentYear, 11, 25); // Month is 0-indexed
-
-    // If Christmas already passed this year, check next year
-    if (christmasThisYear < currentDate) {
-      christmasThisYear.setFullYear(currentYear + 1);
-    }
-
-    const daysUntilChristmas = Math.ceil(
-      (christmasThisYear.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    // Show Christmas within the next 60 days
-    if (daysUntilChristmas <= 60) {
-      const lastChristmas = new Date(christmasThisYear.getFullYear() - 1, 11, 25);
-
-      // Check if claimed since last Christmas
-      if (!lastClaimDate || lastClaimDate < lastChristmas) {
-        upcomingGifts.push({
-          friend,
-          occasion: "christmas" as const,
-          daysUntil: daysUntilChristmas,
-          date: christmasThisYear.toISOString(),
+      if (occasion.entityType === "WISHLIST" && occasion.entityId) {
+        // Get the specific wishlist associated with this occasion
+        const wishlist = await prisma.wishlist.findUnique({
+          where: { id: occasion.entityId },
+          select: { permalink: true },
         });
+        wishlistPermalink = wishlist?.permalink || null;
       }
+
+      // Fallback to default wishlist if no occasion-specific wishlist
+      if (!wishlistPermalink) {
+        const defaultWishlist = await prisma.wishlist.findFirst({
+          where: {
+            ownerId: friend.id,
+            isDefault: true,
+          },
+          select: { permalink: true },
+        });
+        wishlistPermalink = defaultWishlist?.permalink || null;
+      }
+
+      upcomingOccasions.push({
+        friend,
+        occasionType: occasion.type,
+        occasionTitle: occasion.title,
+        daysUntil,
+        date: occasion.nextOccurrence.toISOString(),
+        wishlistPermalink,
+      });
     }
   }
 
-  // Sort upcoming gifts by days until occasion
-  upcomingGifts.sort((a, b) => a.daysUntil - b.daysUntil);
+  // Sort upcoming occasions by days until occurrence
+  upcomingOccasions.sort((a, b) => a.daysUntil - b.daysUntil);
 
   // Get claimed gifts that haven't been sent
   const claimedGifts = await prisma.claim.findMany({
@@ -239,14 +225,15 @@ export async function fetchDashboardData(): Promise<DashboardData> {
         imageBlurhash: item.blurhash || undefined,
       })),
     })),
-    upcomingGifts: upcomingGifts.map((gift) => ({
-      ...gift,
+    upcomingOccasions: upcomingOccasions.map((occasion) => ({
+      ...occasion,
+      wishlistPermalink: occasion.wishlistPermalink,
       friend: {
-        ...gift.friend,
-        image: gift.friend.image || undefined,
-        profile: gift.friend.profile
+        ...occasion.friend,
+        image: occasion.friend.image || undefined,
+        profile: occasion.friend.profile
           ? {
-              birthday: gift.friend.profile.birthday?.toISOString(),
+              birthday: occasion.friend.profile.birthday?.toISOString(),
             }
           : undefined,
       },
@@ -514,8 +501,28 @@ export async function fetchFriendsData(): Promise<FriendsData> {
 
   const friends = friendships.map((f) => f.friend);
 
-  // Fetch friend requests
-  const friendRequests = await prisma.friendRequest.findMany({
+  // Get visible wishlist counts for each friend
+  const friendsWithCounts = await Promise.all(
+    friends.map(async (friend) => {
+      const visibleWishlistCount = await prisma.wishlist.count({
+        where: {
+          ownerId: friend.id,
+          isDeleted: false,
+          privacy: {
+            in: ["PUBLIC", "FRIENDS_ONLY"],
+          },
+        },
+      });
+
+      return {
+        ...friend,
+        visibleWishlistCount,
+      };
+    })
+  );
+
+  // Fetch incoming friend requests
+  const incomingRequests = await prisma.friendRequest.findMany({
     where: {
       receiverId: currentUserId,
       status: "PENDING",
@@ -537,18 +544,42 @@ export async function fetchFriendsData(): Promise<FriendsData> {
     },
   });
 
+  // Fetch outgoing friend requests
+  const outgoingRequests = await prisma.friendRequest.findMany({
+    where: {
+      requesterId: currentUserId,
+      status: "PENDING",
+    },
+    select: {
+      id: true,
+      email: true,
+      createdAt: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
   return {
-    friends: friends.map((friend) => ({
+    friends: friendsWithCounts.map((friend) => ({
       ...friend,
       image: friend.image || undefined,
     })),
-    friendRequests: friendRequests.map((request) => ({
-      ...request,
-      createdAt: request.createdAt.toISOString(),
-      requester: {
-        ...request.requester,
-        image: request.requester.image || undefined,
-      },
-    })),
+    friendRequests: [
+      ...incomingRequests.map((request) => ({
+        ...request,
+        createdAt: request.createdAt.toISOString(),
+        type: "incoming" as const,
+        requester: {
+          ...request.requester,
+          image: request.requester.image || undefined,
+        },
+      })),
+      ...outgoingRequests.map((request) => ({
+        ...request,
+        createdAt: request.createdAt.toISOString(),
+        type: "outgoing" as const,
+      })),
+    ],
   };
 }

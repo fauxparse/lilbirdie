@@ -174,7 +174,7 @@ export function UserProfileClient({ userId, initialData }: UserProfileClientProp
             className="gap-2"
           >
             <UserPlus className="h-4 w-4" />
-            Add Friend
+            Add friend
           </Button>
         );
     }

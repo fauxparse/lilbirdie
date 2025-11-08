@@ -63,7 +63,8 @@
       "Bash(rm:*)",
       "Bash(mkdir:*)",
       "Bash(pnpm build:*)",
-      "Bash(npx wrangler deploy:*)"
+      "Bash(npx wrangler deploy:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

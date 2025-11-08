@@ -108,3 +108,51 @@ export async function POST(
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ requestId: string }> }
+) {
+  try {
+    const { requestId } = await params;
+
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const currentUserId = session.user.id;
+
+    // Get the friend request - verify it belongs to the current user as requester
+    const friendRequest = await prisma.friendRequest.findFirst({
+      where: {
+        id: requestId,
+        requesterId: currentUserId,
+        status: "PENDING",
+      },
+    });
+
+    if (!friendRequest) {
+      return NextResponse.json(
+        { error: "Friend request not found or already processed" },
+        { status: 404 }
+      );
+    }
+
+    // Delete the friend request
+    await prisma.friendRequest.delete({
+      where: { id: requestId },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Friend request cancelled",
+    });
+  } catch (error) {
+    console.error("Error cancelling friend request:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

@@ -1,108 +1,97 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, CheckCircle, Gift, Package, TreePine } from "lucide-react";
+import { Calendar } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { ProfileCard } from "@/components/ui/ProfileCard";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { OCCASIONS } from "@/lib/occasions";
 import type { DashboardData } from "@/lib/server/data-fetchers";
 
-interface UpcomingClientProps {
+interface UpcomingProps {
   initialData: DashboardData;
 }
 
-export function UpcomingClient({ initialData }: UpcomingClientProps) {
-  const queryClient = useQueryClient();
+export function Upcoming({ initialData }: UpcomingProps) {
+  // const queryClient = useQueryClient();
 
-  const markAsSentMutation = useMutation({
-    mutationFn: async (claimId: string) => {
-      const response = await fetch(`/api/claims/${claimId}/sent`, {
-        method: "POST",
-      });
+  // const markAsSentMutation = useMutation({
+  //   mutationFn: async (claimId: string) => {
+  //     const response = await fetch(`/api/claims/${claimId}/sent`, {
+  //       method: "POST",
+  //     });
 
-      if (!response.ok) {
-        const error = (await response.json()) as { error?: string };
-        throw new Error(error.error || "Failed to mark as sent");
-      }
+  //     if (!response.ok) {
+  //       const error = (await response.json()) as { error?: string };
+  //       throw new Error(error.error || "Failed to mark as sent");
+  //     }
 
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-      toast.success("Gift marked as sent!");
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  //     return response.json();
+  //   },
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+  //     toast.success("Gift marked as sent!");
+  //   },
+  //   onError: (error) => {
+  //     toast.error(error.message);
+  //   },
+  // });
 
-  const handleMarkAsSent = (claimId: string) => {
-    markAsSentMutation.mutate(claimId);
-  };
+  // const handleMarkAsSent = (claimId: string) => {
+  //   markAsSentMutation.mutate(claimId);
+  // };
 
-  const { upcomingGifts, claimedGifts } = initialData;
-  const unsentGifts = claimedGifts.filter((gift) => !gift.sent);
+  const { upcomingOccasions } = initialData;
+  // const unsentGifts = claimedGifts.filter((gift) => !gift.sent);
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-6 cq-lg:grid-cols-2">
-        {/* Upcoming Gift Occasions */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Upcoming Gift Occasions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {upcomingGifts.length === 0 ? (
-              <div className="text-center py-8">
-                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">No upcoming occasions</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {upcomingGifts.map((gift, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 rounded-lg border"
-                  >
-                    <div className="flex items-center gap-3 flex-1">
-                      <UserAvatar user={gift.friend} size="default" />
-                      <div className="flex-1 min-w-0">
-                        <Link
-                          href={`/u/${gift.friend.id}`}
-                          className="font-medium hover:underline truncate block"
-                        >
-                          {gift.friend.name || gift.friend.email}
-                        </Link>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          {gift.occasion === "christmas" ? (
-                            <TreePine className="h-3 w-3" />
-                          ) : (
-                            <Calendar className="h-3 w-3" />
-                          )}
-                          <span>
-                            {gift.occasion === "christmas" ? "Christmas" : "Birthday"} in{" "}
-                            {gift.daysUntil} days
-                          </span>
-                        </div>
-                      </div>
+    <div className="@container space-y-6">
+      <div>
+        {/* Upcoming Occasions */}
+        <div className="space-y-3 grid grid-cols-1 @2xl:grid-cols-2 @4xl:grid-cols-3 @6xl:grid-cols-4 gap-4">
+          {upcomingOccasions.length === 0 ? (
+            <div className="text-center py-8">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">No upcoming occasions</p>
+            </div>
+          ) : (
+            upcomingOccasions.map((occasion, index) => {
+              const OccasionIcon = OCCASIONS[occasion.occasionType].icon;
+
+              const card = (
+                <ProfileCard
+                  key={index}
+                  avatar={<UserAvatar user={occasion.friend} />}
+                  primaryText={
+                    <p className="font-medium truncate">
+                      {occasion.friend.name || occasion.friend.email}
+                    </p>
+                  }
+                  secondaryText={
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <OccasionIcon className="h-3 w-3" />
+                      <span>
+                        {occasion.occasionTitle} in {occasion.daysUntil} days
+                      </span>
                     </div>
-                    <Button variant="outline" size="small" asChild>
-                      <Link href={`/u/${gift.friend.id}`}>View Profile</Link>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  }
+                />
+              );
+
+              // Only wrap in Link if there's a wishlist to link to
+              return occasion.wishlistPermalink ? (
+                <Link key={index} href={`/w/${occasion.wishlistPermalink}` as Route}>
+                  {card}
+                </Link>
+              ) : (
+                card
+              );
+            })
+          )}
+        </div>
 
         {/* Claimed Gifts to Send */}
-        <Card>
+        {/* <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
@@ -173,7 +162,7 @@ export function UpcomingClient({ initialData }: UpcomingClientProps) {
               </div>
             )}
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </div>
   );

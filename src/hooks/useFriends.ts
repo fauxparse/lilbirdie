@@ -5,17 +5,20 @@ export interface Friend {
   id: string;
   name: string;
   image?: string;
+  visibleWishlistCount: number;
 }
 
 export interface FriendRequest {
   id: string;
   createdAt: string;
-  requester: {
+  type: "incoming" | "outgoing";
+  requester?: {
     id: string;
     name: string;
     email: string;
     image?: string;
   };
+  email?: string;
 }
 
 export interface UserSearchResult {
@@ -153,6 +156,30 @@ export function useHandleFriendRequest() {
       if (action === "accept") {
         queryClient.invalidateQueries({ queryKey: ["friends", user?.id] });
       }
+    },
+  });
+}
+
+export function useCancelFriendRequest() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (requestId: string) => {
+      const response = await fetch(`/api/friend-requests/${requestId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = (await response.json()) as { error?: string };
+        throw new Error(error.error || "Failed to cancel friend request");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate friend requests to remove the cancelled request
+      queryClient.invalidateQueries({ queryKey: ["friend-requests", user?.id] });
     },
   });
 }

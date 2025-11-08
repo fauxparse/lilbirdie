@@ -15,7 +15,8 @@ import { PriceDisplay } from "@/components/PriceDisplay";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { BlurImage } from "@/components/ui/BlurImage";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
+import { CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/Card";
+import { CardBase } from "@/components/ui/CardBase";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,14 +105,18 @@ function WishlistItemCardContent({
   // Early return if item data not available in cache
   if (!item) {
     return (
-      <Card className="group">
-        <CardContent className="p-6">
-          <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-muted rounded w-3/4 mx-auto"></div>
-            <div className="h-3 bg-muted rounded w-1/2 mx-auto"></div>
+      <CardBase
+        asChild
+        isLoading
+        loadingSkeleton={
+          <div className="p-6">
+            <div className="animate-pulse space-y-3">
+              <div className="h-4 bg-muted rounded w-3/4 mx-auto"></div>
+              <div className="h-3 bg-muted rounded w-1/2 mx-auto"></div>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
     );
   }
 
@@ -122,7 +127,7 @@ function WishlistItemCardContent({
   };
 
   return (
-    <Card className="group grid grid-rows-[auto_1fr_auto] -my-3 @md:-mx-3 gap-2 min-h-72 p-3 shadow-none hover:shadow-sm border-0 bg-transparent hover:bg-background-hover rounded-xl transition-all duration-300">
+    <CardBase className="group grid grid-rows-[auto_1fr_auto] -my-3 @md:-mx-3 gap-2 min-h-72">
       <CardHeader className="p-0 space-y-0 row-start-1 row-end-2 col-start-1 col-end-1 relative">
         {item.imageUrl && (
           <BlurImage
@@ -294,7 +299,7 @@ function WishlistItemCardContent({
           </div>
         </div>
       )}
-    </Card>
+    </CardBase>
   );
 }
 

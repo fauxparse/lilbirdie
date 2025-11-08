@@ -6,14 +6,14 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
-import { WishlistCard } from "@/components/WishlistCard";
 import type { DashboardData } from "@/lib/server/data-fetchers";
+import { Wishlists } from "../Wishlists";
 
-interface MyListsClientProps {
+interface MyListsProps {
   initialData: DashboardData;
 }
 
-export function MyListsClient({ initialData }: MyListsClientProps) {
+export function MyLists({ initialData }: MyListsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const hasOpenedModalRef = useRef(false);
@@ -51,19 +51,16 @@ export function MyListsClient({ initialData }: MyListsClientProps) {
 
   return (
     <div className="space-y-6 @container">
-      {wishlists.length === 0 ? (
-        <div className="text-center py-8">
-          <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground mb-4">No wishlists yet</p>
-          <Button asChild size="small">
-            <Link href="/wishlists/new">Create Your First Wishlist</Link>
-          </Button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4 @6xl:grid-cols-5 gap-8 items-start">
-          {wishlists.map((wishlist) => (
-            <WishlistCard key={wishlist.id} wishlist={wishlist} />
-          ))}
+      <Wishlists lists={wishlists}>
+        {wishlists.length === 0 ? (
+          <div className="text-center py-8">
+            <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground mb-4">No wishlists yet</p>
+            <Button asChild size="small">
+              <Link href="/wishlists/new">Create Your First Wishlist</Link>
+            </Button>
+          </div>
+        ) : (
           <Link
             href="/wishlists/new"
             className="flex flex-col gap-3 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground"
@@ -73,8 +70,8 @@ export function MyListsClient({ initialData }: MyListsClientProps) {
             </div>
             <div className="text-lg font-medium">Add a list</div>
           </Link>
-        </div>
-      )}
+        )}
+      </Wishlists>
     </div>
   );
 }

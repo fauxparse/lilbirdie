@@ -1,5 +1,6 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "./Skeleton";
 
 type PolymorphicProps<C extends ElementType> = {
   as?: C;
@@ -46,6 +47,10 @@ type ProfileCardProps<C extends ElementType = "div"> = PolymorphicProps<C>;
  *   </>}
  * />
  */
+// Shared grid layout classes for ProfileCard and its skeleton
+const PROFILE_CARD_GRID_CLASSES =
+  "grid grid-cols-[auto_1fr_1fr] grid-rows-[auto_auto] gap-2 hover:bg-muted p-3 rounded-xl items-center";
+
 export function ProfileCard<C extends ElementType = "div">({
   as,
   avatar,
@@ -60,7 +65,7 @@ export function ProfileCard<C extends ElementType = "div">({
   return (
     <Component
       className={cn(
-        "grid grid-cols-[auto_1fr_1fr] grid-rows-[auto_auto] gap-2 hover:bg-muted p-3 rounded-xl items-center",
+        PROFILE_CARD_GRID_CLASSES,
         // Add cursor-pointer and text-left for interactive elements
         (as === "button" || props.onClick) && "cursor-pointer text-left",
         className
@@ -76,3 +81,39 @@ export function ProfileCard<C extends ElementType = "div">({
     </Component>
   );
 }
+
+/**
+ * ProfileCard.Skeleton - Loading skeleton that matches ProfileCard layout
+ */
+interface ProfileCardSkeletonProps {
+  withActions?: boolean;
+  className?: string;
+}
+
+ProfileCard.Skeleton = function ProfileCardSkeleton({
+  withActions = false,
+  className,
+}: ProfileCardSkeletonProps) {
+  return (
+    <div className={cn(PROFILE_CARD_GRID_CLASSES, className)}>
+      {/* Avatar skeleton - circular */}
+      <div className="row-[1/span_2] w-17 h-17 mr-2">
+        <Skeleton className="w-full h-full rounded-full" />
+      </div>
+
+      {/* Text content skeleton */}
+      <div className="col-span-2 last:row-span-2 space-y-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-3 w-16" />
+      </div>
+
+      {/* Optional action buttons skeleton */}
+      {withActions && (
+        <>
+          <Skeleton className="h-7 w-16 rounded-md" />
+          <Skeleton className="h-7 w-16 rounded-md" />
+        </>
+      )}
+    </div>
+  );
+};

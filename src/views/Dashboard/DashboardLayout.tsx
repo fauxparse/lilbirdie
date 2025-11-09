@@ -3,9 +3,13 @@
 import { Calendar, Heart, Users } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { ProfileCard } from "@/components/ui/ProfileCard";
+import { ResponsiveGrid } from "@/components/ui/ResponsiveGrid";
 import { UserAvatar } from "@/components/ui/UserAvatar";
+import { WishlistCard } from "@/components/WishlistCard";
 import type { User } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { FriendCard } from "../Friends/FriendCard";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -33,23 +37,26 @@ const tabs = [
   },
 ];
 
-function TabSkeleton() {
+function WishlistsSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="grid gap-6 cq-lg:grid-cols-2">
-        <div className="h-64 bg-muted animate-pulse rounded-lg" />
-        <div className="h-64 bg-muted animate-pulse rounded-lg" />
-      </div>
+    <div className="space-y-6 @container">
+      <ResponsiveGrid>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <WishlistCard.Skeleton key={i} />
+        ))}
+      </ResponsiveGrid>
     </div>
   );
 }
 
 function FriendsSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-1">
-        <div className="h-64 bg-muted animate-pulse rounded-lg" />
-        <div className="h-64 bg-muted animate-pulse rounded-lg" />
+    <div className="@container">
+      <div className="grid grid-cols-1 @2xl:grid-cols-2 @4xl:grid-cols-3 @6xl:grid-cols-4 gap-4">
+        <ProfileCard.Skeleton />
+        {Array.from({ length: 7 }).map((_, i) => (
+          <FriendCard.Skeleton key={i} />
+        ))}
       </div>
     </div>
   );
@@ -57,10 +64,11 @@ function FriendsSkeleton() {
 
 function UpcomingSkeleton() {
   return (
-    <div className="space-y-6">
-      <div className="grid gap-6 cq-lg:grid-cols-2">
-        <div className="h-80 bg-muted animate-pulse rounded-lg" />
-        <div className="h-80 bg-muted animate-pulse rounded-lg" />
+    <div className="@container space-y-6">
+      <div className="space-y-3 grid grid-cols-1 @2xl:grid-cols-2 @4xl:grid-cols-3 @6xl:grid-cols-4 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <ProfileCard.Skeleton key={i} />
+        ))}
       </div>
     </div>
   );
@@ -89,14 +97,14 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   };
 
   const renderSkeleton = () => {
-    if (!targetTab) return <TabSkeleton />;
+    if (!targetTab) return <WishlistsSkeleton />;
 
     if (targetTab === "/friends") {
       return <FriendsSkeleton />;
     } else if (targetTab === "/upcoming") {
       return <UpcomingSkeleton />;
     } else {
-      return <TabSkeleton />;
+      return <WishlistsSkeleton />;
     }
   };
 

@@ -2,6 +2,7 @@ import { Gift } from "lucide-react";
 import { BlurImage } from "@/components/ui/BlurImage";
 import { CardBase } from "@/components/ui/CardBase";
 import { PrivacyBadge } from "@/components/ui/PrivacyBadge";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import type { SerializedWishlistSummary } from "@/types/serialized";
 
@@ -13,6 +14,10 @@ const gridPlacements = [
   ["col-1 row-1", "col-2 row-1", "col-1 row-2", "col-2 row-2"],
 ] as const;
 
+// Shared layout classes
+const CARD_CONTAINER_CLASSES = "grid grid-rows-[auto_1fr] gap-3 group/list";
+const IMAGE_GRID_CLASSES = "grid grid-cols-2 grid-rows-2 aspect-square gap-2";
+
 interface WishlistCardProps {
   wishlist: SerializedWishlistSummary;
 }
@@ -21,11 +26,8 @@ export function WishlistCard({ wishlist }: WishlistCardProps) {
   const items = wishlist?.items?.slice(0, 4) ?? [];
 
   return (
-    <CardBase
-      href={`/w/${wishlist.permalink}`}
-      className="grid grid-rows-[auto_1fr] gap-3 group/list"
-    >
-      <div className="grid grid-cols-2 grid-rows-2 aspect-square gap-2">
+    <CardBase href={`/w/${wishlist.permalink}`} className={CARD_CONTAINER_CLASSES}>
+      <div className={IMAGE_GRID_CLASSES}>
         {items.map((item, i) => (
           <div
             key={item.id}
@@ -60,3 +62,28 @@ export function WishlistCard({ wishlist }: WishlistCardProps) {
     </CardBase>
   );
 }
+
+/**
+ * WishlistCard.Skeleton - Loading skeleton that matches WishlistCard layout
+ */
+WishlistCard.Skeleton = function WishlistCardSkeleton() {
+  return (
+    <CardBase className={CARD_CONTAINER_CLASSES} asChild>
+      <div>
+        {/* Image grid skeleton - 2x2 grid matching the real layout */}
+        <div className={IMAGE_GRID_CLASSES}>
+          <Skeleton className="rounded-lg" />
+          <Skeleton className="rounded-lg" />
+          <Skeleton className="rounded-lg" />
+          <Skeleton className="rounded-lg" />
+        </div>
+
+        {/* Text content skeleton */}
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+      </div>
+    </CardBase>
+  );
+};

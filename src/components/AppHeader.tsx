@@ -16,7 +16,7 @@ export function AppHeader() {
       <div className="container flex items-center justify-between mx-auto px-4 py-2">
         <div className="flex items-center gap-2 flex-1">
           <Link href="/" className="flex items-center gap-2">
-            <h1 className="text-xl font-medium">Lil Birdie</h1>
+            <h1 className="text-xl">Lil Birdie</h1>
           </Link>
         </div>
 

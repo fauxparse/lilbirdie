@@ -72,7 +72,8 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
       scrapeURL(pastedUrl.trim());
       // The data will be available in the query result, we'll handle it in a useEffect
     } catch {
-      // Invalid URL, do nothing
+      // Invalid URL
+      setScrapingError("Invalid URL");
     }
   };
 

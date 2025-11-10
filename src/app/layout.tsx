@@ -13,6 +13,9 @@ import { getServerTheme, resolveTheme } from "@/lib/server/theme";
 
 import "./globals.css";
 
+// Force dynamic rendering since we need to access session/headers for theme
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Lil Birdie - Share Your Wishes",
   description: "A modern wishlist app for sharing your wishes and coordinating gifts with friends.",

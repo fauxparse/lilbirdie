@@ -3,8 +3,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { Gift, Plus } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import React, { useState } from "react";
+import { notFound, useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AddItemModal } from "@/components/AddItemModal";
 import { useAuth } from "@/components/AuthProvider";
@@ -38,6 +38,9 @@ export const Wishlist: React.FC<WishlistProps> = ({ permalink, initialData }) =>
 
 const WishlistInner: React.FC = () => {
   const { user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const hasOpenedModalRef = useRef(false);
   const {
     wishlist,
     isLoading,
@@ -48,10 +51,6 @@ const WishlistInner: React.FC = () => {
     claimMutation,
     removeItemFromCache,
     updateWishlist,
-    sortBy,
-    setSortBy,
-    hideClaimedItems,
-    setHideClaimedItems,
     processedItems,
   } = useWishlist();
 
@@ -66,6 +65,21 @@ const WishlistInner: React.FC = () => {
     ids: [],
     names: [],
   });
+
+  // Check if we should open the edit wishlist modal (only once)
+  useEffect(() => {
+    const openModal = searchParams.get("openModal");
+    if (openModal === "edit" && !hasOpenedModalRef.current && wishlist?.permalink) {
+      hasOpenedModalRef.current = true;
+      // First, clear the query param from the URL
+      // Use window.history.replaceState for immediate effect
+      window.history.replaceState({}, "", `/w/${wishlist.permalink}`);
+      // Then navigate to the modal route
+      setTimeout(() => {
+        router.push(`/w/${wishlist.permalink}/edit`);
+      }, 10);
+    }
+  }, [searchParams, router, wishlist?.permalink]);
 
   // Delete item mutation
   const deleteItemMutation = useMutation({

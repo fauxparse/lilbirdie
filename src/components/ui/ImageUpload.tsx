@@ -393,9 +393,8 @@ export function ImageUpload({
 
       {/* Upload zone - only show if no image selected/uploaded */}
       {!value && !selectedFile && !isProcessing && (
-        <button
-          type="button"
-          disabled={disabled || isProcessing}
+        // biome-ignore lint/a11y/useKeyWithClickEvents: TODO
+        <div
           className={`relative w-full ${aspectRatioClass} border-2 border-dashed rounded-lg transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed ${
             isDragOver
               ? "border-primary bg-primary/5"
@@ -436,7 +435,7 @@ export function ImageUpload({
               Focus and paste image or URL (Ctrl+V)
             </p>
           </div>
-        </button>
+        </div>
       )}
     </div>
   );

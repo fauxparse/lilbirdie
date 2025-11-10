@@ -1,10 +1,10 @@
 import { Gift } from "lucide-react";
 import { BlurImage } from "@/components/ui/BlurImage";
 import { CardBase } from "@/components/ui/CardBase";
-import { PrivacyBadge } from "@/components/ui/PrivacyBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import type { SerializedWishlistSummary } from "@/types/serialized";
+import { PrivacyBadge } from "./ui/PrivacyBadge";
 
 const gridPlacements = [
   [],
@@ -27,36 +27,40 @@ export function WishlistCard({ wishlist }: WishlistCardProps) {
 
   return (
     <CardBase href={`/w/${wishlist.permalink}`} className={CARD_CONTAINER_CLASSES}>
-      <div className={IMAGE_GRID_CLASSES}>
-        {items.map((item, i) => (
-          <div
-            key={item.id}
-            className={cn(
-              "relative rounded-lg overflow-hidden bg-muted",
-              "brightness-100 group-hover/list:brightness-110 transition-all duration-300",
-              gridPlacements[items.length][i]
-            )}
-          >
-            {item.imageUrl ? (
-              <BlurImage
-                src={item.imageUrl}
-                blurhash={item.imageBlurhash}
-                alt={item.name}
-                className="w-full h-full"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Gift className="h-6 w-6 text-muted-foreground" />
-              </div>
-            )}
-          </div>
-        ))}
+      <div className="relative">
+        <div className={IMAGE_GRID_CLASSES}>
+          {items.map((item, i) => (
+            <div
+              key={item.id}
+              className={cn(
+                "relative rounded-lg overflow-hidden bg-muted",
+                "brightness-100 group-hover/list:brightness-110 transition-all duration-300",
+                gridPlacements[items.length][i]
+              )}
+            >
+              {item.imageUrl ? (
+                <BlurImage
+                  src={item.imageUrl}
+                  blurhash={item.imageBlurhash}
+                  alt={item.name}
+                  className="w-full h-full"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Gift className="h-6 w-6 text-muted-foreground" />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
       <div>
         <div className="text-lg font-medium">{wishlist.title}</div>
         <div className="text-sm text-muted-foreground flex items-center gap-2">
-          {wishlist._count.items} item{wishlist._count.items !== 1 ? "s" : ""}
-          <PrivacyBadge privacy={wishlist.privacy} readOnly />
+          <span>
+            {wishlist._count.items} item{wishlist._count.items !== 1 ? "s" : ""}
+          </span>
+          <PrivacyBadge privacy={wishlist.privacy} />
         </div>
       </div>
     </CardBase>

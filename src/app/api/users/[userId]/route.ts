@@ -112,6 +112,21 @@ export async function GET(
             },
           },
         },
+        items: {
+          where: {
+            isDeleted: false,
+          },
+          select: {
+            id: true,
+            name: true,
+            imageUrl: true,
+            blurhash: true,
+          },
+          take: 4,
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
       },
       orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
     });
@@ -124,7 +139,15 @@ export async function GET(
     return NextResponse.json({
       user: redactedUser,
       friendshipStatus,
-      wishlists,
+      wishlists: wishlists.map((wishlist) => ({
+        ...wishlist,
+        items: wishlist.items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          imageUrl: item.imageUrl || undefined,
+          imageBlurhash: item.blurhash || undefined,
+        })),
+      })),
       isOwnProfile: viewerId === userId,
     });
   } catch (error) {

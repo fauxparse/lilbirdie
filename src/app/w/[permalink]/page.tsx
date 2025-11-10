@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { fetchWishlistByPermalink } from "@/lib/server/data-fetchers";
-import { WishlistPageContent } from "./WishlistPageContent";
+import { Wishlist } from "@/views/Wishlists/Wishlist";
 
 interface WishlistPageProps {
   params: Promise<{ permalink: string }>;
@@ -17,8 +17,8 @@ export default async function PublicWishlistPage({ params }: WishlistPageProps) 
       notFound();
     }
     // For other errors, we'll let the client handle them
-    return <WishlistPageContent permalink={permalink} initialData={null} />;
+    return <Wishlist permalink={permalink} initialData={null} />;
   }
 
-  return <WishlistPageContent permalink={permalink} initialData={wishlistResult.data} />;
+  return <Wishlist permalink={permalink} initialData={wishlistResult.data} />;
 }

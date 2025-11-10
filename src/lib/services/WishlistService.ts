@@ -163,14 +163,67 @@ export class WishlistService {
       }
     }
 
+    // Calculate friendship status
+    let friendshipStatus: "none" | "friends" | "pending_sent" | "pending_received" = "none";
+    if (viewerId && wishlist.ownerId !== viewerId) {
+      // Check for existing friendship
+      const friendship = await prisma.friendship.findFirst({
+        where: {
+          userId: viewerId,
+          friendId: wishlist.ownerId,
+        },
+      });
+
+      if (friendship) {
+        friendshipStatus = "friends";
+      } else {
+        // Check for pending friend requests
+        const owner = await prisma.user.findUnique({
+          where: { id: wishlist.ownerId },
+          select: { email: true },
+        });
+
+        if (owner) {
+          const sentRequest = await prisma.friendRequest.findFirst({
+            where: {
+              requesterId: viewerId,
+              email: owner.email,
+              status: "PENDING",
+            },
+          });
+
+          const receivedRequest = await prisma.friendRequest.findFirst({
+            where: {
+              requesterId: wishlist.ownerId,
+              receiverId: viewerId,
+              status: "PENDING",
+            },
+          });
+
+          if (sentRequest) {
+            friendshipStatus = "pending_sent";
+          } else if (receivedRequest) {
+            friendshipStatus = "pending_received";
+          }
+        }
+      }
+    }
+
     // Redact owner data if not a friend (but not for public wishlists)
     if (viewerId && wishlist.ownerId !== viewerId && wishlist.privacy !== "PUBLIC") {
-      const isOwnerFriend = await this.privacyService.areFriends(viewerId, wishlist.ownerId);
+      const isOwnerFriend = friendshipStatus === "friends";
       wishlist.owner =
         wishlist.owner && this.privacyService.redactUserData(wishlist.owner, isOwnerFriend);
     }
 
-    return wishlist;
+    // Fetch associated occasions
+    const occasions = await this.getWishlistOccasions(wishlist.id);
+
+    return {
+      ...wishlist,
+      occasions,
+      friendshipStatus,
+    };
   }
 
   async createWishlist(userId: string, data: CreateWishlistData) {

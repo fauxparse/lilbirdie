@@ -1,4 +1,5 @@
 import { OccasionType } from "@prisma/client";
+import { add, set } from "date-fns";
 import { Cake, Gem, Gift, GraduationCap, Heart, LucideIcon, TreePine } from "lucide-react";
 import { GemRing } from "@/icons/GemRing";
 
@@ -39,4 +40,12 @@ export const OCCASIONS: { [key in OccasionType]: OccasionDefinition } = {
     label: "Custom",
     icon: Gift,
   },
+};
+
+export const nextOccurrence = (date: Date) => {
+  let nextDate = set(date, { year: new Date().getFullYear() });
+  if (nextDate < new Date()) {
+    nextDate = add(nextDate, { years: 1 });
+  }
+  return nextDate;
 };

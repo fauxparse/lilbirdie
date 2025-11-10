@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { fetchUserProfile } from "@/lib/server/data-fetchers";
-import { UserProfileClient } from "./UserProfileClient";
+import { Profile } from "@/views/Users/Profile";
 
 interface UserProfilePageProps {
   params: Promise<{ userId: string }>;
@@ -17,8 +17,8 @@ export default async function UserProfilePage({ params }: UserProfilePageProps) 
       notFound();
     }
     // For other errors, we'll let the client handle them
-    return <UserProfileClient userId={userId} initialData={null} />;
+    return <Profile userId={userId} initialData={null} />;
   }
 
-  return <UserProfileClient userId={userId} initialData={profileResult.data} />;
+  return <Profile userId={userId} initialData={profileResult.data} />;
 }

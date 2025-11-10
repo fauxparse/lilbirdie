@@ -1,6 +1,5 @@
 "use client";
 
-import { Prisma } from "@prisma/client";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useWishlist } from "@/contexts/WishlistContext";
@@ -53,13 +52,6 @@ export function EditItemModal({ isOpen, onClose, item }: EditItemModalProps) {
         updateItemCache({
           ...currentItem,
           ...data,
-          // Handle price conversion from number to Decimal
-          price:
-            data.price !== undefined
-              ? data.price !== null
-                ? new Prisma.Decimal(data.price)
-                : null
-              : currentItem.price,
         });
       }
 

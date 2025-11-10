@@ -1,7 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { UserRound } from "lucide-react";
-
 import { cn } from "@/lib/utils";
+import type { MinimalUser } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "./Avatar";
 
 const userAvatarVariants = cva("", {
@@ -49,15 +49,8 @@ const iconVariants = cva("text-muted-foreground", {
   },
 });
 
-interface User {
-  id: string;
-  name?: string | null;
-  email?: string;
-  image?: string | null;
-}
-
 interface UserAvatarProps extends VariantProps<typeof userAvatarVariants> {
-  user: User | null | undefined;
+  user: MinimalUser | null | undefined;
   className?: string;
   fallbackClassName?: string;
   showIcon?: boolean;

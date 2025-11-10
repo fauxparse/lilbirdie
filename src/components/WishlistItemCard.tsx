@@ -230,7 +230,7 @@ function WishlistItemCardContent({
         {priceValue > 0 && (
           <PriceDisplay
             originalPrice={priceValue}
-            originalCurrency={item.currency}
+            originalCurrency={item.currency || "NZD"}
             convertedPrice={!isCurrencyLoading ? convertedPrice || undefined : undefined}
             convertedCurrency={!isCurrencyLoading ? convertedCurrency || undefined : undefined}
             className="font-medium text-base text-muted-foreground col-start-1 justify-self-start"
@@ -243,7 +243,7 @@ function WishlistItemCardContent({
         />
       </CardFooter>
       {isClaimed && !isOwner && (
-        <div className="row-start-1 row-span-3 col-start-1 col-span-1 relative z-20 bg-background/85 backdrop-blur-sm rounded-xl grid place-items-center p-4 animate-in fade-in-0 duration-300">
+        <div className="row-start-1 row-span-3 col-start-1 col-span-1 relative z-20 bg-background/85 backdrop-blur-sm rounded-xl squircle grid place-items-center p-4 animate-in fade-in-0 duration-300">
           <div className="flex flex-col items-center gap-3">
             <div className="flex flex-row-reverse justify-center">
               {[...claims].reverse().map((claim, index) => (

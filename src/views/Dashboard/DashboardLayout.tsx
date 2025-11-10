@@ -4,10 +4,11 @@ import { Calendar, Heart, Users } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ProfileCard } from "@/components/ui/ProfileCard";
+import { ProfileHeader } from "@/components/ui/ProfileHeader";
 import { ResponsiveGrid } from "@/components/ui/ResponsiveGrid";
-import { UserAvatar } from "@/components/ui/UserAvatar";
 import { WishlistCard } from "@/components/WishlistCard";
 import type { User } from "@/lib/auth";
+import type { UserProfileData } from "@/lib/server/data-fetchers";
 import { cn } from "@/lib/utils";
 import { FriendCard } from "../Friends/FriendCard";
 
@@ -81,6 +82,19 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   const [isNavigating, setIsNavigating] = useState(false);
   const [targetTab, setTargetTab] = useState<string | null>(null);
 
+  // Create a profile structure for the current user's dashboard
+  const profile: UserProfileData = {
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      image: user.image,
+    },
+    friendshipStatus: "none",
+    wishlists: [],
+    isOwnProfile: true,
+  };
+
   const handleTabClick = (href: string) => {
     if (href === pathname) return;
 
@@ -111,14 +125,9 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   return (
     <div className="container mx-auto px-4 py-8 container-type-inline-size">
       <div className="space-y-6">
-        <div className="flex flex-col items-center gap-4">
-          <UserAvatar user={user} size="huge" />
-          <h1 className="text-3xl font-medium text-center">{user.name || "Dashboard"}</h1>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="border-t border-border">
-          <nav className="-mt-px flex space-x-8 justify-center">
+        <ProfileHeader profile={profile} title={user.name || "Dashboard"}>
+          {/* Tab Navigation */}
+          <nav className="mt-6 flex space-x-8 justify-center border-t border-border">
             {tabs.map((tab) => {
               const isActive = pathname === tab.href;
 
@@ -129,7 +138,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
                   onClick={() => handleTabClick(tab.href)}
                   disabled={isPending || isNavigating}
                   className={cn(
-                    "group inline-flex items-center gap-2 py-4 px-1 border-t-1 font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                    "group inline-flex items-center gap-2 py-4 px-1 -mt-px border-t-1 font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
                     isActive
                       ? "border-primary text-foreground"
                       : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
@@ -140,7 +149,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
               );
             })}
           </nav>
-        </div>
+        </ProfileHeader>
 
         {/* Tab Content */}
         <div className="mt-6">{isPending || isNavigating ? renderSkeleton() : children}</div>

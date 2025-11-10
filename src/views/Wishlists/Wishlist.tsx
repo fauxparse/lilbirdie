@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { Gift, Plus, Settings2 } from "lucide-react";
+import { Gift, Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import React, { useState } from "react";
@@ -11,64 +11,48 @@ import { useAuth } from "@/components/AuthProvider";
 import { EditItemModal } from "@/components/EditItemModal";
 import { MoveItemsModal } from "@/components/MoveItemsModal";
 import { Button } from "@/components/ui/Button";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { Card, CardContent } from "@/components/ui/Card";
 import { InlineEditable } from "@/components/ui/InlineEditable";
-import { Label } from "@/components/ui/Label";
-import {
-  PageActions,
-  PageHeader,
-  PageHeaderDescription,
-  PageTitle,
-} from "@/components/ui/PageHeader";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/Popover";
+import { OccasionBadge } from "@/components/ui/OccasionBadge";
 import { PrivacyBadge } from "@/components/ui/PrivacyBadge";
+import { ProfileHeader } from "@/components/ui/ProfileHeader";
 import { ResponsiveGrid } from "@/components/ui/ResponsiveGrid";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/Select";
-import { Switch } from "@/components/ui/Switch";
-import { UserAvatar } from "@/components/ui/UserAvatar";
 import { WishlistItemCard } from "@/components/WishlistItemCard";
 import { useWishlist, WishlistProvider } from "@/contexts/WishlistContext";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
+import type { UserProfileData } from "@/lib/server/data-fetchers";
 import type { WishlistItemWithRelations } from "@/types";
 import type { SerializedWishlist } from "@/types/serialized";
+import { FilterBar } from "./FilterBar";
 
-interface WishlistPageContentProps {
+interface WishlistProps {
   permalink: string;
   initialData: SerializedWishlist | null;
 }
 
-export function WishlistPageContent({ permalink, initialData }: WishlistPageContentProps) {
-  return (
-    <WishlistProvider permalink={permalink} initialData={initialData}>
-      <WishlistPageInner />
-    </WishlistProvider>
-  );
-}
+export const Wishlist: React.FC<WishlistProps> = ({ permalink, initialData }) => (
+  <WishlistProvider permalink={permalink} initialData={initialData}>
+    <WishlistInner />
+  </WishlistProvider>
+);
 
-function WishlistPageInner() {
+const WishlistInner: React.FC = () => {
   const { user } = useAuth();
   const {
     wishlist,
     isLoading,
     isOwner,
+    friendshipStatus,
     error,
     refetch,
     claimMutation,
     removeItemFromCache,
     updateWishlist,
+    sortBy,
+    setSortBy,
+    hideClaimedItems,
+    setHideClaimedItems,
+    processedItems,
   } = useWishlist();
 
   // Undoable delete hook
@@ -82,10 +66,6 @@ function WishlistPageInner() {
     ids: [],
     names: [],
   });
-
-  // Sorting and filtering state
-  const [sortBy, setSortBy] = useState<"priority" | "price" | "date">("priority");
-  const [hideClaimedItems, setHideClaimedItems] = useState(false);
 
   // Delete item mutation
   const deleteItemMutation = useMutation({
@@ -146,84 +126,35 @@ function WishlistPageInner() {
     });
   };
 
-  // Sorting and filtering logic
-  const processedItems = React.useMemo(() => {
-    if (!wishlist?.items) return [];
-
-    let filteredItems = [...wishlist.items];
-
-    // Apply filtering
-    if (hideClaimedItems) {
-      filteredItems = filteredItems.filter((item) => {
-        const hasClaims = item.claims && item.claims.length > 0;
-        return !hasClaims;
-      });
-    }
-
-    // Apply sorting
-    filteredItems.sort((a, b) => {
-      switch (sortBy) {
-        case "priority":
-          // Higher priority first
-          return (b.priority || 0) - (a.priority || 0);
-        case "price": {
-          // Lower price first, null/undefined prices go to end
-          const priceA =
-            typeof a.price === "number"
-              ? a.price
-              : typeof a.price === "string"
-                ? parseFloat(a.price)
-                : Number.MAX_VALUE;
-          const priceB =
-            typeof b.price === "number"
-              ? b.price
-              : typeof b.price === "string"
-                ? parseFloat(b.price)
-                : Number.MAX_VALUE;
-          return priceA - priceB;
-        }
-        case "date":
-          // Newer items first
-          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-        default:
-          return 0;
-      }
-    });
-
-    return filteredItems;
-  }, [wishlist?.items, sortBy, hideClaimedItems]);
-
   if (error?.message === "NOT_FOUND") {
     notFound();
   }
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 container-type-inline-size">
         <div className="space-y-6 @container">
-          {/* Page Header Skeleton */}
-          <div className="flex flex-col items-start gap-2 pb-8">
-            {/* Breadcrumb Skeleton */}
+          {/* Profile Header Skeleton */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-20 w-20 bg-muted rounded-full animate-pulse" />
+            <div className="h-8 bg-muted rounded w-48 animate-pulse" />
+          </div>
+
+          {/* Breadcrumb & Actions Skeleton */}
+          <div className="border-t border-border pt-6 space-y-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <div className="h-4 bg-muted rounded w-12 animate-pulse" />
               <div className="h-3.5 w-3.5 bg-muted rounded animate-pulse" />
               <div className="h-4 bg-muted rounded w-20 animate-pulse" />
             </div>
 
-            {/* Title and Privacy Badge Skeleton */}
-            <div className="flex items-center gap-3 pt-6 w-full">
-              <div className="h-10 md:h-12 lg:h-14 bg-muted rounded w-2/3 max-w-md animate-pulse" />
+            <div className="flex items-center gap-3">
               <div className="h-6 bg-muted rounded-full w-16 animate-pulse" />
+              <div className="h-5 bg-muted rounded w-full max-w-2xl animate-pulse" />
             </div>
 
-            {/* Description Skeleton */}
-            <div className="h-5 bg-muted rounded w-full max-w-2xl animate-pulse" />
-            <div className="h-5 bg-muted rounded w-4/5 max-w-xl animate-pulse" />
-
-            {/* Actions Skeleton */}
             <div className="flex w-full items-center justify-start gap-2 pt-2 flex-wrap">
               <div className="h-10 bg-muted rounded w-28 animate-pulse" />
-              <div className="h-10 bg-muted rounded w-32 animate-pulse" />
               <div className="h-10 bg-muted rounded w-32 animate-pulse" />
               <div className="ml-auto flex items-center gap-3">
                 <div className="h-4 bg-muted rounded w-24 animate-pulse" />
@@ -286,152 +217,101 @@ function WishlistPageInner() {
     );
   }
 
+  // Create a UserProfileData-like object for ProfileHeader
+  const ownerProfile: UserProfileData = {
+    user: {
+      id: wishlist.owner?.id || "",
+      name: wishlist.owner?.name || undefined,
+      email: "", // Not available in wishlist data, but ProfileHeader doesn't use it
+      image: wishlist.owner?.image || undefined,
+    },
+    friendshipStatus,
+    wishlists: [], // Not needed for wishlist page
+    isOwnProfile: isOwner,
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 container-type-inline-size">
       <div className="space-y-6 @container">
-        <PageHeader>
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link href="/wishlists">Home</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              {isOwner ? (
-                <BreadcrumbItem>
-                  <BreadcrumbLink asChild>
-                    <Link href="/wishlists">My Wishlists</Link>
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-              ) : (
-                <>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <Link href="/friends">Friends</Link>
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <Link href={`/u/${wishlist.owner?.id}`} className="flex items-center gap-2">
-                        <UserAvatar user={wishlist.owner} size="medium" />
-                        {wishlist.owner?.name}
-                      </Link>
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                </>
-              )}
-            </BreadcrumbList>
-          </Breadcrumb>
-          <div className="flex items-center gap-3 pt-6">
-            <PageTitle>
-              {isOwner ? (
-                <InlineEditable
-                  value={wishlist.title}
-                  onChange={(title) => updateWishlist({ title })}
-                />
-              ) : (
-                wishlist.title
-              )}
-            </PageTitle>
-            <PrivacyBadge
-              privacy={wishlist.privacy as "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE"}
-              onChange={isOwner ? (privacy) => updateWishlist({ privacy }) : undefined}
-            />
-          </div>
-          <PageHeaderDescription>
-            {isOwner ? (
+        <ProfileHeader
+          profile={ownerProfile}
+          title={
+            isOwner ? (
               <InlineEditable
-                value={wishlist.description || ""}
-                onChange={(description) => updateWishlist({ description })}
+                value={wishlist.title}
+                onChange={(title) => updateWishlist({ title })}
               />
             ) : (
-              wishlist.description
-            )}
-          </PageHeaderDescription>
-          <PageActions className="flex-wrap">
+              wishlist.title
+            )
+          }
+          description={wishlist.description}
+          // breadcrumbs={
+          //   <Breadcrumb>
+          //     <BreadcrumbList>
+          //       <BreadcrumbItem>
+          //         <BreadcrumbLink asChild>
+          //           <Link href="/wishlists">Home</Link>
+          //         </BreadcrumbLink>
+          //       </BreadcrumbItem>
+          //       <BreadcrumbSeparator />
+          //       {isOwner ? (
+          //         <BreadcrumbItem>
+          //           <BreadcrumbLink asChild>
+          //             <Link href="/wishlists">My Wishlists</Link>
+          //           </BreadcrumbLink>
+          //         </BreadcrumbItem>
+          //       ) : (
+          //         <>
+          //           <BreadcrumbItem>
+          //             <BreadcrumbLink asChild>
+          //               <Link href="/friends">Friends</Link>
+          //             </BreadcrumbLink>
+          //           </BreadcrumbItem>
+          //           <BreadcrumbSeparator />
+          //           <BreadcrumbItem>
+          //             <BreadcrumbLink asChild>
+          //               <Link href={`/u/${wishlist.owner?.id}`} className="flex items-center gap-2">
+          //                 <UserAvatar user={wishlist.owner} size="medium" />
+          //                 {wishlist.owner?.name}
+          //               </Link>
+          //             </BreadcrumbLink>
+          //           </BreadcrumbItem>
+          //         </>
+          //       )}
+          //     </BreadcrumbList>
+          //   </Breadcrumb>
+          // }
+        >
+          <div className="space-y-4 flex flex-col items-center">
+            <div className="flex items-center justify-center flex-wrap gap-2">
+              <PrivacyBadge
+                privacy={wishlist.privacy as "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE"}
+                onChange={isOwner ? (privacy) => updateWishlist({ privacy }) : undefined}
+              />
+              {wishlist.occasions.map((occasion) => (
+                <OccasionBadge key={occasion.id} occasion={occasion} />
+              ))}
+            </div>
+          </div>
+          <FilterBar>
             {isOwner && (
-              <div className="flex gap-2 flex-wrap">
-                <Button onClick={() => setShowAddItem(true)} className="flex items-center gap-2">
+              <>
+                <Button
+                  size="small"
+                  className="flex items-center gap-2"
+                  onClick={() => setShowAddItem(true)}
+                >
                   <Plus className="h-4 w-4" />
                   Add Item
                 </Button>
-                <Button variant="outline" asChild>
-                  <Link href={{ pathname: `/wishlists/${wishlist.permalink}/edit` }}>
-                    Edit Wishlist
-                  </Link>
+                <Button size="small" variant="outline" asChild>
+                  <Link href={{ pathname: `/w/${wishlist.permalink}/edit` }}>Edit details</Link>
                 </Button>
-                <Button variant="outline" asChild>
-                  <Link href={{ pathname: "/wishlists" }}>My Wishlists</Link>
-                </Button>
-              </div>
+              </>
             )}
-            {wishlist.items.length > 0 && (
-              <div className="flex items-center gap-3 ml-auto">
-                <div className="text-sm text-foreground">
-                  {processedItems.length} of {wishlist.items.length} items
-                  {hideClaimedItems && processedItems.length < wishlist.items.length && (
-                    <span className="ml-1 text-muted-foreground">
-                      ({wishlist.items.length - processedItems.length} hidden)
-                    </span>
-                  )}
-                </div>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon-small"
-                      className="flex items-center gap-2 data-active:bg-secondary-hover aria-expanded:bg-secondary-hover"
-                      data-active={sortBy !== "priority" || hideClaimedItems || undefined}
-                      aria-label="Sort and filter items"
-                    >
-                      <Settings2 className="h-4 w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80" align="end">
-                    <div className="flex flex-col gap-3">
-                      <div className="flex justify-between items-center gap-3">
-                        <Label
-                          htmlFor="sort-select"
-                          className="text-sm font-medium whitespace-nowrap m-0"
-                        >
-                          Sort by
-                        </Label>
-                        <Select
-                          value={sortBy}
-                          onValueChange={(value: "priority" | "price" | "date") => setSortBy(value)}
-                        >
-                          <SelectTrigger id="sort-select" size="small">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="priority">Priority (High to Low)</SelectItem>
-                            <SelectItem value="price">Price (Low to High)</SelectItem>
-                            <SelectItem value="date">Date Added (Newest First)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {!isOwner && (
-                        <div className="flex items-center justify-between gap-3">
-                          <Label htmlFor="hide-claimed" className="text-sm">
-                            Hide claimed items
-                          </Label>
-                          <Switch
-                            id="hide-claimed"
-                            checked={hideClaimedItems}
-                            onCheckedChange={setHideClaimedItems}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            )}
-          </PageActions>
-        </PageHeader>
+          </FilterBar>
+        </ProfileHeader>
 
         {/* Items */}
         {wishlist.items.length === 0 ? (
@@ -490,12 +370,7 @@ function WishlistPageInner() {
             description: editingItem.description,
             url: editingItem.url,
             imageUrl: editingItem.imageUrl,
-            price:
-              typeof editingItem.price === "number"
-                ? editingItem.price
-                : editingItem.price
-                  ? Number.parseFloat(editingItem.price.toString())
-                  : null,
+            price: editingItem.price,
             currency: editingItem.currency,
             priority: editingItem.priority,
             wishlistId: wishlist?.id || "",
@@ -515,4 +390,4 @@ function WishlistPageInner() {
       />
     </div>
   );
-}
+};

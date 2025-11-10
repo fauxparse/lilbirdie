@@ -82,6 +82,15 @@
 - Implement proper error handling
 - Use Zod schemas for validation
 
+### View Component Organization
+
+- **Client view components** should be located in `src/views/` folder
+- Organize views by feature/domain (e.g., `Users/`, `Dashboard/`, `Friends/`, `Wishlists/`)
+- App route folders (`src/app/`) should only contain thin server components that import from views
+- Keep route components minimal - they should fetch data and pass it to view components
+- View components handle all UI logic, state management, and user interactions
+- This separation allows for better testing, reusability, and code organization
+
 ### Service Layer Architecture
 
 #### Core Principles

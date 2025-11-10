@@ -320,6 +320,14 @@ export async function fetchWishlistByPermalink(permalink: string): Promise<{
               sentAt: claim.sentAt?.toISOString() || null,
             })) || [],
         })) || [],
+      occasions:
+        wishlist.occasions?.map((occasion) => ({
+          ...occasion,
+          date: occasion.date.toISOString(),
+          createdAt: occasion.createdAt.toISOString(),
+          updatedAt: occasion.updatedAt.toISOString(),
+          deletedAt: occasion.deletedAt?.toISOString() || null,
+        })) || [],
     },
   };
 }
@@ -436,6 +444,21 @@ export async function fetchUserProfile(userId: string) {
           },
         },
       },
+      items: {
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          name: true,
+          imageUrl: true,
+          blurhash: true,
+        },
+        take: 4,
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
     },
     orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
   });
@@ -465,6 +488,12 @@ export async function fetchUserProfile(userId: string) {
         ...wishlist,
         description: wishlist.description || undefined,
         createdAt: wishlist.createdAt.toISOString(),
+        items: wishlist.items.map((item) => ({
+          id: item.id,
+          name: item.name,
+          imageUrl: item.imageUrl || undefined,
+          imageBlurhash: item.blurhash || undefined,
+        })),
       })),
       isOwnProfile: viewerId === userId,
     },

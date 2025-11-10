@@ -1,29 +1,10 @@
 "use client";
 
-import type { Decimal } from "@prisma/client/runtime/library";
 import { useMutation } from "@tanstack/react-query";
 import { createContext, type ReactNode, useContext } from "react";
 import { toast } from "sonner";
 import type { WishlistItemResponse, WishlistItemWithRelations } from "@/types";
-import type { SerializedWishlistItem } from "@/types/serialized";
 import { useWishlist } from "./WishlistContext";
-
-// Helper function to convert serialized data to expected format
-function convertSerializedItem(item: SerializedWishlistItem): WishlistItemWithRelations {
-  return {
-    ...item,
-    price: item.price ? ({ toNumber: () => item.price } as Decimal) : null, // Convert number back to Decimal-like object
-    currency: item.currency || "USD", // Provide default currency
-    createdAt: new Date(item.createdAt),
-    updatedAt: new Date(item.updatedAt),
-    deletedAt: item.deletedAt ? new Date(item.deletedAt) : null,
-    claims: item.claims.map((claim) => ({
-      ...claim,
-      createdAt: new Date(claim.createdAt),
-      sentAt: claim.sentAt ? new Date(claim.sentAt) : null,
-    })),
-  };
-}
 
 interface ItemFormData {
   name: string;
@@ -62,8 +43,8 @@ export function WishlistItemProvider({ children, itemId }: WishlistItemProviderP
 
   // First try to get from individual cache, then fall back to wishlist items
   const cachedItem = getItem(itemId);
-  const serializedItem = wishlist?.items.find((i) => i.id === itemId);
-  const item = cachedItem || (serializedItem ? convertSerializedItem(serializedItem) : undefined);
+  const wishlistItem = wishlist?.items.find((i) => i.id === itemId);
+  const item = cachedItem || wishlistItem;
 
   const updateItemMutation = useMutation({
     mutationFn: async (data: Partial<ItemFormData>): Promise<WishlistItemWithRelations> => {

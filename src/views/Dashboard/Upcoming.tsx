@@ -145,7 +145,14 @@ export function Upcoming({ initialData }: UpcomingProps) {
                         </p>
                       )}
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Claimed {new Date(claimedGift.createdAt).toLocaleDateString()}</span>
+                        <span>
+                          Claimed{" "}
+                          {new Date(claimedGift.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                          })}
+                        </span>
                       </div>
                       <Button
                         onClick={() => handleMarkAsSent(claimedGift.id)}

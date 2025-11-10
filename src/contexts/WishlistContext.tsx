@@ -2,7 +2,15 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { uniqueId } from "es-toolkit/compat";
-import { createContext, type ReactNode, useCallback, useContext, useEffect } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { useWishlistRealtime } from "@/hooks/useWishlistRealtime";
@@ -15,10 +23,43 @@ import type {
 } from "@/types";
 import type { SerializedWishlist } from "@/types/serialized";
 
+export type SortOption = "priority" | "price" | "date" | "name";
+
+/**
+ * Deserialize a wishlist from server format (ISO strings) to client format (Date objects)
+ */
+function deserializeWishlist(serialized: SerializedWishlist): WishlistResponse {
+  return {
+    ...serialized,
+    createdAt: new Date(serialized.createdAt),
+    updatedAt: new Date(serialized.updatedAt),
+    deletedAt: serialized.deletedAt ? new Date(serialized.deletedAt) : null,
+    items: serialized.items.map((item) => ({
+      ...item,
+      createdAt: new Date(item.createdAt),
+      updatedAt: new Date(item.updatedAt),
+      deletedAt: item.deletedAt ? new Date(item.deletedAt) : null,
+      claims: item.claims.map((claim) => ({
+        ...claim,
+        createdAt: new Date(claim.createdAt),
+        sentAt: claim.sentAt ? new Date(claim.sentAt) : null,
+      })),
+    })),
+    occasions: serialized.occasions.map((occasion) => ({
+      ...occasion,
+      date: new Date(occasion.date),
+      createdAt: new Date(occasion.createdAt),
+      updatedAt: new Date(occasion.updatedAt),
+      deletedAt: occasion.deletedAt ? new Date(occasion.deletedAt) : null,
+    })),
+  };
+}
+
 interface WishlistContextValue {
-  wishlist: SerializedWishlist | undefined;
+  wishlist: WishlistResponse | undefined;
   isLoading: boolean;
   isOwner: boolean;
+  friendshipStatus: "friends" | "none" | "pending_sent" | "pending_received";
   error: Error | null;
   refetch: () => void;
   getItem: (itemId: string) => WishlistItemResponse | undefined;
@@ -30,6 +71,12 @@ interface WishlistContextValue {
     mutate: (params: { itemId: string; action: "claim" | "unclaim" }) => void;
     isPending: boolean;
   };
+  // Sorting and filtering
+  sortBy: SortOption;
+  setSortBy: (sortBy: SortOption) => void;
+  hideClaimedItems: boolean;
+  setHideClaimedItems: (hideClaimedItems: boolean) => void;
+  processedItems: WishlistItemResponse[];
 }
 
 const WishlistContext = createContext<WishlistContextValue | undefined>(undefined);
@@ -58,7 +105,7 @@ export function WishlistProvider({ children, permalink, initialData }: WishlistP
     isLoading,
     error,
     refetch,
-  } = useQuery<SerializedWishlist>({
+  } = useQuery<WishlistResponse>({
     queryKey: ["wishlist", permalink],
     queryFn: async () => {
       const response = await fetch(`/api/wishlists/${permalink}`);
@@ -68,11 +115,66 @@ export function WishlistProvider({ children, permalink, initialData }: WishlistP
         }
         throw new Error("Failed to fetch wishlist");
       }
-      return response.json();
+      const serialized = (await response.json()) as SerializedWishlist;
+      return deserializeWishlist(serialized);
     },
-    initialData: initialData || undefined,
+    initialData: initialData ? deserializeWishlist(initialData) : undefined,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Sorting and filtering state
+  const [sortBy, setSortBy] = useState<SortOption>("priority");
+  const [hideClaimedItems, setHideClaimedItems] = useState(false);
+
+  // Processed items with sorting and filtering
+  const processedItems = useMemo(() => {
+    if (!wishlist?.items) return [];
+
+    let filteredItems = [...wishlist.items];
+
+    // Apply filtering
+    if (hideClaimedItems) {
+      filteredItems = filteredItems.filter((item) => {
+        const hasClaims = item.claims && item.claims.length > 0;
+        return !hasClaims;
+      });
+    }
+
+    // Apply sorting
+    filteredItems.sort((a, b) => {
+      switch (sortBy) {
+        case "priority":
+          // Higher priority first
+          return (b.priority || 0) - (a.priority || 0);
+        case "price": {
+          // Lower price first, null/undefined prices go to end
+          const priceA =
+            typeof a.price === "number"
+              ? a.price
+              : typeof a.price === "string"
+                ? parseFloat(a.price)
+                : Number.MAX_VALUE;
+          const priceB =
+            typeof b.price === "number"
+              ? b.price
+              : typeof b.price === "string"
+                ? parseFloat(b.price)
+                : Number.MAX_VALUE;
+          return priceA - priceB;
+        }
+        case "date":
+          // Newer items first
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        case "name":
+          // Case-insensitive alphabetical sort with proper handling of accented characters
+          return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+        default:
+          return 0;
+      }
+    });
+
+    return filteredItems;
+  }, [wishlist?.items, sortBy, hideClaimedItems]);
 
   // Populate individual item cache entries when wishlist data is available
   useEffect(() => {
@@ -291,6 +393,7 @@ export function WishlistProvider({ children, permalink, initialData }: WishlistP
     wishlist,
     isLoading,
     isOwner: !!user && wishlist?.ownerId === user?.id,
+    friendshipStatus: wishlist?.friendshipStatus || "none",
     error,
     refetch,
     getItem,
@@ -302,6 +405,11 @@ export function WishlistProvider({ children, permalink, initialData }: WishlistP
       isPending: claimMutation.isPending,
     },
     updateWishlist: updateWishlist.mutate,
+    sortBy,
+    setSortBy,
+    hideClaimedItems,
+    setHideClaimedItems,
+    processedItems,
   };
 
   return (

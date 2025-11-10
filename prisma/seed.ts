@@ -291,34 +291,176 @@ const wishlistItems = {
   ],
   angela: {
     personal: [
-      { name: "KitchenAid Stand Mixer", url: "https://kitchenaid.com", price: 379.99, priority: 3 },
-      { name: "Family Photo Session", price: 350.0, priority: 2 },
-      { name: "Pinterest Premium Subscription", price: 4.99, priority: 1 },
-      { name: "Kids Baking Set", price: 45.0, priority: 2 },
+      {
+        name: "KitchenAid Stand Mixer",
+        description: "Professional 5-quart stand mixer with 10 speeds and multiple attachments",
+        url: "https://kitchenaid.com",
+        imageUrl: "https://images.unsplash.com/photo-1578645510447-e20b4311e3ce?w=400&h=400&fit=crop",
+        blurhash: "LKHn+?~q%MRj?bj[R*ay%Mt7RjRj",
+        price: 379.99,
+        priority: 3,
+      },
+      {
+        name: "Family Photo Session",
+        description: "Professional photography session for the whole family with printed photos",
+        imageUrl: "https://images.unsplash.com/photo-1511895426328-dc8714191300?w=400&h=400&fit=crop",
+        blurhash: "LIH2o-?b9F~q?bM{ofM{-;j[xuRj",
+        price: 350.0,
+        priority: 2,
+      },
+      {
+        name: "Pinterest Premium Subscription",
+        description: "Annual premium subscription for unlimited pins and advanced features",
+        imageUrl: "https://images.unsplash.com/photo-1611262588024-d12430b98920?w=400&h=400&fit=crop",
+        blurhash: "L9S6Ll%M00xu~q-;IUt700WB?bof",
+        price: 4.99,
+        priority: 1,
+      },
+      {
+        name: "Kids Baking Set",
+        description: "Complete children's baking set with kid-safe utensils and recipe book",
+        imageUrl: "https://images.unsplash.com/photo-1495147466023-ac5c588e2e94?w=400&h=400&fit=crop",
+        blurhash: "LNM7=t_3IUM{~qIU-;WBIUt7WBay",
+        price: 45.0,
+        priority: 2,
+      },
     ],
     ihaia: [
-      { name: "LEGO Ninjago Dragon Set", url: "https://lego.com", price: 89.99, priority: 3 },
-      { name: "Kids Art Supplies Kit", price: 35.0, priority: 2 },
-      { name: "Children's Book Series", price: 45.0, priority: 1 },
-      { name: "Junior Soccer Ball", price: 25.0, priority: 1 },
+      {
+        name: "LEGO Ninjago Dragon Set",
+        description: "Build the legendary Ninjago dragon with mini figures and accessories",
+        url: "https://lego.com",
+        imageUrl: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=400&fit=crop",
+        blurhash: "L8GR3f}@JA?Gwg$+Rh,,-7abIV#p",
+        price: 89.99,
+        priority: 3,
+      },
+      {
+        name: "Kids Art Supplies Kit",
+        description: "Complete art set with markers, crayons, paints, and drawing paper",
+        imageUrl: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=400&fit=crop",
+        blurhash: "LJH1m:xu00%M-;ofxuWB_3t7%MRj",
+        price: 35.0,
+        priority: 2,
+      },
+      {
+        name: "Children's Book Series",
+        description: "Popular children's adventure series with 10 illustrated books",
+        imageUrl: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&h=400&fit=crop",
+        blurhash: "LSGt4p%M?b~q?bxuM{WBt7t7M{t7",
+        price: 45.0,
+        priority: 1,
+      },
+      {
+        name: "Junior Soccer Ball",
+        description: "Size 3 soccer ball perfect for kids aged 5-8 years",
+        imageUrl: "https://images.unsplash.com/photo-1511886929837-354d827aae26?w=400&h=400&fit=crop",
+        blurhash: "LBD9X~4n?b%M~q-;ofWB00t7RjWB",
+        price: 25.0,
+        priority: 1,
+      },
     ],
     tawera: [
-      { name: "Remote Control Car", price: 75.0, priority: 3 },
-      { name: "Science Experiment Kit", price: 55.0, priority: 2 },
-      { name: "Kids Tablet Case", price: 30.0, priority: 1 },
-      { name: "Building Blocks Set", price: 40.0, priority: 2 },
+      {
+        name: "Remote Control Car",
+        description: "High-speed RC car with rechargeable battery and all-terrain tires",
+        imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+        blurhash: "LfHxvi?bxut7~q-;%MV[E1ofaeR+",
+        price: 75.0,
+        priority: 3,
+      },
+      {
+        name: "Science Experiment Kit",
+        description: "50+ safe science experiments for curious young minds",
+        imageUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=400&fit=crop",
+        blurhash: "LKHn~X?b_3%M-;ofofWB~qt7IUt7",
+        price: 55.0,
+        priority: 2,
+      },
+      {
+        name: "Kids Tablet Case",
+        description: "Shockproof protective case with handle for kids' tablets",
+        imageUrl: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=400&fit=crop",
+        blurhash: "LCE{g8IU4nof~qRjM{of00M{IURj",
+        price: 30.0,
+        priority: 1,
+      },
+      {
+        name: "Building Blocks Set",
+        description: "500-piece creative building blocks compatible with major brands",
+        imageUrl: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=400&h=400&fit=crop",
+        blurhash: "L8GR3f}@JA?Gwg$+Rh,,-7abIV#p",
+        price: 40.0,
+        priority: 2,
+      },
     ],
     atawhai: [
-      { name: "Dollhouse Furniture Set", price: 65.0, priority: 3 },
-      { name: "Craft Making Kit", price: 42.0, priority: 2 },
-      { name: "Kids Dress-up Costumes", price: 50.0, priority: 2 },
-      { name: "Storybook Collection", price: 35.0, priority: 1 },
+      {
+        name: "Dollhouse Furniture Set",
+        description: "Miniature furniture set for dollhouse with living room and bedroom pieces",
+        imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+        blurhash: "LfHxvi?bxut7~q-;%MV[E1ofaeR+",
+        price: 65.0,
+        priority: 3,
+      },
+      {
+        name: "Craft Making Kit",
+        description: "Creative craft kit with materials for jewelry, cards, and decorations",
+        imageUrl: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=400&fit=crop",
+        blurhash: "LJH1m:xu00%M-;ofxuWB_3t7%MRj",
+        price: 42.0,
+        priority: 2,
+      },
+      {
+        name: "Kids Dress-up Costumes",
+        description: "Set of 5 princess and character costumes with accessories",
+        imageUrl: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&h=400&fit=crop",
+        blurhash: "LEF~X=_34n~q?bM{IURj%M%M-;RO",
+        price: 50.0,
+        priority: 2,
+      },
+      {
+        name: "Storybook Collection",
+        description: "10 classic fairy tale books with beautiful illustrations",
+        imageUrl: "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&h=400&fit=crop",
+        blurhash: "LSGt4p%M?b~q?bxuM{WBt7t7M{t7",
+        price: 35.0,
+        priority: 1,
+      },
     ],
     mana: [
-      { name: "Baby Sensory Toys", price: 45.0, priority: 3 },
-      { name: "Wooden Teething Rings", price: 25.0, priority: 2 },
-      { name: "Soft Play Mat", price: 75.0, priority: 2 },
-      { name: "Baby Monitor", price: 120.0, priority: 1 },
+      {
+        name: "Baby Sensory Toys",
+        description: "Set of colorful sensory toys to stimulate baby's development",
+        imageUrl: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400&h=400&fit=crop",
+        blurhash: "LPJa{f?b~q%M?bxuM{j[IURjRPWB",
+        price: 45.0,
+        priority: 3,
+      },
+      {
+        name: "Wooden Teething Rings",
+        description: "Natural organic wooden teething rings safe for babies",
+        imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop",
+        blurhash: "LfHxvi?bxut7~q-;%MV[E1ofaeR+",
+        price: 25.0,
+        priority: 2,
+      },
+      {
+        name: "Soft Play Mat",
+        description: "Extra thick foam play mat with colorful alphabet design",
+        imageUrl: "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=400&h=400&fit=crop",
+        blurhash: "LKN-gI?b~qM{-;ofRjt7D%M{Rjof",
+        price: 75.0,
+        priority: 2,
+      },
+      {
+        name: "Baby Monitor",
+        description: "HD video baby monitor with night vision and two-way audio",
+        imageUrl: "https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?w=400&h=400&fit=crop",
+        blurhash: "LPF$y?~q-;WB_3t7RjWB-;RjRjt7",
+        price: 120.0,
+        priority: 1,
+      },
     ],
   },
   emma: [
@@ -491,142 +633,256 @@ async function createWishlists(userId: string, userName: string, wishlists: Wish
     // Handle Matt's multiple wishlists
     if (firstName === "matt") {
       for (const wl of mattWishlists) {
-        const existingWishlist = await prisma.wishlist.findFirst({
+        let existingWishlist = await prisma.wishlist.findFirst({
           where: {
             ownerId: userId,
             title: wl.title,
           },
-        });
-
-        if (existingWishlist) {
-          console.log(`Wishlist "${wl.title}" already exists, skipping...`);
-          continue;
-        }
-
-        const wishlist = await prisma.wishlist.create({
-          data: {
-            title: wl.title,
-            description: wl.description,
-            permalink: `${firstName}-${wl.key}`,
-            privacy: wl.privacy,
-            isDefault: wl.isDefault,
-            ownerId: userId,
+          include: {
+            items: true,
           },
         });
 
-        // Add items to wishlist
-        const items = wishlists[wl.key as keyof typeof wishlists] as WishlistItem[];
-        for (const item of items) {
-          await prisma.wishlistItem.create({
+        let wishlistId: string;
+
+        if (existingWishlist) {
+          console.log(`Wishlist "${wl.title}" already exists, checking items...`);
+          wishlistId = existingWishlist.id;
+        } else {
+          const newWishlist = await prisma.wishlist.create({
             data: {
-              name: item.name,
-              description: item.description || null,
-              url: item.url || null,
-              imageUrl: item.imageUrl || null,
-              blurhash: item.blurhash || null,
-              price: item.price,
-              currency: "USD",
-              priority: item.priority,
-              wishlistId: wishlist.id,
+              title: wl.title,
+              description: wl.description,
+              permalink: `${firstName}-${wl.key}`,
+              privacy: wl.privacy,
+              isDefault: wl.isDefault,
+              ownerId: userId,
             },
           });
+          wishlistId = newWishlist.id;
+          existingWishlist = null;
+          console.log(`Created ${wl.title}`);
         }
 
-        console.log(`Created ${wl.title} with ${items.length} items`);
+        // Add or update items in wishlist
+        const items = wishlists[wl.key as keyof typeof wishlists] as WishlistItem[];
+        let createdCount = 0;
+        let updatedCount = 0;
+
+        for (const item of items) {
+          const existingItem = existingWishlist?.items.find(i => i.name === item.name);
+
+          if (existingItem) {
+            // Update if seed data has values that differ from existing item
+            const hasUpdates =
+              (item.description && item.description !== existingItem.description) ||
+              (item.imageUrl && item.imageUrl !== existingItem.imageUrl) ||
+              (item.blurhash && item.blurhash !== existingItem.blurhash) ||
+              (item.url && item.url !== existingItem.url);
+
+            if (hasUpdates) {
+              await prisma.wishlistItem.update({
+                where: { id: existingItem.id },
+                data: {
+                  description: item.description || existingItem.description || null,
+                  imageUrl: item.imageUrl || existingItem.imageUrl || null,
+                  blurhash: item.blurhash || existingItem.blurhash || null,
+                  url: item.url || existingItem.url || null,
+                },
+              });
+              updatedCount++;
+            }
+          } else {
+            await prisma.wishlistItem.create({
+              data: {
+                name: item.name,
+                description: item.description || null,
+                url: item.url || null,
+                imageUrl: item.imageUrl || null,
+                blurhash: item.blurhash || null,
+                price: item.price,
+                currency: "USD",
+                priority: item.priority,
+                wishlistId: wishlistId,
+              },
+            });
+            createdCount++;
+          }
+        }
+
+        if (createdCount > 0 || updatedCount > 0) {
+          console.log(`  ${wl.title}: created ${createdCount}, updated ${updatedCount} items`);
+        }
       }
     }
     // Handle Angela's children's wishlists
     else if (firstName === "angela") {
       for (const wl of angelaWishlists) {
-        const existingWishlist = await prisma.wishlist.findFirst({
+        let existingWishlist = await prisma.wishlist.findFirst({
           where: {
             ownerId: userId,
             title: wl.title,
           },
-        });
-
-        if (existingWishlist) {
-          console.log(`Wishlist "${wl.title}" already exists, skipping...`);
-          continue;
-        }
-
-        const wishlist = await prisma.wishlist.create({
-          data: {
-            title: wl.title,
-            description: wl.description,
-            permalink: `angela-${wl.key}`,
-            privacy: wl.privacy,
-            isDefault: wl.isDefault,
-            ownerId: userId,
+          include: {
+            items: true,
           },
         });
 
-        // Add items to wishlist
-        const items = wishlists[wl.key as keyof typeof wishlists] as WishlistItem[];
-        for (const item of items) {
-          await prisma.wishlistItem.create({
+        let wishlistId: string;
+
+        if (existingWishlist) {
+          console.log(`Wishlist "${wl.title}" already exists, checking items...`);
+          wishlistId = existingWishlist.id;
+        } else {
+          const newWishlist = await prisma.wishlist.create({
             data: {
-              name: item.name,
-              description: item.description || null,
-              url: item.url || null,
-              imageUrl: item.imageUrl || null,
-              blurhash: item.blurhash || null,
-              price: item.price,
-              currency: "USD",
-              priority: item.priority,
-              wishlistId: wishlist.id,
+              title: wl.title,
+              description: wl.description,
+              permalink: `angela-${wl.key}`,
+              privacy: wl.privacy,
+              isDefault: wl.isDefault,
+              ownerId: userId,
             },
           });
+          wishlistId = newWishlist.id;
+          existingWishlist = null;
+          console.log(`Created ${wl.title}`);
         }
 
-        console.log(`Created ${wl.title} with ${items.length} items`);
+        // Add or update items in wishlist
+        const items = wishlists[wl.key as keyof typeof wishlists] as WishlistItem[];
+        let createdCount = 0;
+        let updatedCount = 0;
+
+        for (const item of items) {
+          const existingItem = existingWishlist?.items.find(i => i.name === item.name);
+
+          if (existingItem) {
+            // Update if seed data has values that differ from existing item
+            const hasUpdates =
+              (item.description && item.description !== existingItem.description) ||
+              (item.imageUrl && item.imageUrl !== existingItem.imageUrl) ||
+              (item.blurhash && item.blurhash !== existingItem.blurhash) ||
+              (item.url && item.url !== existingItem.url);
+
+            if (hasUpdates) {
+              await prisma.wishlistItem.update({
+                where: { id: existingItem.id },
+                data: {
+                  description: item.description || existingItem.description || null,
+                  imageUrl: item.imageUrl || existingItem.imageUrl || null,
+                  blurhash: item.blurhash || existingItem.blurhash || null,
+                  url: item.url || existingItem.url || null,
+                },
+              });
+              updatedCount++;
+            }
+          } else {
+            await prisma.wishlistItem.create({
+              data: {
+                name: item.name,
+                description: item.description || null,
+                url: item.url || null,
+                imageUrl: item.imageUrl || null,
+                blurhash: item.blurhash || null,
+                price: item.price,
+                currency: "USD",
+                priority: item.priority,
+                wishlistId: wishlistId,
+              },
+            });
+            createdCount++;
+          }
+        }
+
+        if (createdCount > 0 || updatedCount > 0) {
+          console.log(`  ${wl.title}: created ${createdCount}, updated ${updatedCount} items`);
+        }
       }
     }
     // Handle everyone else's single wishlist
     else {
-      const existingWishlist = await prisma.wishlist.findFirst({
+      let existingWishlist = await prisma.wishlist.findFirst({
         where: {
           ownerId: userId,
           isDefault: true,
         },
-      });
-
-      if (existingWishlist) {
-        console.log(`Default wishlist for ${userName} already exists, skipping...`);
-        return;
-      }
-
-      const wishlist = await prisma.wishlist.create({
-        data: {
-          title: `${userName}'s Wishlist`,
-          description: `Things ${firstName} would love to receive`,
-          permalink: `${firstName}-wishlist`,
-          privacy: "FRIENDS_ONLY",
-          isDefault: true,
-          ownerId: userId,
+        include: {
+          items: true,
         },
       });
 
-      if (Array.isArray(wishlists)) {
-        // Add items to wishlist (wishlists is an array for other people)
-        for (const item of wishlists) {
-          await prisma.wishlistItem.create({
-            data: {
-              name: item.name,
-              description: item.description || null,
-              url: item.url || null,
-              imageUrl: item.imageUrl || null,
-              blurhash: item.blurhash || null,
-              price: item.price,
-              currency: "USD",
-              priority: item.priority,
-              wishlistId: wishlist.id,
-            },
-          });
-        }
+      let wishlistId: string;
+
+      if (existingWishlist) {
+        console.log(`Default wishlist for ${userName} already exists, checking items...`);
+        wishlistId = existingWishlist.id;
+      } else {
+        const newWishlist = await prisma.wishlist.create({
+          data: {
+            title: `${userName}'s Wishlist`,
+            description: `Things ${firstName} would love to receive`,
+            permalink: `${firstName}-wishlist`,
+            privacy: "FRIENDS_ONLY",
+            isDefault: true,
+            ownerId: userId,
+          },
+        });
+        wishlistId = newWishlist.id;
+        existingWishlist = null;
+        console.log(`Created wishlist for ${userName}`);
       }
 
-      console.log(`Created wishlist for ${userName} with ${wishlists.length} items`);
+      if (Array.isArray(wishlists)) {
+        let createdCount = 0;
+        let updatedCount = 0;
+
+        // Add or update items to wishlist (wishlists is an array for other people)
+        for (const item of wishlists) {
+          const existingItem = existingWishlist?.items.find(i => i.name === item.name);
+
+          if (existingItem) {
+            // Update if seed data has values that differ from existing item
+            const hasUpdates =
+              (item.description && item.description !== existingItem.description) ||
+              (item.imageUrl && item.imageUrl !== existingItem.imageUrl) ||
+              (item.blurhash && item.blurhash !== existingItem.blurhash) ||
+              (item.url && item.url !== existingItem.url);
+
+            if (hasUpdates) {
+              await prisma.wishlistItem.update({
+                where: { id: existingItem.id },
+                data: {
+                  description: item.description || existingItem.description || null,
+                  imageUrl: item.imageUrl || existingItem.imageUrl || null,
+                  blurhash: item.blurhash || existingItem.blurhash || null,
+                  url: item.url || existingItem.url || null,
+                },
+              });
+              updatedCount++;
+            }
+          } else {
+            await prisma.wishlistItem.create({
+              data: {
+                name: item.name,
+                description: item.description || null,
+                url: item.url || null,
+                imageUrl: item.imageUrl || null,
+                blurhash: item.blurhash || null,
+                price: item.price,
+                currency: "USD",
+                priority: item.priority,
+                wishlistId: wishlistId,
+              },
+            });
+            createdCount++;
+          }
+        }
+
+        if (createdCount > 0 || updatedCount > 0) {
+          console.log(`  ${userName}: created ${createdCount}, updated ${updatedCount} items`);
+        }
+      }
     }
   } catch (error) {
     console.error(`Error creating wishlists for ${userName}:`, error);

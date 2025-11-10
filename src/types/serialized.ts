@@ -1,6 +1,23 @@
 // Serialized types for server-side data (with string dates and number prices)
 
-import { OccasionType } from "@prisma/client";
+import type { EntityType, OccasionType } from "@prisma/client";
+
+export interface SerializedOccasion {
+  id: string;
+  title: string;
+  date: string;
+  type: OccasionType;
+  isRecurring: boolean;
+  startYear: number | null;
+  isDeleted: boolean;
+  ownerId: string;
+  entityType: EntityType | null;
+  entityId: string | null;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
 
 export interface SerializedClaim {
   id: string;
@@ -43,6 +60,7 @@ export interface SerializedWishlist {
   permalink: string;
   privacy: "PUBLIC" | "FRIENDS_ONLY" | "PRIVATE";
   isDefault: boolean;
+  isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -53,6 +71,8 @@ export interface SerializedWishlist {
     name: string | null;
     image: string | null;
   } | null;
+  occasions: SerializedOccasion[];
+  friendshipStatus: "friends" | "none" | "pending_sent" | "pending_received";
 }
 
 export interface SerializedWishlistSummary {

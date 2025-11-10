@@ -219,10 +219,10 @@ body {
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    --tw-shadow-color: var(--color-shadow);
+    /* --tw-shadow-color: var(--color-shadow); */
   }
 
-  h1 {
+  h1, .font-heading {
     font-family: var(--font-heading);
   }
 }

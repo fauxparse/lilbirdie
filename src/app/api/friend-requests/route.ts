@@ -55,44 +55,11 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // TEMPORARY: Add fake ninja turtle friend requests (incoming)
-    const fakeTurtles = [
-      { id: "leo-1", name: "Leonardo", email: "leo@tmnt.com" },
-      { id: "raph-1", name: "Raphael", email: "raph@tmnt.com" },
-      { id: "don-1", name: "Donatello", email: "don@tmnt.com" },
-      { id: "mike-1", name: "Michelangelo", email: "mike@tmnt.com" },
-    ];
-
-    const fakeIncomingRequests = fakeTurtles.map((turtle, index) => ({
-      id: `fake-incoming-${turtle.id}`,
-      email: currentUserEmail,
-      createdAt: new Date(Date.now() - index * 3600000), // Stagger by 1 hour each
-      type: "incoming" as const,
-      requester: {
-        id: turtle.id,
-        name: turtle.name,
-        email: turtle.email,
-        image: null,
-      },
-    }));
-
-    // TEMPORARY: Add fake outgoing request to Master Splinter
-    const fakeOutgoingRequests = [
-      {
-        id: "fake-outgoing-splinter",
-        email: "splinter@tmnt.com",
-        createdAt: new Date(Date.now() - 86400000), // 1 day ago
-        type: "outgoing" as const,
-      },
-    ];
-
     return NextResponse.json([
-      ...fakeIncomingRequests,
       ...incomingRequests.map((request) => ({
         ...request,
         type: "incoming" as const,
       })),
-      ...fakeOutgoingRequests,
       ...outgoingRequests.map((request) => ({
         ...request,
         type: "outgoing" as const,

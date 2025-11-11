@@ -1,5 +1,6 @@
 import type { Currency } from "@/types/currency";
 import { BlurhashService } from "./BlurhashService";
+import { ImageService } from "./ImageService";
 
 export interface ScrapedData {
   name: string;
@@ -31,7 +32,7 @@ export class UrlScrapingService {
     return UrlScrapingService.instance;
   }
 
-  async scrapeUrl(url: string): Promise<ScrapedData | ScrapingError> {
+  async scrapeUrl(url: string, userId: string): Promise<ScrapedData | ScrapingError> {
     try {
       // Validate URL format
       let parsedUrl: URL;
@@ -163,9 +164,20 @@ export class UrlScrapingService {
         scrapedData = this.extractMetadata(htmlToProcess, url);
       }
 
-      // Generate blurhash if we have an image URL
+      // Download and upload image to blob storage, generate blurhash
       if (scrapedData.imageUrl) {
-        const blurhash = await BlurhashService.getInstance().generateBlurhash(scrapedData.imageUrl);
+        // Try to download and upload to blob storage
+        const blobUrl = await ImageService.getInstance().downloadAndUploadImage(
+          scrapedData.imageUrl,
+          userId
+        );
+
+        // Use blob URL if successful, otherwise keep external URL (graceful degradation)
+        const finalImageUrl = blobUrl || scrapedData.imageUrl;
+        scrapedData.imageUrl = finalImageUrl;
+
+        // Generate blurhash from final URL
+        const blurhash = await BlurhashService.getInstance().generateBlurhash(finalImageUrl);
         if (blurhash) {
           scrapedData.blurhash = blurhash;
         }

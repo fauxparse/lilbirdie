@@ -11,6 +11,15 @@ vi.mock("@/lib/services/BlurhashService", () => ({
   },
 }));
 
+// Mock ImageService
+vi.mock("@/lib/services/ImageService", () => ({
+  ImageService: {
+    getInstance: vi.fn(() => ({
+      downloadAndUploadImage: vi.fn().mockResolvedValue(null), // Return null to fall back to external URL
+    })),
+  },
+}));
+
 // Mock fetch globally
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -36,7 +45,10 @@ describe("UrlScrapingService", () => {
 
   describe("URL Validation", () => {
     it("should reject invalid URL formats", async () => {
-      const result = await UrlScrapingService.getInstance().scrapeUrl("invalid-url");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "invalid-url",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         error: "Invalid URL format",
@@ -47,7 +59,10 @@ describe("UrlScrapingService", () => {
     });
 
     it("should reject localhost URLs", async () => {
-      const result = await UrlScrapingService.getInstance().scrapeUrl("http://localhost:3000/test");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "http://localhost:3000/test",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         error: "Local URLs are not supported",
@@ -58,7 +73,10 @@ describe("UrlScrapingService", () => {
     });
 
     it("should reject private IP addresses", async () => {
-      const result = await UrlScrapingService.getInstance().scrapeUrl("http://192.168.1.1/test");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "http://192.168.1.1/test",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         error: "Local URLs are not supported",
@@ -79,7 +97,10 @@ describe("UrlScrapingService", () => {
         });
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://example.com",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         error: "Request timeout",
@@ -95,7 +116,10 @@ describe("UrlScrapingService", () => {
         throw new TypeError("fetch failed");
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://example.com",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         error: "Unable to connect to website",
@@ -111,7 +135,10 @@ describe("UrlScrapingService", () => {
         status: 403,
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://example.com",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         error: "Access denied by website",
@@ -128,7 +155,10 @@ describe("UrlScrapingService", () => {
         status: 404,
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://example.com",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         error: "Page not found",
@@ -144,7 +174,10 @@ describe("UrlScrapingService", () => {
         status: 429,
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://example.com",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         error: "Too many requests",
@@ -177,7 +210,10 @@ describe("UrlScrapingService", () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://example.com",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         name: "Test Product",
@@ -210,7 +246,10 @@ describe("UrlScrapingService", () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.co.uk");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://example.co.uk",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         name: "Twitter Product",
@@ -241,7 +280,10 @@ describe("UrlScrapingService", () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://shop.co.nz/product");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://shop.co.nz/product",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         name: "NZ Product",
@@ -269,7 +311,10 @@ describe("UrlScrapingService", () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://example.com",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         error: "No product information found",
@@ -301,7 +346,8 @@ describe("UrlScrapingService", () => {
       });
 
       const result = await UrlScrapingService.getInstance().scrapeUrl(
-        "https://amazon.com.au/product/test"
+        "https://amazon.com.au/product/test",
+        "test-user-id"
       );
 
       expect(result).toEqual({
@@ -331,7 +377,8 @@ describe("UrlScrapingService", () => {
       });
 
       const result = await UrlScrapingService.getInstance().scrapeUrl(
-        "https://amazon.com.au/product"
+        "https://amazon.com.au/product",
+        "test-user-id"
       );
 
       expect(result).toEqual({
@@ -360,7 +407,8 @@ describe("UrlScrapingService", () => {
       });
 
       const result = await UrlScrapingService.getInstance().scrapeUrl(
-        "https://amazon.co.uk/product"
+        "https://amazon.co.uk/product",
+        "test-user-id"
       );
 
       expect(result).toEqual({
@@ -389,7 +437,10 @@ describe("UrlScrapingService", () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://amazon.com/product");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://amazon.com/product",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         name: "Product with Multiple Prices",
@@ -443,7 +494,10 @@ describe("UrlScrapingService", () => {
           text: () => Promise.resolve(html),
         });
 
-        const result = await UrlScrapingService.getInstance().scrapeUrl(testCase.url);
+        const result = await UrlScrapingService.getInstance().scrapeUrl(
+          testCase.url,
+          "test-user-id"
+        );
 
         expect(result).toMatchObject({
           price: testCase.expected,
@@ -471,7 +525,10 @@ describe("UrlScrapingService", () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://example.com",
+        "test-user-id"
+      );
 
       expect(result).toMatchObject({
         price: 5.99, // Should pick the lowest reasonable price (first pattern match)
@@ -497,7 +554,8 @@ describe("UrlScrapingService", () => {
       });
 
       const result = await UrlScrapingService.getInstance().scrapeUrl(
-        "https://www.kmart.co.nz/product"
+        "https://www.kmart.co.nz/product",
+        "test-user-id"
       );
 
       expect(result).toMatchObject({
@@ -526,7 +584,8 @@ describe("UrlScrapingService", () => {
       });
 
       const result = await UrlScrapingService.getInstance().scrapeUrl(
-        "https://www.kmart.co.nz/product"
+        "https://www.kmart.co.nz/product",
+        "test-user-id"
       );
 
       expect(result).toMatchObject({
@@ -585,7 +644,8 @@ describe("UrlScrapingService", () => {
       });
 
       const result = await UrlScrapingService.getInstance().scrapeUrl(
-        "https://www.kmart.co.nz/product/orchard-toys-bluey-shopping-list-fun-memory-game-43580910/"
+        "https://www.kmart.co.nz/product/orchard-toys-bluey-shopping-list-fun-memory-game-43580910/",
+        "test-user-id"
       );
 
       expect(result).toMatchObject({
@@ -627,7 +687,8 @@ describe("UrlScrapingService", () => {
         });
 
         const result = await UrlScrapingService.getInstance().scrapeUrl(
-          `https://${domain}/product`
+          `https://${domain}/product`,
+          "test-user-id"
         );
 
         expect(result).toMatchObject({
@@ -657,7 +718,10 @@ describe("UrlScrapingService", () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://example.com",
+        "test-user-id"
+      );
 
       expect(result).toEqual({
         name: "Product & Service <Special>",
@@ -686,7 +750,10 @@ describe("UrlScrapingService", () => {
         text: () => Promise.resolve(html),
       });
 
-      const result = await UrlScrapingService.getInstance().scrapeUrl("https://example.com");
+      const result = await UrlScrapingService.getInstance().scrapeUrl(
+        "https://example.com",
+        "test-user-id"
+      );
 
       expect(result).toMatchObject({
         name: "Product Title",

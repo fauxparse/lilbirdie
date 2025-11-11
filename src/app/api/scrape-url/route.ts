@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await UrlScrapingService.getInstance().scrapeUrl(url);
+    const result = await UrlScrapingService.getInstance().scrapeUrl(url, session.user.id);
 
     // Check if result is an error
     if ("error" in result) {

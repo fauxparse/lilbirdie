@@ -6,10 +6,10 @@ import { PermissionService } from "@/lib/services/PermissionService";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ permalink: string; itemId: string }> }
+  { params }: { params: Promise<{ id: string; itemId: string }> }
 ) {
   try {
-    const { permalink, itemId } = await params;
+    const { id, itemId } = await params;
 
     // Get the session
     const session = await auth.api.getSession({
@@ -25,7 +25,7 @@ export async function POST(
       where: {
         id: itemId,
         wishlist: {
-          permalink,
+          permalink: id,
         },
         isDeleted: false,
       },
@@ -106,10 +106,10 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ permalink: string; itemId: string }> }
+  { params }: { params: Promise<{ id: string; itemId: string }> }
 ) {
   try {
-    const { permalink, itemId } = await params;
+    const { id, itemId } = await params;
 
     // Get the session
     const session = await auth.api.getSession({
@@ -125,7 +125,7 @@ export async function DELETE(
       where: {
         id: itemId,
         wishlist: {
-          permalink,
+          permalink: id,
         },
         isDeleted: false,
       },

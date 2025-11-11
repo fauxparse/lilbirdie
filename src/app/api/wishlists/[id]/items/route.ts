@@ -5,19 +5,16 @@ import { PermissionService } from "@/lib/services/PermissionService";
 import { WishlistItemService } from "@/lib/services/WishlistItemService";
 import { WishlistService } from "@/lib/services/WishlistService";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ permalink: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { permalink } = await params;
+    const { id } = await params;
     const session = await auth.api.getSession({
       headers: request.headers,
     });
 
     // First resolve the permalink to get the wishlist
     const wishlist = await WishlistService.getInstance().getWishlistByPermalink(
-      permalink,
+      id,
       session?.user?.id
     );
 
@@ -42,12 +39,9 @@ export async function GET(
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ permalink: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { permalink } = await params;
+    const { id } = await params;
     const session = await auth.api.getSession({
       headers: request.headers,
     });
@@ -74,7 +68,7 @@ export async function POST(
 
     // First resolve the permalink to get the wishlist
     const wishlist = await WishlistService.getInstance().getWishlistByPermalink(
-      permalink,
+      id,
       session.user.id
     );
 

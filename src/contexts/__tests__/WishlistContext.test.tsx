@@ -121,6 +121,8 @@ describe("WishlistContext", () => {
           claims: [],
         },
       ],
+      occasions: [],
+      friendshipStatus: "none",
     };
 
     mockFetch.mockResolvedValueOnce({
@@ -190,6 +192,8 @@ describe("WishlistContext", () => {
           claims: [],
         },
       ],
+      occasions: [],
+      friendshipStatus: "none",
     };
 
     mockFetch.mockResolvedValueOnce({

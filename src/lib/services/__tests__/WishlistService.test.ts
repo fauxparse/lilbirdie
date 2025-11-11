@@ -19,6 +19,19 @@ vi.mock("@/lib/db", () => ({
       findFirst: vi.fn(),
       findMany: vi.fn(),
     },
+    occasion: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    user: {
+      findUnique: vi.fn(),
+    },
+    friendRequest: {
+      findFirst: vi.fn(),
+    },
   },
 }));
 
@@ -29,6 +42,17 @@ vi.mock("../PrivacyService", () => ({
       areFriends: vi.fn(),
       redactUserData: vi.fn(),
       redactClaimsUserData: vi.fn(),
+    })),
+  },
+}));
+
+// Mock OccasionService
+vi.mock("../OccasionService", () => ({
+  OccasionService: {
+    getInstance: vi.fn(() => ({
+      createOccasion: vi.fn(),
+      updateOccasion: vi.fn(),
+      getOccasionsByEntity: vi.fn(),
     })),
   },
 }));
@@ -57,6 +81,19 @@ describe("WishlistService", () => {
     (PrivacyService.getInstance as MockedFunction<() => PrivacyService>).mockReturnValue(
       mockPrivacyService as unknown as PrivacyService
     );
+
+    // Set default mocks for occasions and related models
+    (
+      prisma.occasion.findMany as unknown as MockedFunction<typeof prisma.occasion.findMany>
+    ).mockResolvedValue([]);
+    (
+      prisma.user.findUnique as unknown as MockedFunction<typeof prisma.user.findUnique>
+    ).mockResolvedValue(null);
+    (
+      prisma.friendRequest.findFirst as unknown as MockedFunction<
+        typeof prisma.friendRequest.findFirst
+      >
+    ).mockResolvedValue(null);
 
     // Reset the WishlistService singleton instance to ensure it gets the mocked PrivacyService
     WishlistService.resetInstance();
@@ -157,7 +194,7 @@ describe("WishlistService", () => {
         "user-2"
       );
 
-      expect(result).toEqual(mockWishlist);
+      expect(result).toEqual({ ...mockWishlist, occasions: [], friendshipStatus: "none" });
     });
 
     it("should return null for private wishlist when not owner", async () => {
@@ -212,7 +249,7 @@ describe("WishlistService", () => {
         "user-1"
       );
 
-      expect(result).toEqual(mockWishlist);
+      expect(result).toEqual({ ...mockWishlist, occasions: [], friendshipStatus: "none" });
     });
 
     it("should return friends-only wishlist when users are friends", async () => {
@@ -258,7 +295,7 @@ describe("WishlistService", () => {
         },
       });
 
-      expect(result).toEqual(mockWishlist);
+      expect(result).toEqual({ ...mockWishlist, occasions: [], friendshipStatus: "friends" });
     });
 
     it("should return null for friends-only wishlist when users are not friends", async () => {
@@ -839,12 +876,14 @@ describe("WishlistService", () => {
         (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
           .mockResolvedValueOnce(basicWishlist as unknown as any)
           .mockResolvedValueOnce(mockWishlist as unknown as any);
+        // First friendship.findFirst call for privacy check (in getWishlistByPermalink line ~119)
         (
           prisma.friendship.findFirst as unknown as MockedFunction<
             typeof prisma.friendship.findFirst
           >
-        ).mockResolvedValue({ id: "friendship-1" } as unknown as any); // Friends for access check
-        mockPrivacyService.areFriends.mockResolvedValue(false); // Not friends for redaction
+        )
+          .mockResolvedValueOnce({ id: "friendship-1" } as unknown as any) // Friends for access check
+          .mockResolvedValueOnce(null); // Not friends for friendshipStatus calculation
         mockPrivacyService.redactUserData.mockReturnValue(null); // Redact for non-friend
 
         const result = await WishlistService.getInstance().getWishlistByPermalink(
@@ -852,7 +891,6 @@ describe("WishlistService", () => {
           "user-2" // Different user (non-friend for redaction)
         );
 
-        expect(mockPrivacyService.areFriends).toHaveBeenCalledWith("user-2", "user-1");
         expect(mockPrivacyService.redactUserData).toHaveBeenCalledWith(
           owner,
           false // isFriend for privacy check
@@ -882,12 +920,12 @@ describe("WishlistService", () => {
         (prisma.wishlist.findUnique as unknown as MockedFunction<typeof prisma.wishlist.findUnique>)
           .mockResolvedValueOnce(basicWishlist as unknown as any)
           .mockResolvedValueOnce(mockWishlist as unknown as any);
+        // All friendship.findFirst calls should return friendship (they're friends)
         (
           prisma.friendship.findFirst as unknown as MockedFunction<
             typeof prisma.friendship.findFirst
           >
-        ).mockResolvedValue({ id: "friendship-1" } as unknown as any); // Friends for access check
-        mockPrivacyService.areFriends.mockResolvedValue(true); // Friends for privacy check
+        ).mockResolvedValue({ id: "friendship-1" } as unknown as any); // Friends for all checks
         mockPrivacyService.redactUserData.mockReturnValue(mockWishlist.owner); // Don't redact for friend
 
         const result = await WishlistService.getInstance().getWishlistByPermalink(
@@ -895,7 +933,6 @@ describe("WishlistService", () => {
           "user-2"
         );
 
-        expect(mockPrivacyService.areFriends).toHaveBeenCalledWith("user-2", "user-1");
         expect(mockPrivacyService.redactUserData).toHaveBeenCalledWith(mockWishlist.owner, true);
         expect(result?.owner).toEqual(mockWishlist.owner);
       });

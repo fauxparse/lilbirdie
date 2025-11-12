@@ -1,5 +1,5 @@
 import { put } from "@vercel/blob";
-import sharp from "sharp";
+import Sharp from "sharp";
 
 export class ImageService {
   private static instance: ImageService;
@@ -97,7 +97,9 @@ export class ImageService {
       const filename = `wishlist-items/${userId}/${timestamp}-${randomSuffix}.${fileExtension}`;
 
       // Upload to Vercel Blob Storage
-      const blob = await put(filename, processedBuffer, {
+      // Convert Buffer to Blob for compatibility with put()
+      const imageBlob = new Blob([new Uint8Array(processedBuffer)], { type: contentType });
+      const blob = await put(filename, imageBlob, {
         access: "public",
         addRandomSuffix: false,
         contentType: contentType,
@@ -117,7 +119,7 @@ export class ImageService {
    */
   private async resizeImage(buffer: Buffer): Promise<Buffer | null> {
     try {
-      const image = sharp(buffer);
+      const image = Sharp(buffer);
       const metadata = await image.metadata();
 
       if (!metadata.width || !metadata.height) {

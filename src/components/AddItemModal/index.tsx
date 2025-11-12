@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { Gift } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Modal, ModalHeader, ModalTitle } from "@/components/ui/Modal";
 import { useWishlist } from "@/contexts/WishlistContext";
@@ -29,6 +29,8 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
   const [scrapedData, setScrapedData] = useState<ItemFormData | null>(null);
   const [scrapingError, setScrapingError] = useState<string | null>(null);
   const { addItemToCache } = useWishlist();
+
+  const urlInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -136,6 +138,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
                     Paste the URL of the item you want to add
                   </p>
                   <Input
+                    ref={urlInput}
                     type="url"
                     className="w-full text-center focus-visible:shadow-none"
                     placeholder="https://example.com/product"
@@ -170,7 +173,7 @@ export const AddItemModal: React.FC<AddItemModalProps> = ({
               exit={{ opacity: 0 }}
             >
               <ItemForm
-                initialData={scrapedData || { name: "" }}
+                initialData={scrapedData || { name: "", url: urlInput.current?.value || "" }}
                 onBack={() => setModalState("paste")}
                 onCancel={onClose}
                 onSubmit={handleSubmit}

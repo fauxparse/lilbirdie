@@ -58,7 +58,7 @@ vi.mock("../OccasionService", () => ({
 }));
 
 // Import the mocked modules
-import { prisma } from "@/lib/db";
+import { prisma } from "../../db";
 import { PrivacyService } from "../PrivacyService";
 
 // Type definitions for mocked functions

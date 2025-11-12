@@ -64,11 +64,12 @@ export class ImageService {
       }
 
       // Verify content type is an image
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.startsWith("image/")) {
-        console.error("URL does not point to an image:", contentType);
+      const contentTypeHeader = response.headers.get("content-type");
+      if (!contentTypeHeader || !contentTypeHeader.startsWith("image/")) {
+        console.error("URL does not point to an image:", contentTypeHeader);
         return null;
       }
+      const contentType: string = contentTypeHeader;
 
       // Get image buffer
       const arrayBuffer = await response.arrayBuffer();

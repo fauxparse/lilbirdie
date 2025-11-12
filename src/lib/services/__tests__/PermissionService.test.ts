@@ -208,6 +208,32 @@ describe("PermissionService", () => {
       expect(canClaim).toBe(true);
     });
 
+    it("should grant viewer read and claim permissions for public wishlist", async () => {
+      mockPrisma.wishlist.findFirst.mockResolvedValue(null);
+      mockPrisma.wishlistEditor.findFirst.mockResolvedValue(null);
+      mockPrisma.wishlist.findUnique.mockResolvedValue({
+        ownerId: "owner-1",
+        privacy: "PUBLIC",
+      });
+
+      const hasRead = await permissionService.hasPermission(
+        { userId: "user-1", wishlistId: "wishlist-1" },
+        "wishlists:read"
+      );
+      const hasWrite = await permissionService.hasPermission(
+        { userId: "user-1", wishlistId: "wishlist-1" },
+        "wishlists:write"
+      );
+      const canClaim = await permissionService.hasPermission(
+        { userId: "user-1", wishlistId: "wishlist-1" },
+        "items:claim"
+      );
+
+      expect(hasRead).toBe(true);
+      expect(hasWrite).toBe(false);
+      expect(canClaim).toBe(true);
+    });
+
     it("should deny access for users with no role", async () => {
       mockPrisma.wishlist.findFirst.mockResolvedValue(null);
       mockPrisma.wishlistEditor.findFirst.mockResolvedValue(null);
@@ -323,6 +349,27 @@ describe("PermissionService", () => {
       expect(permissions).toContain("items:write");
       expect(permissions).not.toContain("wishlists:delete");
       expect(permissions).not.toContain("items:delete");
+    });
+
+    it("should return read and claim permissions for viewer on public wishlist", async () => {
+      mockPrisma.wishlist.findFirst.mockResolvedValue(null);
+      mockPrisma.wishlistEditor.findFirst.mockResolvedValue(null);
+      mockPrisma.wishlist.findUnique.mockResolvedValue({
+        ownerId: "owner-1",
+        privacy: "PUBLIC",
+      });
+
+      const permissions = await permissionService.getUserPermissions({
+        userId: "user-1",
+        wishlistId: "wishlist-1",
+      });
+
+      expect(permissions).toContain("wishlists:read");
+      expect(permissions).toContain("items:read");
+      expect(permissions).toContain("items:claim");
+      expect(permissions).not.toContain("wishlists:write");
+      expect(permissions).not.toContain("items:write");
+      expect(permissions).not.toContain("wishlists:delete");
     });
 
     it("should return only global permissions when no context", async () => {

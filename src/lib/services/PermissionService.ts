@@ -199,7 +199,7 @@ export class PermissionService {
         "items:claim",
       ],
       friend: ["wishlists:read", "items:read", "items:claim"],
-      viewer: ["wishlists:read", "items:read"],
+      viewer: ["wishlists:read", "items:read", "items:claim"],
     };
 
     return rolePermissions[role]?.includes(permission) ?? false;
@@ -262,7 +262,7 @@ export class PermissionService {
         "items:claim",
       ],
       friend: ["wishlists:read", "items:read", "items:claim"],
-      viewer: ["wishlists:read", "items:read"],
+      viewer: ["wishlists:read", "items:read", "items:claim"],
     };
 
     return rolePermissions[role] ?? [];

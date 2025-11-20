@@ -29,6 +29,7 @@ import { useWishlistItem, WishlistItemProvider } from "@/contexts/WishlistItemCo
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { useUserPreferredCurrency } from "@/hooks/useUserPreferredCurrency";
 import { HandOff } from "@/icons/HandOff";
+import { hostname } from "@/lib/utils/hostname";
 import type { WishlistItemResponse } from "../types";
 import { useAuth } from "./AuthProvider";
 
@@ -250,7 +251,7 @@ function WishlistItemCardContent({
                 onClick={(e) => e.stopPropagation()}
               >
                 <ShoppingCart className="h-4 w-4" />
-                {new URL(item.url).hostname}
+                {hostname(item.url) || "View on website"}
               </a>
             )}
           </div>

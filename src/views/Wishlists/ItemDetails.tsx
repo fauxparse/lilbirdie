@@ -16,6 +16,7 @@ import { StarInput } from "@/components/ui/StarInput";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
 import { useUserPreferredCurrency } from "@/hooks/useUserPreferredCurrency";
 import { HandOff } from "@/icons/HandOff";
+import { hostname } from "@/lib/utils/hostname";
 import type { WishlistItemResponse } from "@/types";
 
 interface ItemDetailsProps {
@@ -138,17 +139,17 @@ export function ItemDetails({ item, permalink }: ItemDetailsProps) {
 
         {/* Right Column - Details */}
         <div className="space-y-6">
-        {/* Priority */}
-        {isOwner && (
-          <div>
-            <StarInput
-              value={item.priority || 0}
-              onChange={() => {}}
-              disabled
-              className="pointer-events-none"
-            />
-          </div>
-        )}
+          {/* Priority */}
+          {isOwner && (
+            <div>
+              <StarInput
+                value={item.priority || 0}
+                onChange={() => {}}
+                disabled
+                className="pointer-events-none"
+              />
+            </div>
+          )}
 
           {/* Description */}
           {item.description && (
@@ -165,7 +166,7 @@ export function ItemDetails({ item, permalink }: ItemDetailsProps) {
                 className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
               >
                 <ShoppingCart className="h-4 w-4" />
-                <span>View on {new URL(item.url).hostname}</span>
+                <span>View on {hostname(item?.url) || "website"}</span>
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>

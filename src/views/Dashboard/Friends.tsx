@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AddFriendModal } from "@/components/AddFriendModal";
 import { useFriends } from "@/hooks/useFriends";
 import type { FriendsData } from "@/lib/server/data-fetchers";
 import { FriendRequests } from "@/views/Friends/FriendRequests";
@@ -11,7 +12,7 @@ interface FriendsProps {
 }
 
 export function Friends({ initialData }: FriendsProps) {
-  const [_showAddDialog, setShowAddDialog] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const { data: friends } = useFriends(initialData.friends);
 
   return (
@@ -23,6 +24,7 @@ export function Friends({ initialData }: FriendsProps) {
       {friends?.map((friend) => (
         <FriendCard key={friend.id} friend={friend} />
       ))}
+      <AddFriendModal isOpen={showAddDialog} onClose={() => setShowAddDialog(false)} />
     </div>
   );
 

@@ -403,6 +403,16 @@ export async function fetchUserProfile(userId: string) {
     }
   }
 
+  // Check if viewer is admin - admins can view all wishlists
+  let isViewerAdmin = false;
+  if (viewerId) {
+    const viewer = await prisma.user.findUnique({
+      where: { id: viewerId },
+      select: { admin: true },
+    });
+    isViewerAdmin = viewer?.admin ?? false;
+  }
+
   // Get visible wishlists based on relationship
   let whereClause: {
     ownerId: string;
@@ -418,6 +428,9 @@ export async function fetchUserProfile(userId: string) {
 
   if (viewerId === userId) {
     // User viewing their own profile - show all wishlists
+    whereClause = { ownerId: userId };
+  } else if (isViewerAdmin) {
+    // Admins can see all wishlists regardless of privacy
     whereClause = { ownerId: userId };
   } else if (friendshipStatus === "friends") {
     // Friends can see public and friends_only wishlists
@@ -463,10 +476,10 @@ export async function fetchUserProfile(userId: string) {
     orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
   });
 
-  // Apply privacy redaction if not a friend or self
+  // Apply privacy redaction if not a friend, self, or admin
   const privacyService = PrivacyService.getInstance();
-  const isFriendOrSelf = viewerId === userId || friendshipStatus === "friends";
-  const redactedUser = privacyService.redactUserData(user, isFriendOrSelf);
+  const isFriendOrSelfOrAdmin = viewerId === userId || friendshipStatus === "friends" || isViewerAdmin;
+  const redactedUser = privacyService.redactUserData(user, isFriendOrSelfOrAdmin);
 
   return {
     success: true,

@@ -26,8 +26,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
 import { StarInput } from "@/components/ui/StarInput";
+import { useWishlist } from "@/contexts/WishlistContext";
 import { useWishlistItem, WishlistItemProvider } from "@/contexts/WishlistItemContext";
 import { useCurrencyConversion } from "@/hooks/useCurrencyConversion";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useUserPreferredCurrency } from "@/hooks/useUserPreferredCurrency";
 import { HandOff } from "@/icons/HandOff";
 import { hostname } from "@/lib/utils/hostname";
@@ -61,6 +63,24 @@ function WishlistItemCardContent({
 
   // Get item from context
   const { item, updateItem } = useWishlistItem();
+
+  // Get wishlist from context to access wishlist ID
+  const { wishlist } = useWishlist();
+
+  // Check permissions for editing items (admins will have items:write permission)
+  // Use wishlist ID from context (more reliable than item.wishlist.id)
+  // Fallback to item.wishlist.id if wishlist context doesn't have id
+  const wishlistId = wishlist?.id || item?.wishlist?.id;
+  const { canWriteItems, permissions } = usePermissions({
+    wishlistId,
+    enabled: !!wishlistId,
+  });
+
+  // User can edit if they're the owner OR have write permission (admin)
+  // Check permissions array directly to ensure we catch admin permissions
+  // Use both canWriteItems (from hook) and direct check as fallback
+  const hasWritePermission = canWriteItems || permissions.includes("items:write");
+  const canEdit = isOwner || hasWritePermission;
 
   // Helper to convert price (handles both number and Decimal-like objects)
   const getPriceAsNumber = (price: unknown): number => {
@@ -194,21 +214,19 @@ function WishlistItemCardContent({
                       </a>
                     </DropdownMenuItem>
                   )}
-                  {isOwner ? (
+                  {canEdit && onEdit ? (
                     <>
-                      {onEdit && (
-                        <DropdownMenuItem onClick={() => onEdit(item)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                      )}
-                      {onMove && (
+                      <DropdownMenuItem onClick={() => onEdit(item)}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      {onMove && isOwner && (
                         <DropdownMenuItem onClick={() => onMove(item.id, item.name)}>
                           <FolderOpen className="h-4 w-4 mr-2" />
                           Move to...
                         </DropdownMenuItem>
                       )}
-                      {onDelete && (
+                      {onDelete && isOwner && (
                         <DropdownMenuItem
                           onClick={() => onDelete(item.id)}
                           className="text-red-600 focus:text-red-600"
@@ -218,25 +236,24 @@ function WishlistItemCardContent({
                         </DropdownMenuItem>
                       )}
                     </>
-                  ) : (
-                    onClaim && (
-                      <DropdownMenuItem
-                        onClick={() => onClaim(item.id, claimedByMe)}
-                        disabled={isClaimPending}
-                      >
-                        {claimedByMe ? (
-                          <>
-                            <HandOff className="h-4 w-4 mr-2" />
-                            Unclaim
-                          </>
-                        ) : (
-                          <>
-                            <Hand className="h-4 w-4 mr-2" />
-                            Claim
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                    )
+                  ) : null}
+                  {!isOwner && onClaim && (
+                    <DropdownMenuItem
+                      onClick={() => onClaim(item.id, claimedByMe)}
+                      disabled={isClaimPending}
+                    >
+                      {claimedByMe ? (
+                        <>
+                          <HandOff className="h-4 w-4 mr-2" />
+                          Unclaim
+                        </>
+                      ) : (
+                        <>
+                          <Hand className="h-4 w-4 mr-2" />
+                          Claim
+                        </>
+                      )}
+                    </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
               </DropdownMenuPortal>

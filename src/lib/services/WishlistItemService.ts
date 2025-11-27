@@ -77,14 +77,37 @@ export class WishlistItemService {
       throw new Error("Wishlist not found");
     }
 
-    // Privacy check
-    if (wishlist.privacy === "PRIVATE" && wishlist.ownerId !== viewerId) {
-      throw new Error("Wishlist not found");
+    // Check if viewer is admin - admins can view all wishlists
+    let isViewerAdmin = false;
+    if (viewerId) {
+      const viewer = await prisma.user.findUnique({
+        where: { id: viewerId },
+        select: { admin: true },
+      });
+      isViewerAdmin = viewer?.admin ?? false;
     }
 
-    if (wishlist.privacy === "FRIENDS_ONLY" && wishlist.ownerId !== viewerId) {
-      // TODO: Check friendship when friends system is implemented
-      // For now, allow access
+    // Privacy check (skip for admins)
+    if (!isViewerAdmin) {
+      if (wishlist.privacy === "PRIVATE" && wishlist.ownerId !== viewerId) {
+        throw new Error("Wishlist not found");
+      }
+
+      if (wishlist.privacy === "FRIENDS_ONLY" && wishlist.ownerId !== viewerId) {
+        // Check friendship
+        const friendship = await prisma.friendship.findFirst({
+          where: {
+            OR: [
+              { userId: wishlist.ownerId, friendId: viewerId },
+              { userId: viewerId, friendId: wishlist.ownerId },
+            ],
+          },
+        });
+
+        if (!friendship) {
+          throw new Error("Wishlist not found");
+        }
+      }
     }
 
     return await prisma.wishlistItem.findMany({
@@ -203,7 +226,14 @@ export class WishlistItemService {
       throw new Error("Item not found");
     }
 
-    if (item.wishlist.ownerId !== userId) {
+    // Check if user is admin - admins can edit items on any wishlist
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { admin: true },
+    });
+    const isUserAdmin = user?.admin ?? false;
+
+    if (!isUserAdmin && item.wishlist.ownerId !== userId) {
       throw new Error("Access denied");
     }
 

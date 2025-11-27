@@ -40,10 +40,27 @@ export class PermissionService {
   }
 
   /**
+   * Check if a user is an admin
+   */
+  async isAdmin(userId: string): Promise<boolean> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { admin: true },
+    });
+    return user?.admin ?? false;
+  }
+
+  /**
    * Check if a user has a specific permission in a context
    */
   async hasPermission(context: PermissionContext, permission: Permission): Promise<boolean> {
     try {
+      // Check admin status first - admins have all permissions
+      const isUserAdmin = await this.isAdmin(context.userId);
+      if (isUserAdmin) {
+        return true;
+      }
+
       if (context.wishlistId) {
         return await this.hasWishlistPermission(context.userId, context.wishlistId, permission);
       }
@@ -128,6 +145,12 @@ export class PermissionService {
     wishlistId: string,
     permission: Permission
   ): Promise<boolean> {
+    // Check admin status first - admins have all permissions
+    const isUserAdmin = await this.isAdmin(userId);
+    if (isUserAdmin) {
+      return true;
+    }
+
     const role = await this.getUserWishlistRole(userId, wishlistId);
 
     if (!role) {
@@ -159,7 +182,13 @@ export class PermissionService {
   /**
    * Check global permissions (not tied to specific resource)
    */
-  private async hasGlobalPermission(_userId: string, permission: Permission): Promise<boolean> {
+  private async hasGlobalPermission(userId: string, permission: Permission): Promise<boolean> {
+    // Check admin status first - admins have all permissions
+    const isUserAdmin = await this.isAdmin(userId);
+    if (isUserAdmin) {
+      return true;
+    }
+
     // Global permissions like friends:invite are always allowed for authenticated users
     const globalPermissions: Permission[] = ["friends:invite", "friends:manage"];
 
@@ -220,6 +249,27 @@ export class PermissionService {
    * Get all permissions for a user in a context
    */
   async getUserPermissions(context: PermissionContext): Promise<Permission[]> {
+    // Check admin status first - admins have all permissions
+    const isUserAdmin = await this.isAdmin(context.userId);
+    if (isUserAdmin) {
+      // Return all possible permissions for admins
+      return [
+        "wishlists:read",
+        "wishlists:write",
+        "wishlists:delete",
+        "wishlists:share",
+        "items:read",
+        "items:write",
+        "items:delete",
+        "items:move",
+        "items:claim",
+        "friends:invite",
+        "friends:manage",
+        "members:invite",
+        "members:remove",
+      ];
+    }
+
     const permissions: Permission[] = [];
 
     if (context.wishlistId) {

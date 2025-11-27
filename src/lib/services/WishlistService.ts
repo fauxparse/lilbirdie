@@ -109,24 +109,36 @@ export class WishlistService {
       return null;
     }
 
-    // Check privacy permissions using basic wishlist info
-    if (basicWishlist.privacy === "PRIVATE" && basicWishlist.ownerId !== viewerId) {
-      return null;
+    // Check if viewer is admin - admins can view all wishlists
+    let isViewerAdmin = false;
+    if (viewerId) {
+      const viewer = await prisma.user.findUnique({
+        where: { id: viewerId },
+        select: { admin: true },
+      });
+      isViewerAdmin = viewer?.admin ?? false;
     }
 
-    if (basicWishlist.privacy === "FRIENDS_ONLY" && basicWishlist.ownerId !== viewerId) {
-      // Check if viewer is friends with owner
-      const friendship = await prisma.friendship.findFirst({
-        where: {
-          OR: [
-            { userId: basicWishlist.ownerId, friendId: viewerId },
-            { userId: viewerId, friendId: basicWishlist.ownerId },
-          ],
-        },
-      });
-
-      if (!friendship) {
+    // Check privacy permissions using basic wishlist info (skip for admins)
+    if (!isViewerAdmin) {
+      if (basicWishlist.privacy === "PRIVATE" && basicWishlist.ownerId !== viewerId) {
         return null;
+      }
+
+      if (basicWishlist.privacy === "FRIENDS_ONLY" && basicWishlist.ownerId !== viewerId) {
+        // Check if viewer is friends with owner
+        const friendship = await prisma.friendship.findFirst({
+          where: {
+            OR: [
+              { userId: basicWishlist.ownerId, friendId: viewerId },
+              { userId: viewerId, friendId: basicWishlist.ownerId },
+            ],
+          },
+        });
+
+        if (!friendship) {
+          return null;
+        }
       }
     }
 

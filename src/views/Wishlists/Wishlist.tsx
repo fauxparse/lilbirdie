@@ -19,6 +19,7 @@ import { ProfileHeader } from "@/components/ui/ProfileHeader";
 import { ResponsiveGrid } from "@/components/ui/ResponsiveGrid";
 import { WishlistItemCard } from "@/components/WishlistItemCard";
 import { useWishlist, WishlistProvider } from "@/contexts/WishlistContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useUndoableDelete } from "@/hooks/useUndoableDelete";
 import type { UserProfileData } from "@/lib/server/data-fetchers";
 import type { WishlistItemWithRelations } from "@/types";
@@ -53,6 +54,15 @@ const WishlistInner: React.FC = () => {
     updateWishlist,
     processedItems,
   } = useWishlist();
+
+  // Check permissions for editing items (admins will have items:write permission)
+  const { canWriteItems } = usePermissions({
+    wishlistId: wishlist?.id,
+    enabled: !!wishlist?.id,
+  });
+
+  // User can edit if they're the owner OR have write permission (admin)
+  const canEdit = isOwner || canWriteItems;
 
   // Undoable delete hook
   const { performUndoableDelete } = useUndoableDelete();
@@ -356,7 +366,7 @@ const WishlistInner: React.FC = () => {
                 wishlistPermalink={wishlist?.permalink || ""}
                 isOwner={isOwner}
                 onClaim={handleClaim}
-                onEdit={isOwner ? setEditingItem : undefined}
+                onEdit={setEditingItem}
                 onDelete={isOwner ? handleDeleteItem : undefined}
                 onMove={isOwner ? handleMoveItem : undefined}
                 isClaimPending={claimMutation.isPending}

@@ -6,6 +6,7 @@ import { Edit, ExternalLink, Hand, ShoppingCart, Trash } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { usePermissions } from "@/hooks/usePermissions";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
@@ -30,6 +31,15 @@ export function ItemDetails({ item, permalink }: ItemDetailsProps) {
   const queryClient = useQueryClient();
 
   const isOwner = item.wishlist?.owner?.id === user?.id;
+
+  // Check permissions for editing items (admins will have items:write permission)
+  const { canWriteItems } = usePermissions({
+    wishlistId: item.wishlist?.id,
+    enabled: !!item.wishlist?.id,
+  });
+
+  // User can edit if they're the owner OR have write permission (admin)
+  const canEdit = isOwner || canWriteItems;
 
   // Helper to convert price (handles both number and Decimal-like objects)
   const getPriceAsNumber = (price: unknown): number => {
@@ -243,7 +253,7 @@ export function ItemDetails({ item, permalink }: ItemDetailsProps) {
 
       {/* Action Buttons */}
       <div className="border-t p-6 flex gap-3">
-        {isOwner ? (
+        {canEdit ? (
           <>
             <Button
               onClick={handleEdit}
@@ -254,24 +264,26 @@ export function ItemDetails({ item, permalink }: ItemDetailsProps) {
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button
-              onClick={handleDelete}
-              variant="outline"
-              className="flex-1 text-destructive hover:text-destructive"
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? (
-                <>
-                  <span className="animate-spin mr-2">⏳</span>
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash className="h-4 w-4 mr-2" />
-                  Delete
-                </>
-              )}
-            </Button>
+            {isOwner && (
+              <Button
+                onClick={handleDelete}
+                variant="outline"
+                className="flex-1 text-destructive hover:text-destructive"
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash className="h-4 w-4 mr-2" />
+                    Delete
+                  </>
+                )}
+              </Button>
+            )}
           </>
         ) : (
           <Button

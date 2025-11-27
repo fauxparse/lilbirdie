@@ -22,6 +22,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuPortal,
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
 import { StarInput } from "@/components/ui/StarInput";
@@ -170,66 +171,75 @@ function WishlistItemCardContent({
                   variant="secondary"
                   size="small"
                   className="h-8 w-8 p-0 bg-background/80 rounded-full hover:bg-background/90 backdrop-blur-sm"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                  }}
                 >
                   <MoreVertical className="h-4 w-4 text-foreground" />
                   <span className="sr-only">Open menu</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                {item.url && (
-                  <DropdownMenuItem asChild>
-                    <a href={item.url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      View
-                    </a>
-                  </DropdownMenuItem>
-                )}
-                {isOwner ? (
-                  <>
-                    {onEdit && (
-                      <DropdownMenuItem onClick={() => onEdit(item)}>
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                    )}
-                    {onMove && (
-                      <DropdownMenuItem onClick={() => onMove(item.id, item.name)}>
-                        <FolderOpen className="h-4 w-4 mr-2" />
-                        Move to...
-                      </DropdownMenuItem>
-                    )}
-                    {onDelete && (
-                      <DropdownMenuItem
-                        onClick={() => onDelete(item.id)}
-                        className="text-red-600 focus:text-red-600"
-                      >
-                        <Trash className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    )}
-                  </>
-                ) : (
-                  onClaim && (
-                    <DropdownMenuItem
-                      onClick={() => onClaim(item.id, claimedByMe)}
-                      disabled={isClaimPending}
-                    >
-                      {claimedByMe ? (
-                        <>
-                          <HandOff className="h-4 w-4 mr-2" />
-                          Unclaim
-                        </>
-                      ) : (
-                        <>
-                          <Hand className="h-4 w-4 mr-2" />
-                          Claim
-                        </>
-                      )}
+              <DropdownMenuPortal>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-40"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {item.url && (
+                    <DropdownMenuItem asChild>
+                      <a href={item.url} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View
+                      </a>
                     </DropdownMenuItem>
-                  )
-                )}
-              </DropdownMenuContent>
+                  )}
+                  {isOwner ? (
+                    <>
+                      {onEdit && (
+                        <DropdownMenuItem onClick={() => onEdit(item)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                      )}
+                      {onMove && (
+                        <DropdownMenuItem onClick={() => onMove(item.id, item.name)}>
+                          <FolderOpen className="h-4 w-4 mr-2" />
+                          Move to...
+                        </DropdownMenuItem>
+                      )}
+                      {onDelete && (
+                        <DropdownMenuItem
+                          onClick={() => onDelete(item.id)}
+                          className="text-red-600 focus:text-red-600"
+                        >
+                          <Trash className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      )}
+                    </>
+                  ) : (
+                    onClaim && (
+                      <DropdownMenuItem
+                        onClick={() => onClaim(item.id, claimedByMe)}
+                        disabled={isClaimPending}
+                      >
+                        {claimedByMe ? (
+                          <>
+                            <HandOff className="h-4 w-4 mr-2" />
+                            Unclaim
+                          </>
+                        ) : (
+                          <>
+                            <Hand className="h-4 w-4 mr-2" />
+                            Claim
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                    )
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenuPortal>
             </DropdownMenu>
           </div>
         </CardHeader>

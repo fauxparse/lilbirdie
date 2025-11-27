@@ -195,6 +195,7 @@ export const Modal = ({
 }: ModalProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const modalContext = useContext(ModalLevelContext);
+  const mousedownTargetRef = useRef<EventTarget | null>(null);
 
   // Capture this modal's level when it's created (never changes)
   const modalLevel = useRef<number | null>(null);
@@ -228,10 +229,32 @@ export const Modal = ({
     modalLevel.current = null;
   }, [isOpen, modalContext]);
 
+  // Reset mousedown target ref on mouseup to prevent stale state
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleMouseUp = () => {
+      // Small delay to ensure click handler runs first
+      setTimeout(() => {
+        mousedownTargetRef.current = null;
+      }, 0);
+    };
+
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => document.removeEventListener("mouseup", handleMouseUp);
+  }, [isOpen]);
+
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (closeOnOverlayClick && e.target === e.currentTarget) {
+    // Only close if mousedown started on the overlay (not inside content)
+    if (
+      closeOnOverlayClick &&
+      e.target === e.currentTarget &&
+      mousedownTargetRef.current === e.currentTarget
+    ) {
       onClose();
     }
+    // Reset the ref after handling the click
+    mousedownTargetRef.current = null;
   };
 
   return (
@@ -258,6 +281,12 @@ export const Modal = ({
                   variants={overlayVariants}
                   custom={modalLevel.current === 0}
                   onClick={handleOverlayClick}
+                  onMouseDown={(e) => {
+                    // Only track if mousedown is directly on the overlay (not a child)
+                    if (e.target === e.currentTarget) {
+                      mousedownTargetRef.current = e.currentTarget;
+                    }
+                  }}
                 >
                   {/* Content */}
                   <FocusTrap isActive={isOpen && !preventAutoFocus}>
@@ -289,6 +318,10 @@ export const Modal = ({
                       role="dialog"
                       aria-modal="true"
                       onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => {
+                        // Mark that mousedown started inside the content
+                        mousedownTargetRef.current = e.currentTarget;
+                      }}
                     >
                       {children}
                     </motion.div>

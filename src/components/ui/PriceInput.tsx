@@ -32,7 +32,8 @@ const PriceInput = React.forwardRef<HTMLInputElement, PriceInputProps>(
     // Update the input value when the prop value changes (but not when focused)
     React.useEffect(() => {
       if (inputRef.current && !isFocused) {
-        const displayValue = value === null || value === undefined ? "" : value.toFixed(2);
+        const displayValue =
+          value === null || value === undefined ? "" : parseFloat(value.toString()).toFixed(2);
         inputRef.current.value = displayValue;
       }
     }, [value, isFocused]);

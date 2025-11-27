@@ -37,7 +37,10 @@ yarn-error.log*
 next-env.d.ts
 
 # prisma
-prisma/migrations
+# Note: prisma/migrations should be committed to git for deployments
+
+# backups
+/backups
 
 .partykit
 

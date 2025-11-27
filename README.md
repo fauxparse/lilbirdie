@@ -43,6 +43,8 @@ A modern wishlist web application built with Next.js, TypeScript, and PostgreSQL
 - `npx biome check --write` - Run linting with auto-fix
 - `tsc --noEmit` - Run TypeScript type checking
 - `pnpm test` - Run tests with Vitest
+- `pnpm db:backup` - Backup development database
+- `pnpm db:backup:prod` - Backup production database (requires .env.production.local)
 
 **Note:** For development, you need to run both `pnpm dev` and `pnpm dev:party` in separate terminals.
 
@@ -120,7 +122,8 @@ This application is designed to deploy to Vercel with PartyKit for real-time fea
 2. **Deploy to Vercel**
    - Connect your GitHub repository to Vercel
    - Configure environment variables in Vercel dashboard:
-     - `DATABASE_URL` - Your PostgreSQL connection string
+     - `DATABASE_URL` - Your PostgreSQL connection string (connection pooler URL)
+     - `DIRECT_URL` - Your PostgreSQL direct connection string (required for migrations)
      - `BETTER_AUTH_SECRET` - Generate a secure random string
      - `BETTER_AUTH_URL` - Your Vercel deployment URL
      - `GOOGLE_CLIENT_ID` - Your Google OAuth client ID
@@ -130,8 +133,19 @@ This application is designed to deploy to Vercel with PartyKit for real-time fea
      - `NEXT_PUBLIC_PARTYKIT_HOST` - Your PartyKit deployment URL (from step 1)
      - `PARTYKIT_HOST` - Same as `NEXT_PUBLIC_PARTYKIT_HOST`
 
-3. **Run Database Migrations**
-   After the first deployment, run migrations:
+   **Note:** Database migrations run automatically during the build process. If migrations fail, the build will fail and you'll see the error in the Vercel deployment logs.
+
+   **⚠️ Important:** Always backup your production database before deploying migrations:
+   ```bash
+   # Pull production environment variables
+   vercel env pull .env.production.local
+
+   # Create a backup
+   pnpm db:backup:prod
+   ```
+
+3. **Manual Migration (if needed)**
+   If you need to run migrations manually after deployment:
    ```bash
    # Using Vercel CLI
    vercel env pull .env.production.local

@@ -23,7 +23,9 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "dotenv -e .env.development.local -- prisma studio",
-    "db:seed": "dotenv -e .env.development.local tsx prisma/seed.ts"
+    "db:seed": "dotenv -e .env.development.local tsx prisma/seed.ts",
+    "db:backup": "./scripts/backup-db.sh development",
+    "db:backup:prod": "./scripts/backup-db.sh production"
   },
   "dependencies": {
     "@lucide/lab": "^0.1.2",
